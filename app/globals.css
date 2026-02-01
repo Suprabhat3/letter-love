@@ -262,7 +262,58 @@ h6 {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Marquee Animation */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 40s linear infinite;
+}
+
+/* Custom Selection Color */
+::selection {
+  background-color: #fb7185;
+  /* rose-400 */
+  color: white;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #fff1f2;
+  /* rose-50 */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #fb7185;
+  /* rose-400 */
+  border-radius: 9999px;
+  border: 2px solid #fff1f2;
+  /* Creates padding effect */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #f43f5e;
+  /* rose-500 */
+}
+
+.mask-gradient-x {
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
 }
