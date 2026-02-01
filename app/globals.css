@@ -1,26 +1,79 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fff0f5;
+  /* Lavender Blush / Very light pink */
+  --foreground: #4a041f;
+  /* Dark Burgundy */
+
+  --primary: #ec4899;
+  /* Pink 500 */
+  --primary-foreground: #ffffff;
+
+  --secondary: #fce7f3;
+  /* Pink 100 */
+  --secondary-foreground: #ec4899;
+
+  --accent: #fff1f2;
+  /* Rose 50 */
+  --accent-foreground: #be123c;
+  /* Rose 700 */
+
+  --card: #ffffff;
+  --card-foreground: #4a041f;
+
+  --border: #fbcfe8;
+  --input: #fbcfe8;
+  --ring: #f472b6;
+
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: Courier New, monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* Remove @theme inline as it might be breaking v3 */
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+/* Custom Utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+  color: white;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px 0 rgba(236, 72, 153, 0.39);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(236, 72, 153, 0.23);
+  filter: brightness(110%);
+}
+
+.blob-bg {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(255, 183, 197, 0.4) 0%, rgba(255, 183, 197, 0) 70%);
+  border-radius: 50%;
+  z-index: -1;
+  filter: blur(60px);
 }
