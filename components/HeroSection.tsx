@@ -50,9 +50,9 @@ export default function HeroSection() {
         <div className="relative w-full max-w-[1100px] mx-auto h-[600px] md:h-[700px] flex justify-center items-end mt-10">
           {/* Left Phone - Tilted Left */}
           <div className="absolute left-[5%] md:left-[10%] bottom-0 w-[260px] md:w-[320px] h-[520px] md:h-[640px] z-10 transition-all duration-500 ease-out transform -rotate-[8deg] origin-bottom hover:z-30 hover:scale-105 hover:-rotate-[12deg] group">
-            <div className="w-full h-full rounded-[2.5rem] md:rounded-[3rem] overflow-hidden shadow-2xl bg-gradient-to-br from-pink-50 to-purple-50 transition-all duration-500 group-hover:shadow-[0_0_50px_-5px_rgba(236,72,153,0.5)]">
+            <div className="w-full h-full rounded-[2.5rem] md:rounded-[3rem] overflow-hidden shadow-2xl bg-gradient-to-br from-pink-50 to-purple-50 transition-all duration-500 group-hover:shadow-[0_0_50px_-5px_rgba(236,72,153,0.5)] border-4 border-pink-200">
               <Image
-                src="/hero1.png"
+                src="/share-input1.png"
                 alt="App Screen - Cycle History"
                 fill
                 className="object-cover"
@@ -64,9 +64,9 @@ export default function HeroSection() {
 
           {/* Right Phone - Tilted Right */}
           <div className="absolute right-[5%] md:right-[10%] bottom-0 w-[260px] md:w-[320px] h-[520px] md:h-[640px] z-10 transition-all duration-500 ease-out transform rotate-[8deg] origin-bottom hover:z-30 hover:scale-105 hover:rotate-[12deg] group">
-            <div className="w-full h-full rounded-[2.5rem] md:rounded-[3rem] overflow-hidden shadow-2xl bg-gradient-to-br from-purple-50 to-pink-50 transition-all duration-500 group-hover:shadow-[0_0_50px_-5px_rgba(168,85,247,0.5)]">
+            <div className="w-full h-full rounded-[2.5rem] md:rounded-[3rem] overflow-hidden shadow-2xl bg-gradient-to-br from-purple-50 to-pink-50 transition-all duration-500 group-hover:shadow-[0_0_50px_-5px_rgba(168,85,247,0.5)] border-4 border-purple-200">
               <Image
-                src="/hero1.png"
+                src="/share-story1.png"
                 alt="App Screen - Community Feed"
                 fill
                 className="object-cover"
@@ -78,9 +78,9 @@ export default function HeroSection() {
 
           {/* Center Phone - Straight (Larger) */}
           <div className="absolute left-1/2 bottom-0 w-[280px] md:w-[360px] h-[560px] md:h-[700px] z-20 transition-all duration-500 ease-out transform -translate-x-1/2 hover:z-30 hover:scale-[1.03] hover:-translate-y-2 group">
-            <div className="w-full h-full rounded-[2.75rem] md:rounded-[3.5rem] overflow-hidden shadow-[0_20px_60px_-10px_rgba(0,0,0,0.3)] bg-white transition-all duration-500 group-hover:shadow-[0_30px_80px_-10px_rgba(236,72,153,0.4)]">
+            <div className="w-full h-full rounded-[2.75rem] md:rounded-[3.5rem] overflow-hidden shadow-[0_20px_60px_-10px_rgba(0,0,0,0.3)] bg-white transition-all duration-500 group-hover:shadow-[0_30px_80px_-10px_rgba(236,72,153,0.4)] border-4 border-rose-200">
               <Image
-                src="/hero1.png"
+                src="/ai-analysis1.png"
                 alt="App Screen - Main Dashboard"
                 fill
                 className="object-cover"

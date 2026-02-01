@@ -118,7 +118,7 @@ export default function Features() {
           </div>
 
           {/* Mobile Vertical Line */}
-          <div className="absolute left-8 top-0 bottom-0 w-1 bg-gray-100 md:hidden rounded-full">
+          <div className="absolute left-8 top-0 bottom-0 w-1 bg-gray-300 md:hidden rounded-full">
             <motion.div
               style={{ scaleY }}
               className="absolute top-0 left-0 w-full bg-gradient-to-b from-pink-500 via-purple-500 to-orange-400 origin-top rounded-full"
@@ -176,20 +176,25 @@ function FeatureItem({ feature, index }: { feature: any; index: number }) {
           animate={isInView ? { opacity: 1, x: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          <div className={cn("inline-block p-3 rounded-2xl mb-4", feature.bg)}>
+          <div
+            className={cn(
+              "inline-block px-4 py-2 rounded-full mb-4 border border-pink-100/50 shadow-sm backdrop-blur-sm",
+              feature.bg,
+            )}
+          >
             <span
               className={cn(
-                "text-sm font-bold tracking-wider uppercase bg-clip-text text-transparent bg-gradient-to-r",
+                "font-handwriting text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r",
                 feature.color,
               )}
             >
               Step {index + 1}
             </span>
           </div>
-          <h3 className="text-3xl font-bold mb-4 text-foreground">
+          <h3 className="text-4xl md:text-5xl font-serif font-bold mb-6 text-foreground tracking-tight">
             {feature.title}
           </h3>
-          <p className="text-lg text-foreground/70 leading-relaxed mb-6">
+          <p className="text-lg md:text-xl text-foreground/70 leading-relaxed font-sans font-light">
             {feature.description}
           </p>
         </motion.div>
@@ -200,15 +205,22 @@ function FeatureItem({ feature, index }: { feature: any; index: number }) {
         className={cn(
           "w-full md:w-1/2 pl-24 md:pl-0 flex",
           isEven
-            ? "justify-center md:justify-start md:-ml-24"
-            : "justify-center md:justify-end md:-mr-24",
+            ? "justify-center md:justify-start"
+            : "justify-center md:justify-end",
         )}
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.8, y: 20 }}
           animate={isInView ? { opacity: 1, scale: 1, y: 0 } : {}}
           transition={{ duration: 0.8, type: "spring" }}
-          className="relative w-full max-w-[600px] aspect-square flex items-center justify-center translate-x-0"
+          className={cn(
+            "relative w-full max-w-[550px] aspect-square flex items-center justify-center",
+            index === 1
+              ? "md:-translate-x-20" // Move 2nd image away from center (Left)
+              : isEven
+                ? "md:-translate-x-12" // Move Even images towards center (Left)
+                : "md:translate-x-12", // Default Odd images towards center (Right)
+          )}
         >
           {/* Backlight Glow */}
           <div
