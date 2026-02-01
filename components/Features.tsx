@@ -28,7 +28,10 @@ export default function Features() {
             How It Works
           </span>
           <h2 className="text-3xl md:text-5xl font-bold mt-2 text-foreground">
-            Three Steps to <span className="text-gradient">Perfect Words</span>
+            Three Steps to{" "}
+            <span className="text-gradient font-handwriting pr-2">
+              Perfect Words
+            </span>
           </h2>
         </div>
 

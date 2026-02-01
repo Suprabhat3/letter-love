@@ -38,7 +38,8 @@ export default function Testimonials() {
             Wall of Love
           </span>
           <h2 className="text-3xl md:text-5xl font-bold mt-2 text-foreground">
-            Stories from the <span className="text-gradient">Heart</span>
+            Stories from the{" "}
+            <span className="text-gradient font-handwriting pr-2">Heart</span>
           </h2>
         </div>
 

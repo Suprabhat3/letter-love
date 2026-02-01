@@ -1,5 +1,5 @@
 import Navbar from "@/components/Navbar";
-import Hero from "@/components/Hero";
+import HeroSection from "@/components/HeroSection";
 import Features from "@/components/Features";
 import Testimonials from "@/components/Testimonials";
 import Footer from "@/components/Footer";
@@ -9,7 +9,7 @@ export default function Home() {
     <div className="min-h-screen font-sans">
       <Navbar />
       <main>
-        <Hero />
+        <HeroSection />
         <Features />
         {/* We can add a filler section here if needed to separate Features and Testimonials */}
         <div className="py-20 text-center bg-pink-50/50">
