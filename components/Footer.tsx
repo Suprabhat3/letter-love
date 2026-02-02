@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Twitter, Instagram, Github, Heart, Mail } from "lucide-react";
+import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -10,6 +11,20 @@ export default function Footer() {
 
       {/* Background Decor */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-pink-50/50 rounded-full blur-[100px] pointer-events-none -translate-y-1/2 translate-x-1/2" />
+
+      {/* Decorative Images */}
+      {/* Decorative Images */}
+      {/* Decorative Image */}
+      <div className="absolute inset-0 z-0 md:left-auto md:right-0 md:w-1/2 overflow-hidden pointer-events-none">
+        <Image
+          src="/footer1.png"
+          alt=""
+          fill
+          className="object-cover md:object-contain md:object-right-bottom opacity-100"
+        />
+        {/* Mobile Gradient Overlay for Readability */}
+        <div className="absolute inset-0 bg-white/60 md:hidden" />
+      </div>
 
       <div className="container mx-auto px-6 relative z-10">
         <div className="grid lg:grid-cols-12 gap-12 mb-16">
@@ -53,7 +68,7 @@ export default function Footer() {
           </div>
 
           {/* Newsletter Column */}
-          <div className="lg:col-span-4 md:col-span-4">
+          {/* <div className="lg:col-span-4 md:col-span-4">
             <h4 className="font-bold text-foreground mb-6">Stay Inspired</h4>
             <p className="text-sm text-foreground/60 mb-4">
               Get writing tips and romantic inspiration delivered to your inbox.
@@ -71,20 +86,14 @@ export default function Footer() {
                 Subscribe
               </button>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-foreground/50">
-            &copy; {new Date().getFullYear()} LetterLove AI. All rights
-            reserved.
+        <div className="pt-8 flex justify-center py-6">
+          <p className="text-xl md:text-2xl font-serif italic text-foreground/60 text-center tracking-wide">
+            "To love and be loved is to feel the sun from both sides."
           </p>
-          <div className="flex items-center gap-1 text-sm text-foreground/60">
-            <span>Made with</span>
-            <Heart className="w-4 h-4 text-pink-500 fill-pink-500 animate-pulse" />
-            <span>in San Francisco</span>
-          </div>
         </div>
       </div>
     </footer>
