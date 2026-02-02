@@ -28,10 +28,10 @@ export default function HeroSection() {
         }}
       >
         <Image
-          src="/hero1.png"
+          src="/hero-1.png"
           alt="Boy Character"
-          width={800}
-          height={800}
+          width={1000}
+          height={1000}
           className="w-full h-auto object-contain opacity-90 drop-shadow-2xl"
         />
       </motion.div>
@@ -51,8 +51,8 @@ export default function HeroSection() {
         <Image
           src="/hero2.png"
           alt="Girl Character"
-          width={800}
-          height={800}
+          width={1000}
+          height={1000}
           className="w-full h-auto object-contain opacity-90 drop-shadow-2xl"
         />
       </motion.div>

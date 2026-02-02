@@ -1,0 +1,290 @@
+"use client";
+
+import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import Link from "next/link";
+import Image from "next/image";
+import Script from "next/script";
+
+// Phrases that appear on the "No" button
+const NO_PHRASES = [
+  "No",
+  "Are you sure?",
+  "Really sure?",
+  "Think again!",
+  "Last chance!",
+  "Surely not?",
+  "You might regret this!",
+  "Give me a chance!",
+  "Have a heart!",
+  "Don't be so cold!",
+  "Change of heart?",
+  "Wouldn't you reconsider?",
+  "Is that your final answer?",
+  "You're breaking my heart ;(",
+];
+
+// Reasons for being sorry
+const REASONS = [
+  { id: "late", label: "being late", emoji: "🏃💨" },
+  { id: "food", label: "eating your food", emoji: "🍕" },
+  { id: "forgot", label: "forgetting", emoji: "📅" },
+  { id: "grumpy", label: "being grumpy", emoji: "😤" },
+  { id: "clumsy", label: "breaking it", emoji: "💥" },
+  { id: "ghosting", label: "not replying", emoji: "📱" },
+];
+
+export default function SorryCardPage() {
+  const [noCount, setNoCount] = useState(0);
+  const [isForgiven, setIsForgiven] = useState(false);
+  const [selectedReason, setSelectedReason] = useState(REASONS[0]);
+
+  const yesButtonSize = noCount * 20 + 16; // Increases by 20px per 'No' click
+
+  const handleNoClick = () => {
+    setNoCount(noCount + 1);
+  };
+
+  const getNoText = () => {
+    return NO_PHRASES[Math.min(noCount, NO_PHRASES.length - 1)];
+  };
+
+  // Generate particles for celebration
+  const particles = Array.from({ length: 50 });
+
+  return (
+    <main className="min-h-screen relative flex items-center justify-center overflow-hidden bg-background p-6">
+      {/* Background Elements */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none z-0">
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{ duration: 8, repeat: Infinity }}
+          className="blob-bg top-[10%] left-[10%] bg-pink-200/40 w-[600px] h-[600px] opacity-40 blur-3xl"
+        />
+        <motion.div
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{ duration: 10, repeat: Infinity }}
+          className="blob-bg bottom-[10%] right-[10%] bg-purple-200/40 w-[500px] h-[500px] opacity-40 blur-3xl"
+        />
+      </div>
+
+      <div className="z-10 w-full max-w-lg relative">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="absolute -top-16 left-0 md:-left-12"
+        >
+          <Link
+            href="/"
+            className="inline-flex items-center text-muted-foreground hover:text-primary transition-colors gap-2 font-medium"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="m12 19-7-7 7-7" />
+              <path d="M19 12H5" />
+            </svg>
+            Back
+          </Link>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-panel p-8 rounded-3xl text-center relative overflow-hidden border-white/60 shadow-xl min-h-[500px] flex flex-col justify-center items-center"
+        >
+          {/* Decorative shine */}
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/50 via-transparent to-transparent pointer-events-none rounded-3xl" />
+
+          {/* Simple Toggle - Removal of AnimatePresence mode='wait' which was causing the blank issue */}
+          {!isForgiven ? (
+            <motion.div
+              key="question"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full relative z-10 flex flex-col items-center"
+            >
+              {/* Interactive Main Icon */}
+              <motion.div
+                animate={{
+                  rotate: noCount % 2 === 0 ? [0, -5, 5, 0] : [0, 5, -5, 0],
+                  scale: 1 + noCount * 0.02,
+                }}
+                transition={{ duration: 0.5 }}
+                className="text-8xl mb-6 filter drop-shadow-lg cursor-pointer hover:scale-110 active:scale-90 transition-transform"
+                onClick={() =>
+                  setSelectedReason(
+                    REASONS[
+                      (REASONS.indexOf(selectedReason) + 1) % REASONS.length
+                    ],
+                  )
+                }
+              >
+                {selectedReason.emoji}
+              </motion.div>
+
+              <h1 className="font-handwriting text-5xl md:text-6xl text-gradient mb-2 drop-shadow-sm">
+                I'm So Sorry
+              </h1>
+              <p className="text-muted-foreground font-serif text-lg mb-6">
+                for {selectedReason.label}
+              </p>
+
+              {/* Reason Selectors */}
+              <div className="flex flex-wrap justify-center gap-2 mb-8">
+                {REASONS.map((reason) => (
+                  <button
+                    key={reason.id}
+                    onClick={() => {
+                      setSelectedReason(reason);
+                      setNoCount(0);
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                      selectedReason.id === reason.id
+                        ? "bg-pink-500 text-white shadow-md scale-105"
+                        : "bg-white/50 text-muted-foreground hover:bg-white/80"
+                    }`}
+                  >
+                    {reason.label}
+                  </button>
+                ))}
+              </div>
+
+              <p className="text-foreground/80 mb-8 max-w-sm mx-auto leading-relaxed">
+                Please find it in your heart to forgive me. I promise to do
+                better next time!
+              </p>
+
+              {/* Dynamic Button Game */}
+              <div className="flex flex-wrap items-center justify-center gap-4 w-full min-h-[100px]">
+                <motion.button
+                  className="btn-primary rounded-xl font-bold shadow-pink-500/20 shadow-xl transition-all"
+                  style={{
+                    fontSize: Math.min(yesButtonSize, 60),
+                    padding: `${Math.min(yesButtonSize / 2, 30)}px ${Math.min(yesButtonSize, 60)}px`,
+                  }}
+                  onClick={() => setIsForgiven(true)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Yes, I Forgive You
+                </motion.button>
+
+                <motion.button
+                  className="px-6 py-3 rounded-xl bg-gray-100 text-gray-500 font-medium hover:bg-gray-200 transition-colors text-sm whitespace-nowrap"
+                  onClick={handleNoClick}
+                  whileHover={{ scale: 0.95, rotate: -2 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  {getNoText()}
+                </motion.button>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="success"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="w-full relative z-10 py-12 flex flex-col items-center"
+            >
+              <div
+                className="tenor-gif-embed mb-6 mx-auto"
+                data-postid="20708229"
+                data-share-method="host"
+                data-aspect-ratio="1.08844"
+                data-width="100%"
+                style={{ maxWidth: "250px" }}
+              >
+                <a href="https://tenor.com/view/bear-hug-gif-20708229">
+                  Bear Hug Sticker
+                </a>{" "}
+                from{" "}
+                <a href="https://tenor.com/search/bear+hug-stickers">
+                  Bear Hug Stickers
+                </a>
+              </div>
+              <Script
+                type="text/javascript"
+                async
+                src="https://tenor.com/embed.js"
+              />
+
+              <h2 className="font-handwriting text-6xl text-pink-500 mb-6 underline-offset-8">
+                Yippeee!!
+              </h2>
+
+              <p className="text-xl text-foreground/80 font-serif mb-8">
+                Thank you for forgiving me! <br /> You're the absolute best.
+              </p>
+
+              <Link href="/">
+                <button className="btn-primary px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:scale-105 transition-transform">
+                  Back to Home
+                </button>
+              </Link>
+
+              {/* Confetti Particles */}
+              {particles.map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute top-1/2 left-1/2 w-2 h-2 rounded-full pointer-events-none"
+                  style={{
+                    backgroundColor: [
+                      "#ff0000",
+                      "#00ff00",
+                      "#0000ff",
+                      "#ffff00",
+                      "#ff00ff",
+                    ][i % 5],
+                  }}
+                  initial={{
+                    x: 0,
+                    y: 0,
+                    opacity: 1,
+                    scale: 0,
+                  }}
+                  animate={{
+                    x: (Math.random() - 0.5) * 600,
+                    y: (Math.random() - 0.5) * 600,
+                    opacity: 0,
+                    scale: [0, 1, 0],
+                    rotate: Math.random() * 360,
+                  }}
+                  transition={{
+                    duration: 2 + Math.random(),
+                    ease: "easeOut",
+                    repeat: Infinity,
+                    repeatDelay: Math.random() * 2,
+                  }}
+                />
+              ))}
+            </motion.div>
+          )}
+        </motion.div>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center text-muted-foreground/60 text-xs mt-8 font-serif italic"
+        >
+          Made with LatterLove
+        </motion.p>
+      </div>
+    </main>
+  );
+}
