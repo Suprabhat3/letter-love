@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,9 +25,9 @@ export default function Navbar() {
   }, [pathname]);
 
   const navLinks = [
+    { name: "Templates", href: "/templates" },
     { name: "How it Works", href: "#features" },
     { name: "Stories", href: "#testimonials" },
-    { name: "Pricing", href: "#pricing" },
   ];
 
   return (
@@ -68,18 +70,38 @@ export default function Navbar() {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-4">
-            <Link
-              href="/login"
-              className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors px-4 py-2 rounded-full hover:bg-pink-50"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/get-started"
-              className="btn-primary px-6 py-2.5 rounded-full text-sm font-bold shadow-pink-200/50 shadow-lg hover:shadow-pink-300/60 transform hover:-translate-y-0.5 transition-all duration-300"
-            >
-              Get Started
-            </Link>
+            {!loading &&
+              (user ? (
+                <>
+                  <Link
+                    href="/dashboard"
+                    className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors px-4 py-2 rounded-full hover:bg-pink-50"
+                  >
+                    My Cards
+                  </Link>
+                  <Link
+                    href="/templates"
+                    className="btn-primary px-6 py-2.5 rounded-full text-sm font-bold shadow-pink-200/50 shadow-lg hover:shadow-pink-300/60 transform hover:-translate-y-0.5 transition-all duration-300"
+                  >
+                    + Create New
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/auth"
+                    className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors px-4 py-2 rounded-full hover:bg-pink-50"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/templates"
+                    className="btn-primary px-6 py-2.5 rounded-full text-sm font-bold shadow-pink-200/50 shadow-lg hover:shadow-pink-300/60 transform hover:-translate-y-0.5 transition-all duration-300"
+                  >
+                    Get Started
+                  </Link>
+                </>
+              ))}
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -130,20 +152,42 @@ export default function Navbar() {
             </Link>
           ))}
           <div className="w-16 h-0.5 bg-border rounded-full my-4"></div>
-          <Link
-            href="/login"
-            onClick={() => setIsMenuOpen(false)}
-            className="text-lg font-medium text-foreground/80 hover:text-primary transition-colors"
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/get-started"
-            onClick={() => setIsMenuOpen(false)}
-            className="btn-primary px-8 py-3 rounded-full text-lg font-bold shadow-lg"
-          >
-            Get Started
-          </Link>
+          {!loading &&
+            (user ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="text-lg font-medium text-foreground/80 hover:text-primary transition-colors"
+                >
+                  My Cards
+                </Link>
+                <Link
+                  href="/templates"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="btn-primary px-8 py-3 rounded-full text-lg font-bold shadow-lg"
+                >
+                  + Create New
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/auth"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="text-lg font-medium text-foreground/80 hover:text-primary transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/templates"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="btn-primary px-8 py-3 rounded-full text-lg font-bold shadow-lg"
+                >
+                  Get Started
+                </Link>
+              </>
+            ))}
         </div>
       </div>
     </>

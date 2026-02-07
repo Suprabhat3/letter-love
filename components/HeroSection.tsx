@@ -7,7 +7,7 @@ import { SparklesIcon } from "./SparklesIcon";
 
 export default function HeroSection() {
   return (
-    <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden">
+    <section className="relative h-screen flex flex-col justify-center items-center overflow-hidden">
       {/* Background Elements */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
         <div className="blob-bg top-[-20%] left-[-10%] bg-pink-200/40 w-[800px] h-[800px]" />
@@ -103,14 +103,17 @@ export default function HeroSection() {
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 mb-20">
           <Link
-            href="/create"
+            href="/templates"
             className="btn-primary px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all"
           >
             Write a Letter
           </Link>
-          <button className="px-8 py-4 rounded-full bg-white text-foreground font-semibold border border-pink-100 hover:bg-pink-50 transition-colors">
-            View Examples
-          </button>
+          <Link
+            href="/templates"
+            className="px-8 py-4 rounded-full bg-white text-foreground font-semibold border border-pink-100 hover:bg-pink-50 transition-colors"
+          >
+            View Templates
+          </Link>
         </div>
       </div>
     </section>
