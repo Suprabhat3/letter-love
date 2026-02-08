@@ -13,6 +13,8 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+import { Sparkles } from "lucide-react";
+
 export default function TemplateEditorPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
@@ -23,6 +25,35 @@ export default function TemplateEditorPage({ params }: PageProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDemoPreview, setShowDemoPreview] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState<string | null>(null);
+
+  const handleAiEnhance = async (fieldName: string, currentValue: string) => {
+    if (!currentValue?.trim()) return;
+
+    setIsEnhancing(fieldName);
+    try {
+      const response = await fetch("/api/ai/enhance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: currentValue,
+          fieldType: fieldName,
+          templateName: template?.name,
+          templateDescription: template?.description,
+          tone: "Emotional and sincere",
+        }),
+      });
+
+      const data = await response.json();
+      if (data.text) {
+        handleInputChange(fieldName, data.text);
+      }
+    } catch (err) {
+      console.error("AI Enhance failed", err);
+    } finally {
+      setIsEnhancing(null);
+    }
+  };
 
   if (!template) {
     return (
@@ -304,23 +335,60 @@ export default function TemplateEditorPage({ params }: PageProps) {
 
               <div className="space-y-5">
                 {template.fields.map((field) => (
-                  <div key={field.name}>
+                  <div key={field.name} className="relative group">
                     <label className="block text-sm font-medium text-foreground/80 mb-2">
                       {field.label}
                       {field.required && (
                         <span className="text-pink-500 ml-1">*</span>
                       )}
                     </label>
+
                     {field.type === "textarea" ? (
-                      <textarea
-                        placeholder={field.placeholder}
-                        value={formData[field.name] || ""}
-                        onChange={(e) =>
-                          handleInputChange(field.name, e.target.value)
-                        }
-                        className="w-full px-4 py-3 rounded-xl bg-white/60 border border-white/80 focus:outline-none focus:ring-2 focus:ring-pink-300 transition-all resize-none"
-                        style={{ minHeight: "120px" }}
-                      />
+                      <div className="relative">
+                        <textarea
+                          placeholder={field.placeholder}
+                          value={formData[field.name] || ""}
+                          onChange={(e) =>
+                            handleInputChange(field.name, e.target.value)
+                          }
+                          className="w-full px-4 py-3 rounded-xl bg-white/60 border border-white/80 focus:outline-none focus:ring-2 focus:ring-pink-300 transition-all resize-none pr-12"
+                          style={{ minHeight: "120px" }}
+                        />
+                        {/* AI Enhance Button */}
+                        <motion.button
+                          type="button"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{
+                            opacity: formData[field.name] ? 1 : 0,
+                            scale: formData[field.name] ? 1 : 0.8,
+                            pointerEvents: formData[field.name]
+                              ? "auto"
+                              : "none",
+                          }}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() =>
+                            handleAiEnhance(field.name, formData[field.name])
+                          }
+                          className="absolute bottom-3 right-3 p-2 rounded-full bg-white/90 shadow-sm text-pink-500 hover:text-pink-600 hover:shadow-md border border-pink-100 transition-colors z-10"
+                          title="Enhance with AI ✨"
+                        >
+                          {isEnhancing === field.name ? (
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{
+                                duration: 1,
+                                repeat: Infinity,
+                                ease: "linear",
+                              }}
+                            >
+                              ✨
+                            </motion.div>
+                          ) : (
+                            <Sparkles size={16} />
+                          )}
+                        </motion.button>
+                      </div>
                     ) : (
                       <input
                         type="text"

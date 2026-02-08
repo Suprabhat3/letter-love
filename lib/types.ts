@@ -30,6 +30,9 @@ export interface Template {
   };
   // Preview text shown in gallery
   previewText: string;
+  tags?: string[];
+  popularity?: number; // 1-5
+  estimatedTime?: string;
 }
 
 // Data structure for user-filled card

@@ -8,6 +8,9 @@ export const templates: Template[] = [
     description: "Pour your heart out with a romantic letter",
     category: "love",
     emoji: "💌",
+    tags: ["Romantic", "Classic", "Letter", "Partner", "Her", "Him"],
+    popularity: 5,
+    estimatedTime: "5 min",
     previewText: "My dearest, every moment with you feels like magic...",
     colors: {
       primary: "#ec4899",
@@ -28,6 +31,9 @@ export const templates: Template[] = [
     description: "Celebrate your special milestone",
     category: "love",
     emoji: "💍",
+    tags: ["Milestone", "Romantic", "Celebration", "Partner", "Spouse"],
+    popularity: 4,
+    estimatedTime: "3 min",
     previewText: "Another year of loving you has been the greatest gift...",
     colors: {
       primary: "#a855f7",
@@ -49,6 +55,9 @@ export const templates: Template[] = [
     description: "Make their birthday extra special",
     category: "celebration",
     emoji: "🎂",
+    tags: ["Birthday", "Fun", "Friends", "Friend", "Family", "Partner"],
+    popularity: 5,
+    estimatedTime: "2 min",
     previewText: "Wishing you a day filled with love, laughter, and cake!",
     colors: {
       primary: "#f59e0b",
@@ -71,6 +80,9 @@ export const templates: Template[] = [
     description: "Apologize with sincerity and heart",
     category: "apology",
     emoji: "🥺",
+    tags: ["Sincere", "Forgiveness", "Heartfelt", "Partner", "Friend"],
+    popularity: 3,
+    estimatedTime: "4 min",
     previewText: "I know I messed up, and I'm truly sorry...",
     colors: {
       primary: "#3b82f6",
@@ -92,6 +104,9 @@ export const templates: Template[] = [
     description: "Tell someone you're thinking of them",
     category: "longing",
     emoji: "💭",
+    tags: ["Distance", "Love", "Thinking of You", "Partner", "Family"],
+    popularity: 4,
+    estimatedTime: "3 min",
     previewText: "Distance means nothing when someone means everything...",
     colors: {
       primary: "#06b6d4",
