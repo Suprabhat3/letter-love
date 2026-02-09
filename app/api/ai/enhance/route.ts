@@ -13,7 +13,6 @@ const MODELS = [
   "openai/gpt-oss-120b",
   "moonshotai/kimi-k2-instruct-0905",
   "qwen/qwen3-32b",
-  "groq/compound",
   "llama-3.3-70b-versatile",
 ];
 
@@ -41,10 +40,11 @@ export async function POST(req: Request) {
     - Desired Tone: "${tone || "Sincere, warm, and emotional"}"
     
     Guidelines:
-    1. Enhance the user's rough draft to fit the "${templateName}" theme perfecty.
-    2. Keep it concise (under 60 words) unless the user wrote a long draft.
-    3. Use evocative, sensory language but avoid clichés words, don't use "—" em dash and other special characters, you can use relevent emojis.
-    4. Return ONLY the enhanced text. No "Here is the improved version:" prefixes.`;
+    - Don't use "—" em dash and other special characters, you can use relevent emojis.
+    - Enhance the user's rough draft to fit the "${templateName}" theme perfecty.
+    - Keep it concise (under 50 words) unless the user wrote a long draft.
+    - Use evocative, sensory language but avoid clichés words.
+    - Return ONLY the enhanced text. No "Here is the improved version:" prefixes.`;
 
     const completion = await client.chat.completions.create({
       messages: [

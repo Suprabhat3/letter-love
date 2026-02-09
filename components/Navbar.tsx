@@ -34,7 +34,7 @@ export default function Navbar() {
     <>
       <nav
         className={`fixed z-50 transition-all duration-300 ${
-          scrolled ? "top-2 md:top-4" : "top-4 md:top-6"
+          scrolled ? "top-2 md:top-4" : "top-2 md:top-4"
         } left-0 right-0 flex justify-center px-4`}
       >
         <div
