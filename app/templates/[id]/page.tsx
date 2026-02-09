@@ -4,6 +4,7 @@ import { useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
+import Script from "next/script";
 import { getTemplateById } from "@/lib/templates";
 import { createCard } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
@@ -189,13 +190,38 @@ export default function TemplateEditorPage({ params }: PageProps) {
                   </span>
                 </div>
 
-                <motion.div
-                  className="text-7xl mb-6 filter drop-shadow-lg"
-                  animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
-                  transition={{ duration: 4, repeat: Infinity }}
-                >
-                  {template.emoji}
-                </motion.div>
+                {template.id === "miss-you" ? (
+                  <div className="mb-6 relative w-full max-w-[280px] mx-auto">
+                    <div
+                      className="tenor-gif-embed"
+                      data-postid="12624079450929191917"
+                      data-share-method="host"
+                      data-aspect-ratio="1.18009"
+                      data-width="100%"
+                    >
+                      <a href="https://tenor.com/view/peach-sad-goma-gif-12624079450929191917">
+                        Peach Sad GIF
+                      </a>
+                      from{" "}
+                      <a href="https://tenor.com/search/peach-gifs">
+                        Peach GIFs
+                      </a>
+                    </div>
+                    <Script
+                      type="text/javascript"
+                      async
+                      src="https://tenor.com/embed.js"
+                    />
+                  </div>
+                ) : (
+                  <motion.div
+                    className="text-7xl mb-6 filter drop-shadow-lg"
+                    animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
+                    transition={{ duration: 4, repeat: Infinity }}
+                  >
+                    {template.emoji}
+                  </motion.div>
+                )}
 
                 <h3
                   className="font-handwriting text-5xl mb-4"
@@ -502,13 +528,39 @@ export default function TemplateEditorPage({ params }: PageProps) {
               </h2>
 
               <div className="relative z-10 text-center py-8">
-                <motion.div
-                  className="text-7xl mb-6 filter drop-shadow-lg"
-                  animate={{ scale: [1, 1.05, 1], rotate: [0, 2, -2, 0] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                >
-                  {template.emoji}
-                </motion.div>
+                {template.id === "miss-you" ? (
+                  <div className="mb-6 relative w-full max-w-[280px] mx-auto">
+                    <div
+                      className="tenor-gif-embed"
+                      data-postid="12624079450929191917"
+                      data-share-method="host"
+                      data-aspect-ratio="1.18009"
+                      data-width="100%"
+                    >
+                      <a href="https://tenor.com/view/peach-sad-goma-gif-12624079450929191917">
+                        Peach Sad GIF
+                      </a>
+                      from{" "}
+                      <a href="https://tenor.com/search/peach-gifs">
+                        Peach GIFs
+                      </a>
+                    </div>
+                    {/* Script already loaded by Demo Preview or previous render, but safe to include again with next/script deduplication */}
+                    <Script
+                      type="text/javascript"
+                      async
+                      src="https://tenor.com/embed.js"
+                    />
+                  </div>
+                ) : (
+                  <motion.div
+                    className="text-7xl mb-6 filter drop-shadow-lg"
+                    animate={{ scale: [1, 1.05, 1], rotate: [0, 2, -2, 0] }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                  >
+                    {template.emoji}
+                  </motion.div>
+                )}
 
                 <h3
                   className="font-handwriting text-4xl mb-4"

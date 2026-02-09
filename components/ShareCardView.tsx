@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
+import Script from "next/script";
 import { SharedCard, Template, CATEGORIES } from "@/lib/types";
 import SorryCard from "./templates/SorryCard";
 import BirthdayCard from "./templates/BirthdayCard";
@@ -110,16 +111,39 @@ export default function ShareCardView({ card, template }: ShareCardViewProps) {
                 </span>
               </motion.div>
 
-              <motion.div
-                className="text-8xl mb-8 filter drop-shadow-lg relative z-10 select-none"
-                animate={{
-                  scale: [1, 1.1, 1],
-                  rotate: [0, 5, -5, 0],
-                }}
-                transition={{ duration: 4, repeat: Infinity }}
-              >
-                {template.emoji}
-              </motion.div>
+              {template.id === "miss-you" ? (
+                <div className="mb-6 relative w-full max-w-[280px] mx-auto z-10">
+                  <div
+                    className="tenor-gif-embed"
+                    data-postid="12624079450929191917"
+                    data-share-method="host"
+                    data-aspect-ratio="1.18009"
+                    data-width="100%"
+                  >
+                    <a href="https://tenor.com/view/peach-sad-goma-gif-12624079450929191917">
+                      Peach Sad GIF
+                    </a>
+                    from{" "}
+                    <a href="https://tenor.com/search/peach-gifs">Peach GIFs</a>
+                  </div>
+                  <Script
+                    type="text/javascript"
+                    async
+                    src="https://tenor.com/embed.js"
+                  />
+                </div>
+              ) : (
+                <motion.div
+                  className="text-8xl mb-8 filter drop-shadow-lg relative z-10 select-none"
+                  animate={{
+                    scale: [1, 1.1, 1],
+                    rotate: [0, 5, -5, 0],
+                  }}
+                  transition={{ duration: 4, repeat: Infinity }}
+                >
+                  {template.emoji}
+                </motion.div>
+              )}
 
               <motion.h1
                 initial={{ opacity: 0 }}
