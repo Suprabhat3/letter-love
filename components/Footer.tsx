@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { Twitter, Instagram, Github, Heart, Mail } from "lucide-react";
+import { Twitter, Linkedin, Github, Heart, Mail } from "lucide-react";
 import Image from "next/image";
 
 export default function Footer() {
@@ -40,9 +40,9 @@ export default function Footer() {
               Write from the heart, with a little help from AI.
             </p>
             <div className="flex items-center gap-4 pt-2">
-              <SocialLink href="#" icon={Twitter} />
-              <SocialLink href="#" icon={Instagram} />
-              <SocialLink href="#" icon={Github} />
+              <SocialLink href="https://x.com/suprabhat_3" target="_blank" icon={Twitter} />
+              <SocialLink href="https://www.linkedin.com/in/suprabhatt/" target="_blank" icon={Linkedin} />
+              <SocialLink href="https://github.com/suprabhat3" target="_blank" icon={Github} />
             </div>
           </div>
 
@@ -100,10 +100,11 @@ export default function Footer() {
   );
 }
 
-function SocialLink({ href, icon: Icon }: { href: string; icon: any }) {
+function SocialLink({ href, icon: Icon, target}: { href: string; icon: any, target: "_blank" }) {
   return (
     <Link
       href={href}
+      target={target}
       className="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-pink-600 hover:bg-pink-100 hover:text-pink-700 transition-colors"
     >
       <Icon className="w-5 h-5" />

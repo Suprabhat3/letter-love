@@ -40,7 +40,7 @@ export default function ValentineCard({ data }: ValentineCardProps) {
   };
 
   const getNoText = () => {
-    return NO_PHRASES[Math.min(noCount, NO_PHRASES.length - 1)];
+    return NO_PHRASES[noCount % NO_PHRASES.length];
   };
 
   return (

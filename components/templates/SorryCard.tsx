@@ -43,7 +43,7 @@ export default function SorryCard({ data }: SorryCardProps) {
   };
 
   const getNoText = () => {
-    return NO_PHRASES[Math.min(noCount, NO_PHRASES.length - 1)];
+    return NO_PHRASES[noCount % NO_PHRASES.length];
   };
 
   // Generate particles for celebration
