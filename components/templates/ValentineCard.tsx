@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
-import Script from "next/script";
+import Image from "next/image";
 
 // Phrases that appear on the "No" button
 const NO_PHRASES = [
@@ -161,26 +161,14 @@ export default function ValentineCard({ data }: ValentineCardProps) {
                 className="w-full relative z-10 py-12 flex flex-col items-center"
               >
                 <div className="mb-6 mx-auto relative max-w-[250px] w-full">
-                  <div
-                    className="tenor-gif-embed"
-                    data-postid="25258331"
-                    data-share-method="host"
-                    data-aspect-ratio="1"
-                    data-width="100%"
-                  >
-                    <a href="https://tenor.com/view/tkthao219-bubududu-peach-goma-gif-25258331">
-                      Tkthao219 Bubududu Sticker
-                    </a>
-                    from{" "}
-                    <a href="https://tenor.com/search/tkthao219-stickers">
-                      Tkthao219 Stickers
-                    </a>
-                  </div>
-                  <Script
-                    type="text/javascript"
-                    async
-                    src="https://tenor.com/embed.js"
-                  ></Script>
+                  <Image
+                    src="https://media1.tenor.com/m/D1CAg1rBD6wAAAAC/tkthao219-bubududu.gif"
+                    alt="Tkthao219 Bubududu Sticker"
+                    width={250}
+                    height={250}
+                    className="w-full h-auto rounded-lg"
+                    unoptimized
+                  />
                 </div>
 
                 <h2 className="font-handwriting text-6xl text-red-500 mb-6">

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 import Script from "next/script";
+import Image from "next/image";
 
 interface BirthdayCardProps {
   data: Record<string, string>;
@@ -182,25 +183,13 @@ export default function BirthdayCard({ data }: BirthdayCardProps) {
                 className="flex flex-col items-center z-10 w-full"
               >
                 <div className="mb-6 relative w-full max-w-[280px]">
-                  <div
-                    className="tenor-gif-embed"
-                    data-postid="26751018"
-                    data-share-method="host"
-                    data-aspect-ratio="1"
-                    data-width="100%"
-                  >
-                    <a href="https://tenor.com/view/happy-birthday-gif-26751018">
-                      Happy Birthday GIF
-                    </a>
-                    from{" "}
-                    <a href="https://tenor.com/search/happy+birthday-gifs">
-                      Happy Birthday GIFs
-                    </a>
-                  </div>
-                  <Script
-                    type="text/javascript"
-                    async
-                    src="https://tenor.com/embed.js"
+                  <Image
+                    src="https://media1.tenor.com/m/tPJaogUqo8wAAAAC/happy-birthday.gif"
+                    alt="Happy Birthday GIF"
+                    width={280}
+                    height={280}
+                    className="w-full h-auto rounded-lg shadow-md"
+                    unoptimized
                   />
                   {age && (
                     <span className="absolute -bottom-2 -right-2 bg-pink-500 text-white text-lg font-bold px-2 py-1 rounded-full shadow-md rotate-12">

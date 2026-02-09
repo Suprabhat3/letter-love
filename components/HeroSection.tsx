@@ -59,12 +59,13 @@ export default function HeroSection() {
 
       {/* Mobile Character Image */}
       <motion.div
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] xs:w-[320px] md:hidden pointer-events-none z-0"
+        className="absolute left-1/2 top-[55%] -translate-x-1/2 -translate-y-1/2 w-[340px] xs:w-[380px] md:hidden pointer-events-none z-0"
         animate={{
           y: [-10, -20, -10],
+          rotate: [0, 2, 0, -2, 0],
         }}
         transition={{
-          duration: 5,
+          duration: 8,
           repeat: Infinity,
           ease: "easeInOut",
         }}
@@ -74,7 +75,7 @@ export default function HeroSection() {
           alt="Couple Character"
           width={800}
           height={800}
-          className="w-full h-auto object-contain opacity-80 drop-shadow-2xl"
+          className="w-full h-auto object-contain opacity-20 drop-shadow-xl blur-[1px]"
         />
       </motion.div>
 
@@ -88,7 +89,7 @@ export default function HeroSection() {
         </div>
 
         {/* Heading */}
-        <h1 className="text-5xl md:text-7xl font-bold font-serif tracking-tight mb-6 max-w-4xl text-foreground">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold font-serif tracking-tight mb-6 max-w-4xl text-foreground px-4 sm:px-0">
           Know Your Heart, <br />
           <span className="text-gradient">Share Your Love.</span>
         </h1>
@@ -101,16 +102,16 @@ export default function HeroSection() {
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-20">
+        <div className="flex flex-col w-full sm:w-auto sm:flex-row gap-4 mb-20 px-4 sm:px-0">
           <Link
             href="/templates"
-            className="btn-primary px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all"
+            className="btn-primary w-full sm:w-auto px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all flex justify-center items-center"
           >
             Write a Letter
           </Link>
           <Link
             href="/templates"
-            className="px-8 py-4 rounded-full bg-white text-foreground font-semibold border border-pink-100 hover:bg-pink-50 transition-colors"
+            className="w-full sm:w-auto px-8 py-4 rounded-full bg-white/80 backdrop-blur-sm text-foreground font-semibold border border-pink-100 hover:bg-pink-50 transition-colors flex justify-center items-center shadow-sm"
           >
             View Templates
           </Link>

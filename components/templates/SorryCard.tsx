@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { motion } from "motion/react";
 import Link from "next/link";
-import Script from "next/script";
+import Image from "next/image";
 import { CardData } from "@/lib/types";
 
 // Phrases that appear on the "No" button
@@ -200,27 +200,16 @@ export default function SorryCard({ data }: SorryCardProps) {
               animate={{ opacity: 1, scale: 1 }}
               className="w-full relative z-10 py-12 flex flex-col items-center"
             >
-              <div
-                className="tenor-gif-embed mb-6 mx-auto"
-                data-postid="20708229"
-                data-share-method="host"
-                data-aspect-ratio="1.08844"
-                data-width="100%"
-                style={{ maxWidth: "250px" }}
-              >
-                <a href="https://tenor.com/view/bear-hug-gif-20708229">
-                  Bear Hug Sticker
-                </a>{" "}
-                from{" "}
-                <a href="https://tenor.com/search/bear+hug-stickers">
-                  Bear Hug Stickers
-                </a>
+              <div className="mb-6 mx-auto relative w-full max-w-[250px]">
+                <Image
+                  src="https://media1.tenor.com/m/cOjBPqUGt4MAAAAC/bear-hug.gif"
+                  alt="Bear Hug Sticker"
+                  width={250}
+                  height={250}
+                  className="w-full h-auto rounded-lg"
+                  unoptimized
+                />
               </div>
-              <Script
-                type="text/javascript"
-                async
-                src="https://tenor.com/embed.js"
-              />
 
               <h2 className="font-handwriting text-6xl text-pink-500 mb-6 underline-offset-8">
                 Yippeee!!

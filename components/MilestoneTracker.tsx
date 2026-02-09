@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Heart, Calendar, Clock, Star, ArrowRight } from "lucide-react";
 
@@ -87,10 +88,13 @@ export default function MilestoneTracker() {
                 moments. We'll remind you when to write something sweet.
               </p>
 
-              <button className="group relative inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-full font-bold shadow-lg hover:shadow-pink-500/25 transition-all hover:-translate-y-1">
+              <Link
+                href="/dashboard"
+                className="group relative inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-full font-bold shadow-lg hover:shadow-pink-500/25 transition-all hover:-translate-y-1"
+              >
                 <span>Start Your Timeline</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </button>
+              </Link>
             </div>
 
             {/* Visual Part - Timeline UI */}

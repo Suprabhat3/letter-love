@@ -6,7 +6,17 @@ import Link from "next/link";
 import { templates } from "@/lib/templates";
 import { CATEGORIES, TemplateCategory, Template } from "@/lib/types";
 import TemplateCard from "@/components/templates/TemplateCard";
-import { Search, Sparkles, ArrowLeft, Filter, Users, X } from "lucide-react";
+import Navbar from "@/components/Navbar";
+import {
+  Search,
+  Sparkles,
+  Filter,
+  Users,
+  X,
+  Heart,
+  Star,
+  Zap,
+} from "lucide-react";
 import SorryCard from "@/components/templates/SorryCard";
 import BirthdayCard from "@/components/templates/BirthdayCard";
 import ValentineCard from "@/components/templates/ValentineCard";
@@ -26,6 +36,8 @@ export default function TemplatesPage() {
   const [activeRecipient, setActiveRecipient] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
+
+  const featuredTemplate = templates.find((t) => t.id === "valentine-ask");
 
   const filteredTemplates = templates.filter((template) => {
     // 1. Filter by Category
@@ -49,18 +61,29 @@ export default function TemplatesPage() {
 
   return (
     <main className="min-h-screen relative overflow-hidden bg-background">
-      {/* Background blobs */}
+      <Navbar />
+
+      {/* Enhanced Background */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <motion.div
-          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 10, repeat: Infinity }}
-          className="absolute top-[-10%] left-[-10%] bg-pink-200/30 w-[600px] h-[600px] rounded-full blur-3xl"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3],
+            rotate: [0, 45, 0],
+          }}
+          transition={{ duration: 15, repeat: Infinity }}
+          className="absolute top-[-10%] left-[-10%] bg-gradient-to-br from-pink-200/40 to-red-200/40 w-[800px] h-[800px] rounded-full blur-3xl"
         />
         <motion.div
-          animate={{ scale: [1.2, 1, 1.2], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 12, repeat: Infinity, delay: 2 }}
-          className="absolute bottom-[-10%] right-[-10%] bg-purple-200/30 w-[600px] h-[600px] rounded-full blur-3xl"
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.3, 0.5, 0.3],
+            rotate: [0, -30, 0],
+          }}
+          transition={{ duration: 18, repeat: Infinity, delay: 2 }}
+          className="absolute bottom-[-10%] right-[-10%] bg-gradient-to-tr from-purple-200/40 to-blue-200/40 w-[700px] h-[700px] rounded-full blur-3xl"
         />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[1200px] bg-white/40 blur-[100px] rounded-full pointer-events-none" />
       </div>
 
       <AnimatePresence>
@@ -132,29 +155,28 @@ export default function TemplatesPage() {
       </AnimatePresence>
 
       <div className="relative z-10 container mx-auto px-6 py-12">
-        {/* Navigation */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="mb-8 flex justify-between items-center"
-        >
-          <Link
-            href="/"
-            className="group inline-flex items-center text-muted-foreground hover:text-primary transition-colors gap-2 font-medium"
+        {/* Hero Section */}
+        <div className="text-center mb-16 space-y-6 max-w-4xl mx-auto pt-16 relative">
+          {/* Decorative Floating Elements */}
+          <motion.div
+            animate={{ y: [0, -10, 0], rotate: [0, 5, 0] }}
+            transition={{ duration: 4, repeat: Infinity }}
+            className="absolute top-20 left-10 md:left-20 text-4xl opacity-60 hidden md:block"
           >
-            <div className="p-2 rounded-full bg-white/50 group-hover:bg-white transition-colors border border-transparent group-hover:border-white/50 shadow-sm">
-              <ArrowLeft size={16} />
-            </div>
-            <span>Back Home</span>
-          </Link>
-        </motion.div>
+            💌
+          </motion.div>
+          <motion.div
+            animate={{ y: [0, 15, 0], rotate: [0, -5, 0] }}
+            transition={{ duration: 5, repeat: Infinity, delay: 1 }}
+            className="absolute top-32 right-10 md:right-20 text-4xl opacity-60 hidden md:block"
+          >
+            ✨
+          </motion.div>
 
-        {/* Header Section */}
-        <div className="text-center mb-12 space-y-6 max-w-3xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/40 backdrop-blur-md border border-white/50 text-foreground/80 text-sm font-medium mb-4 shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/60 backdrop-blur-md border border-white/50 text-foreground/80 text-sm font-medium mb-4 shadow-sm"
           >
             <Sparkles size={14} className="text-primary" />
             <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent font-semibold">
@@ -166,7 +188,7 @@ export default function TemplatesPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-5xl md:text-7xl font-serif font-bold tracking-tight text-foreground"
+            className="text-6xl md:text-8xl font-serif font-bold tracking-tight text-foreground drop-shadow-sm"
           >
             Find the Perfect <span className="text-gradient italic">Words</span>
           </motion.h1>
@@ -175,7 +197,7 @@ export default function TemplatesPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto"
+            className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-2xl mx-auto font-serif"
           >
             Browse our collection of handcrafted templates. From romantic
             letters to heartfelt apologies, let AI help you express exactly how
@@ -183,24 +205,76 @@ export default function TemplatesPage() {
           </motion.p>
         </div>
 
+        {/* Featured Template Banner */}
+        {featuredTemplate &&
+          !searchQuery &&
+          activeCategory === "all" &&
+          activeRecipient === "all" && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="mb-16 max-w-5xl mx-auto"
+            >
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-xl">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full blur-3xl -ml-10 -mb-10 pointer-events-none" />
+
+                <div className="flex flex-col md:flex-row items-center p-8 md:p-12 gap-8 relative z-10">
+                  <div className="flex-1 text-center md:text-left space-y-4">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider mb-2 backdrop-blur-sm border border-white/20">
+                      <Star size={12} className="fill-current" /> Featured This
+                      Week
+                    </div>
+                    <h2 className="text-3xl md:text-5xl font-serif font-bold">
+                      {featuredTemplate.name}
+                    </h2>
+                    <p className="text-pink-100 text-lg max-w-md mx-auto md:mx-0">
+                      {featuredTemplate.description}. Perfect for telling them
+                      how much they mean to you.
+                    </p>
+                    <div className="pt-4 flex flex-wrap gap-4 justify-center md:justify-start">
+                      <Link href={`/templates/${featuredTemplate.id}`}>
+                        <button className="bg-white text-pink-600 px-8 py-3.5 rounded-full font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2">
+                          <Zap size={18} className="fill-current" /> Create Now
+                        </button>
+                      </Link>
+                      <button
+                        onClick={() => setPreviewTemplate(featuredTemplate)}
+                        className="px-6 py-3.5 rounded-full font-semibold border-2 border-white/30 hover:bg-white/10 transition-all text-white"
+                      >
+                        Preview Demo
+                      </button>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <div className="text-[120px] md:text-[160px] leading-none filter drop-shadow-2xl animate-float">
+                      {featuredTemplate.emoji}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
         {/* Search and Filters Container */}
-        <div className="mb-16 space-y-8 max-w-2xl mx-auto">
+        <div className="mb-16 space-y-10 max-w-3xl mx-auto">
           {/* Search Bar */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="relative group"
+            className="relative group z-20"
           >
-            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
+            <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
               <Search size={22} />
             </div>
             <input
               type="text"
-              placeholder="Search for 'birthday', 'love', 'sorry'..."
+              placeholder="Search for 'birthday', 'love', 'apology'..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-14 pr-6 py-5 rounded-2xl bg-white/50 backdrop-blur-xl border border-white/60 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:bg-white/80 transition-all font-medium text-lg text-foreground placeholder:text-muted-foreground/60 shadow-lg shadow-primary/5"
+              className="w-full pl-16 pr-6 py-5 rounded-full bg-white/70 backdrop-blur-xl border border-white/60 focus:outline-none focus:ring-4 focus:ring-pink-500/10 focus:border-pink-300 transition-all font-medium text-lg text-foreground placeholder:text-muted-foreground/60 shadow-xl shadow-pink-500/5 group-hover:shadow-pink-500/10"
             />
           </motion.div>
 
@@ -227,31 +301,32 @@ export default function TemplatesPage() {
                 <button
                   key={category.id}
                   onClick={() => setActiveCategory(category.id)}
-                  className={`px-5 py-2.5 rounded-full font-medium transition-all text-sm flex items-center gap-2 border ${
+                  className={`px-5 py-2.5 rounded-full font-medium transition-all text-sm flex items-center gap-2 border active:scale-95 ${
                     activeCategory === category.id
-                      ? "bg-white text-primary shadow-lg border-primary/20 scale-105"
-                      : "bg-white/40 backdrop-blur-sm text-foreground/70 hover:bg-white/80 border-white/50 hover:border-white/80"
+                      ? "bg-white text-primary shadow-lg shadow-pink-200/50 border-pink-200 ring-2 ring-pink-50"
+                      : "bg-white/40 backdrop-blur-sm text-foreground/70 hover:bg-white/80 border-white/50 hover:border-white/80 hover:shadow-sm"
                   }`}
                 >
-                  <span>{category.emoji}</span> {category.name}
+                  <span className="text-lg">{category.emoji}</span>{" "}
+                  {category.name}
                 </button>
               ))}
             </div>
 
             {/* Secondary: Recipient Filter */}
             <div className="flex justify-center w-full px-4">
-              <div className="flex flex-wrap items-center justify-center gap-2 bg-white/30 p-2 pl-4 rounded-3xl backdrop-blur-sm border border-white/40 shadow-sm">
-                <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-widest flex items-center gap-1.5 mr-1 bg-white/40 px-2 py-1 rounded-md">
-                  <Users size={12} /> For
+              <div className="glass-panel rounded-full p-1.5 pl-4 backdrop-blur-md border border-white/60 shadow-sm flex flex-wrap items-center justify-center gap-1">
+                <span className="text-xs font-bold text-muted-foreground/60 uppercase tracking-widest flex items-center gap-1.5 mr-2">
+                  <Users size={12} /> For:
                 </span>
                 {RECIPIENTS.map((recipient) => (
                   <button
                     key={recipient.id}
                     onClick={() => setActiveRecipient(recipient.id)}
-                    className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
                       activeRecipient === recipient.id
-                        ? "bg-white shadow-sm text-primary font-semibold"
-                        : "text-foreground/60 hover:text-foreground hover:bg-white/50"
+                        ? "bg-pink-100/80 text-pink-700 shadow-sm"
+                        : "text-foreground/60 hover:text-foreground hover:bg-white/40"
                     }`}
                   >
                     {recipient.label}

@@ -4,6 +4,7 @@ import { useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
+import Image from "next/image";
 import Script from "next/script";
 import { getTemplateById } from "@/lib/templates";
 import { createCard } from "@/lib/supabase";
@@ -15,7 +16,7 @@ interface PageProps {
 }
 
 import ShareModal from "@/components/ShareModal";
-import { Sparkles } from "lucide-react";
+import { Sparkles, ArrowLeft, User, LayoutGrid } from "lucide-react";
 
 export default function TemplateEditorPage({ params }: PageProps) {
   const { id } = use(params);
@@ -144,187 +145,48 @@ export default function TemplateEditorPage({ params }: PageProps) {
         shareUrl={createdCardLink}
       />
 
-      {/* Background */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+      <div className="relative z-10 container mx-auto px-4 md:px-6 py-6 md:py-6">
+        {/* Top Navigation */}
         <motion.div
-          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 10, repeat: Infinity }}
-          className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full blur-3xl"
-          style={{ backgroundColor: `${template.colors.secondary}60` }}
-        />
-        <motion.div
-          animate={{ scale: [1.2, 1, 1.2], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 12, repeat: Infinity, delay: 2 }}
-          className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full blur-3xl"
-          style={{ backgroundColor: `${template.colors.primary}40` }}
-        />
-      </div>
-
-      {/* Demo Preview Modal */}
-      <AnimatePresence>
-        {showDemoPreview && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-6"
-            onClick={() => setShowDemoPreview(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="w-full max-w-md"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div
-                className="glass-panel p-8 rounded-3xl text-center relative overflow-hidden"
-                style={{
-                  background: `linear-gradient(135deg, rgba(255,255,255,0.9) 0%, ${template.colors.secondary}40 100%)`,
-                }}
-              >
-                {/* Demo badge */}
-                <div className="absolute top-4 right-4">
-                  <span className="px-3 py-1 bg-amber-400 text-amber-900 text-xs font-bold rounded-full">
-                    DEMO PREVIEW
-                  </span>
-                </div>
-
-                {template.id === "miss-you" ? (
-                  <div className="mb-6 relative w-full max-w-[280px] mx-auto">
-                    <div
-                      className="tenor-gif-embed"
-                      data-postid="12624079450929191917"
-                      data-share-method="host"
-                      data-aspect-ratio="1.18009"
-                      data-width="100%"
-                    >
-                      <a href="https://tenor.com/view/peach-sad-goma-gif-12624079450929191917">
-                        Peach Sad GIF
-                      </a>
-                      from{" "}
-                      <a href="https://tenor.com/search/peach-gifs">
-                        Peach GIFs
-                      </a>
-                    </div>
-                    <Script
-                      type="text/javascript"
-                      async
-                      src="https://tenor.com/embed.js"
-                    />
-                  </div>
-                ) : (
-                  <motion.div
-                    className="text-7xl mb-6 filter drop-shadow-lg"
-                    animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
-                    transition={{ duration: 4, repeat: Infinity }}
-                  >
-                    {template.emoji}
-                  </motion.div>
-                )}
-
-                <h3
-                  className="font-handwriting text-5xl mb-4"
-                  style={{ color: template.colors.primary }}
-                >
-                  {formData.recipientName || "My Dear"}
-                </h3>
-
-                <p className="text-foreground/80 font-serif text-lg leading-relaxed mb-6 max-w-sm mx-auto">
-                  {formData.message || formData.reason || template.previewText}
-                </p>
-
-                {(formData.memory || formData.promise) && (
-                  <p className="text-foreground/60 text-sm italic border-t border-foreground/10 pt-4 mb-4">
-                    "{formData.memory || formData.promise}"
-                  </p>
-                )}
-
-                <p className="text-foreground/50 font-serif">
-                  — {formData.senderName || "With Love"}
-                </p>
-
-                <div className="mt-8 space-y-3">
-                  {user ? (
-                    <button
-                      onClick={(e) => {
-                        setShowDemoPreview(false);
-                        handleSubmit(e as any);
-                      }}
-                      className="w-full py-3 rounded-xl text-white font-semibold"
-                      style={{
-                        background: `linear-gradient(135deg, ${template.colors.primary} 0%, ${template.colors.accent} 100%)`,
-                      }}
-                    >
-                      Save & Get Shareable Link ✨
-                    </button>
-                  ) : (
-                    <Link
-                      href="/auth"
-                      className="block w-full py-3 rounded-xl text-white font-semibold text-center"
-                      style={{
-                        background: `linear-gradient(135deg, ${template.colors.primary} 0%, ${template.colors.accent} 100%)`,
-                      }}
-                    >
-                      Login to Save & Share 💕
-                    </Link>
-                  )}
-                  <button
-                    onClick={() => setShowDemoPreview(false)}
-                    className="w-full py-3 rounded-xl bg-white/60 text-foreground/70 font-medium"
-                  >
-                    Continue Editing
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="relative z-10 container mx-auto px-6 py-12">
-        {/* Back button */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="mb-8 flex justify-between items-center"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-12 flex justify-between items-center"
         >
           <Link
             href="/templates"
-            className="inline-flex items-center text-muted-foreground hover:text-primary transition-colors gap-2 font-medium"
+            className="group flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 rounded-full bg-white/40 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/60 hover:shadow-md transition-all text-foreground/80 font-medium text-sm md:text-base"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="m12 19-7-7 7-7" />
-              <path d="M19 12H5" />
-            </svg>
-            Back to Templates
+            <ArrowLeft
+              size={18}
+              className="group-hover:-translate-x-1 transition-transform"
+            />
+            <span className="hidden md:inline">Back to Templates</span>
+            <span className="inline md:hidden">Back</span>
           </Link>
 
-          {/* Auth status */}
+          {/* Auth / My Cards */}
           {!authLoading &&
             (user ? (
               <Link
                 href="/dashboard"
-                className="text-sm text-foreground/60 hover:text-primary"
+                className="group flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 rounded-full bg-white/40 backdrop-blur-md border border-white/50 shadow-sm hover:bg-white/60 hover:shadow-md transition-all text-foreground/80 font-medium text-sm md:text-base"
               >
-                My Cards →
+                <LayoutGrid size={18} />
+                <span>My Cards</span>
+                <ArrowLeft
+                  size={16}
+                  className="rotate-180 group-hover:translate-x-1 transition-transform opacity-50 hidden md:block"
+                />
               </Link>
             ) : (
               <Link
                 href="/auth"
-                className="text-sm text-pink-500 font-medium hover:text-pink-600"
+                className="group flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg hover:shadow-pink-500/25 hover:scale-105 transition-all font-medium text-sm md:text-base"
               >
-                Login to Save 💕
+                <User size={18} />
+                <span>
+                  Login<span className="hidden md:inline"> to Save</span>
+                </span>
               </Link>
             ))}
         </motion.div>
@@ -333,25 +195,50 @@ export default function TemplateEditorPage({ params }: PageProps) {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="text-center mb-12 max-w-3xl mx-auto"
         >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 260, damping: 20 }}
+            className="w-20 h-20 mx-auto mb-6 text-6xl flex items-center justify-center bg-white rounded-full shadow-lg border-2"
+            style={{ borderColor: template.colors.secondary }}
+          >
+            {template.emoji}
+          </motion.div>
+
           <span
-            className="px-4 py-2 rounded-full text-sm font-medium mb-4 inline-block"
+            className="px-4 py-1.5 rounded-full text-sm font-bold tracking-wide uppercase mb-6 inline-block bg-white/50 backdrop-blur-sm border border-white/60 shadow-sm"
             style={{
-              backgroundColor: `${template.colors.primary}20`,
-              color: template.colors.accent,
+              color: template.colors.primary,
             }}
           >
-            {category?.emoji} {category?.name}
+            {category?.name} Template
           </span>
-          <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">
+          <h1 className="text-4xl md:text-6xl font-serif font-bold mb-4 text-foreground">
             Create Your{" "}
-            <span style={{ color: template.colors.primary }}>
+            <span
+              className="italic relative inline-block"
+              style={{ color: template.colors.primary }}
+            >
               {template.name}
+              <svg
+                className="absolute w-full h-3 -bottom-1 left-0 opacity-40"
+                viewBox="0 0 100 10"
+                preserveAspectRatio="none"
+              >
+                <path
+                  d="M0 5 Q 50 10 100 5"
+                  stroke={template.colors.secondary}
+                  strokeWidth="3"
+                  fill="none"
+                />
+              </svg>
             </span>
           </h1>
-          <p className="text-lg text-foreground/70 max-w-xl mx-auto">
-            {template.description}
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
+            {template.description}. Fill in the details below to generate a
+            beautiful, personalized card.
           </p>
         </motion.div>
 
@@ -365,7 +252,7 @@ export default function TemplateEditorPage({ params }: PageProps) {
           >
             <form
               onSubmit={handleSubmit}
-              className="glass-panel p-8 rounded-3xl"
+              className="glass-panel p-8 md:p-10 rounded-3xl border border-white/60 shadow-xl bg-white/40 backdrop-blur-xl"
             >
               <h2 className="text-2xl font-serif font-bold mb-6 flex items-center gap-3">
                 <span className="text-3xl">{template.emoji}</span>
@@ -436,7 +323,7 @@ export default function TemplateEditorPage({ params }: PageProps) {
                         onChange={(e) =>
                           handleInputChange(field.name, e.target.value)
                         }
-                        className="w-full px-4 py-3 rounded-xl bg-white/60 border border-white/80 focus:outline-none focus:ring-2 focus:ring-pink-300 transition-all"
+                        className="w-full px-5 py-4 rounded-xl bg-white/50 border border-white/60 focus:outline-none focus:ring-4 focus:ring-pink-500/10 focus:border-pink-300 transition-all text-lg placeholder:text-muted-foreground/50 shadow-sm"
                       />
                     )}
                   </div>
@@ -510,46 +397,58 @@ export default function TemplateEditorPage({ params }: PageProps) {
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
-            className="lg:sticky lg:top-8 self-start"
+            className="lg:sticky lg:top-24 self-start"
           >
             <div
-              className="glass-panel p-8 rounded-3xl relative overflow-hidden"
+              className="glass-panel p-8 md:p-12 rounded-3xl relative overflow-hidden border border-white/60 shadow-2xl"
               style={{
-                background: `linear-gradient(135deg, ${template.colors.secondary}30 0%, ${template.colors.primary}10 100%)`,
+                background: `linear-gradient(135deg, rgba(255,255,255,0.8) 0%, ${template.colors.secondary}40 100%)`,
               }}
             >
+              <div className="absolute top-4 right-4 z-20">
+                <span className="px-3 py-1 bg-black/5 text-foreground/60 text-[10px] font-bold tracking-widest uppercase rounded-full border border-black/5">
+                  Live Preview
+                </span>
+              </div>
+
               <div
-                className="absolute top-0 right-0 w-32 h-32 rounded-full blur-2xl opacity-30"
+                className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-40 pointer-events-none"
                 style={{ backgroundColor: template.colors.primary }}
               />
 
-              <h2 className="text-xl font-medium text-foreground/60 mb-6">
-                Live Preview
-              </h2>
-
-              <div className="relative z-10 text-center py-8">
-                {template.id === "miss-you" ? (
+              {/* Card Content Container */}
+              <div className="relative z-10 text-center py-4">
+                {template.id === "love-letter" ? (
                   <div className="mb-6 relative w-full max-w-[280px] mx-auto">
-                    <div
-                      className="tenor-gif-embed"
-                      data-postid="12624079450929191917"
-                      data-share-method="host"
-                      data-aspect-ratio="1.18009"
-                      data-width="100%"
-                    >
-                      <a href="https://tenor.com/view/peach-sad-goma-gif-12624079450929191917">
-                        Peach Sad GIF
-                      </a>
-                      from{" "}
-                      <a href="https://tenor.com/search/peach-gifs">
-                        Peach GIFs
-                      </a>
-                    </div>
-                    {/* Script already loaded by Demo Preview or previous render, but safe to include again with next/script deduplication */}
-                    <Script
-                      type="text/javascript"
-                      async
-                      src="https://tenor.com/embed.js"
+                    <Image
+                      src="https://media1.tenor.com/m/HI7GdDJ1yq0AAAAC/us-you-and-me.gif"
+                      alt="Us You And Me Sticker"
+                      width={280}
+                      height={280}
+                      className="w-full h-auto rounded-lg"
+                      unoptimized
+                    />
+                  </div>
+                ) : template.id === "miss-you" ? (
+                  <div className="mb-6 relative w-full max-w-[280px] mx-auto">
+                    <Image
+                      src="https://media1.tenor.com/m/rzG9YBjxW-0AAAAC/peach-sad.gif"
+                      alt="Peach Sad GIF"
+                      width={280}
+                      height={280}
+                      className="w-full h-auto rounded-lg"
+                      unoptimized
+                    />
+                  </div>
+                ) : template.id === "anniversary" ? (
+                  <div className="mb-6 relative w-full max-w-[280px] overflow-hidden rounded-xl mx-auto">
+                    <Image
+                      src="https://media1.tenor.com/m/K6WkauZF1ToAAAAC/happy-valentines-day-valentines-day.gif"
+                      alt="Happy Valentines Day Hugs Sticker"
+                      width={280}
+                      height={280}
+                      className="w-full h-auto object-contain"
+                      unoptimized
                     />
                   </div>
                 ) : (

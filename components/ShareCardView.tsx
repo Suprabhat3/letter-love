@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 import Script from "next/script";
+import Image from "next/image";
 import { SharedCard, Template, CATEGORIES } from "@/lib/types";
 import SorryCard from "./templates/SorryCard";
 import BirthdayCard from "./templates/BirthdayCard";
@@ -111,25 +112,37 @@ export default function ShareCardView({ card, template }: ShareCardViewProps) {
                 </span>
               </motion.div>
 
-              {template.id === "miss-you" ? (
+              {template.id === "love-letter" ? (
                 <div className="mb-6 relative w-full max-w-[280px] mx-auto z-10">
-                  <div
-                    className="tenor-gif-embed"
-                    data-postid="12624079450929191917"
-                    data-share-method="host"
-                    data-aspect-ratio="1.18009"
-                    data-width="100%"
-                  >
-                    <a href="https://tenor.com/view/peach-sad-goma-gif-12624079450929191917">
-                      Peach Sad GIF
-                    </a>
-                    from{" "}
-                    <a href="https://tenor.com/search/peach-gifs">Peach GIFs</a>
-                  </div>
-                  <Script
-                    type="text/javascript"
-                    async
-                    src="https://tenor.com/embed.js"
+                  <Image
+                    src="https://media1.tenor.com/m/HI7GdDJ1yq0AAAAC/us-you-and-me.gif"
+                    alt="Us You And Me Sticker"
+                    width={280}
+                    height={280}
+                    className="w-full h-auto rounded-lg"
+                    unoptimized
+                  />
+                </div>
+              ) : template.id === "miss-you" ? (
+                <div className="mb-6 relative w-full max-w-[280px] mx-auto z-10">
+                  <Image
+                    src="https://media1.tenor.com/m/rzG9YBjxW-0AAAAC/peach-sad.gif"
+                    alt="Peach Sad GIF"
+                    width={280}
+                    height={280}
+                    className="w-full h-auto rounded-lg"
+                    unoptimized
+                  />
+                </div>
+              ) : template.id === "anniversary" ? (
+                <div className="mb-6 relative w-full max-w-[280px] overflow-hidden rounded-xl mx-auto z-10">
+                  <Image
+                    src="https://media1.tenor.com/m/K6WkauZF1ToAAAAC/happy-valentines-day-valentines-day.gif"
+                    alt="Happy Valentines Day Hugs Sticker"
+                    width={280}
+                    height={280}
+                    className="w-full h-auto object-contain"
+                    unoptimized
                   />
                 </div>
               ) : (
