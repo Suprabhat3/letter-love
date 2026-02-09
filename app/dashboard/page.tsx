@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import { getTemplateById } from "@/lib/templates";
 import { SharedCard, CATEGORIES } from "@/lib/types";
+import ShareModal from "@/components/ShareModal";
 import {
   Search,
   Plus,
@@ -20,6 +21,7 @@ import {
   Check,
   Heart,
   PenLine,
+  Share2,
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -27,9 +29,9 @@ export default function DashboardPage() {
   const { user, loading: authLoading, signOut } = useAuth();
   const [cards, setCards] = useState<SharedCard[]>([]);
   const [loading, setLoading] = useState(true);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [activeShareUrl, setActiveShareUrl] = useState("");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -58,11 +60,10 @@ export default function DashboardPage() {
     }
   }, [user]);
 
-  const copyShareLink = async (cardId: string) => {
+  const handleShare = (cardId: string) => {
     const url = `${window.location.origin}/share/${cardId}`;
-    await navigator.clipboard.writeText(url);
-    setCopiedId(cardId);
-    setTimeout(() => setCopiedId(null), 2000);
+    setActiveShareUrl(url);
+    setShareModalOpen(true);
   };
 
   const deleteCard = async (cardId: string) => {
@@ -79,8 +80,6 @@ export default function DashboardPage() {
         .includes(searchQuery.toLowerCase()) ||
       card.data.message?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // Optional: Add category filtering if we stored category ID on the card directly or looked it up
-    // For now, simple search is good.
     return matchesSearch;
   });
 
@@ -100,6 +99,12 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen relative bg-[#faf5f6] dark:bg-background transition-colors duration-500">
+      <ShareModal
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        shareUrl={activeShareUrl}
+      />
+
       {/* Abstract Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -239,8 +244,7 @@ export default function DashboardPage() {
                   card={card}
                   index={index}
                   onDelete={deleteCard}
-                  onCopy={copyShareLink}
-                  copiedId={copiedId}
+                  onShare={handleShare}
                 />
               ))}
             </AnimatePresence>
@@ -255,14 +259,12 @@ function LetterCard({
   card,
   index,
   onDelete,
-  onCopy,
-  copiedId,
+  onShare,
 }: {
   card: SharedCard;
   index: number;
   onDelete: (id: string) => void;
-  onCopy: (id: string) => void;
-  copiedId: string | null;
+  onShare: (id: string) => void;
 }) {
   const template = getTemplateById(card.template_id);
 
@@ -331,15 +333,11 @@ function LetterCard({
 
           <div className="flex items-center gap-1">
             <button
-              onClick={() => onCopy(card.id)}
-              className="p-2 rounded-lg hover:bg-pink-50 dark:hover:bg-pink-900/20 text-muted-foreground hover:text-pink-600 transition-colors relative"
-              title="Copy Link"
+              onClick={() => onShare(card.id)}
+              className="p-2 rounded-lg hover:bg-pink-50 dark:hover:bg-pink-900/20 text-muted-foreground hover:text-pink-600 transition-colors"
+              title="Share"
             >
-              {copiedId === card.id ? (
-                <Check className="w-4 h-4 text-green-500" />
-              ) : (
-                <Copy className="w-4 h-4" />
-              )}
+              <Share2 className="w-4 h-4" />
             </button>
             <div className="w-[1px] h-4 bg-border mx-1" />
             <Link

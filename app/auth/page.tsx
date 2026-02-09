@@ -139,21 +139,6 @@ export default function AuthPage() {
       </div>
 
       <div className="z-10 w-full max-w-md relative">
-        {/* Back Link with specific styling */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="mb-8 absolute -top-16 left-0"
-        >
-          <Link
-            href="/"
-            className="group inline-flex items-center text-muted-foreground/80 hover:text-pink-600 dark:hover:text-pink-400 transition-colors gap-2 font-medium bg-white/40 dark:bg-black/20 px-4 py-2 rounded-full backdrop-blur-sm border border-white/50 dark:border-white/10 hover:bg-white/60 dark:hover:bg-black/40"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-300" />
-            Back Home
-          </Link>
-        </motion.div>
-
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

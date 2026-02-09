@@ -13,6 +13,7 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+import ShareModal from "@/components/ShareModal";
 import { Sparkles } from "lucide-react";
 
 export default function TemplateEditorPage({ params }: PageProps) {
@@ -26,6 +27,8 @@ export default function TemplateEditorPage({ params }: PageProps) {
   const [error, setError] = useState<string | null>(null);
   const [showDemoPreview, setShowDemoPreview] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState<string | null>(null);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [createdCardLink, setCreatedCardLink] = useState("");
 
   const handleAiEnhance = async (fieldName: string, currentValue: string) => {
     if (!currentValue?.trim()) return;
@@ -121,7 +124,11 @@ export default function TemplateEditorPage({ params }: PageProps) {
         setIsSubmitting(false);
         return;
       }
-      router.push(`/share/${result.id}`);
+
+      const shareUrl = `${window.location.origin}/share/${result.id}`;
+      setCreatedCardLink(shareUrl);
+      setShareModalOpen(true);
+      // Wait for user to close modal to navigate
     } catch {
       setError("Something went wrong. Please try again.");
       setIsSubmitting(false);
@@ -130,6 +137,12 @@ export default function TemplateEditorPage({ params }: PageProps) {
 
   return (
     <main className="min-h-screen relative overflow-hidden bg-background">
+      <ShareModal
+        isOpen={shareModalOpen}
+        onClose={() => router.push("/dashboard")}
+        shareUrl={createdCardLink}
+      />
+
       {/* Background */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <motion.div
