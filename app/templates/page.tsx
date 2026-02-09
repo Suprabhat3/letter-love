@@ -1,18 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 import { templates } from "@/lib/templates";
-import { CATEGORIES, TemplateCategory } from "@/lib/types";
+import { CATEGORIES, TemplateCategory, Template } from "@/lib/types";
 import TemplateCard from "@/components/templates/TemplateCard";
-import { Search, Sparkles, ArrowLeft, Filter, Users } from "lucide-react";
+import { Search, Sparkles, ArrowLeft, Filter, Users, X } from "lucide-react";
+import SorryCard from "@/components/templates/SorryCard";
+import BirthdayCard from "@/components/templates/BirthdayCard";
+import ValentineCard from "@/components/templates/ValentineCard";
 
 const RECIPIENTS = [
   { id: "all", label: "Anyone" },
   { id: "Partner", label: "Partner" },
   { id: "Friend", label: "Friend" },
   { id: "Family", label: "Family" },
+  { id: "Spouse", label: "Spouse" },
 ];
 
 export default function TemplatesPage() {
@@ -21,6 +25,7 @@ export default function TemplatesPage() {
   >("all");
   const [activeRecipient, setActiveRecipient] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
 
   const filteredTemplates = templates.filter((template) => {
     // 1. Filter by Category
@@ -57,6 +62,74 @@ export default function TemplatesPage() {
           className="absolute bottom-[-10%] right-[-10%] bg-purple-200/30 w-[600px] h-[600px] rounded-full blur-3xl"
         />
       </div>
+
+      <AnimatePresence>
+        {previewTemplate && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-md"
+          >
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              onClick={() => setPreviewTemplate(null)}
+              className="absolute top-6 right-6 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 text-foreground border border-white/20 shadow-lg transition-all"
+            >
+              <X size={24} />
+            </motion.button>
+
+            <div className="w-full h-full overflow-y-auto">
+              {previewTemplate.id === "sorry-card" ? (
+                <SorryCard
+                  data={{
+                    recipientName: "Demo Friend",
+                    senderName: "You",
+                    reason: "forgetting the date",
+                    promise: "make it up to you",
+                  }}
+                />
+              ) : previewTemplate.id === "birthday-wish" ? (
+                <BirthdayCard
+                  data={{
+                    recipientName: "Birthday Star",
+                    senderName: "You",
+                    age: "21",
+                    message: "Wishing you the happiest of birthdays!",
+                    wish: "Infinite Joy",
+                  }}
+                />
+              ) : previewTemplate.id === "valentine-ask" ? (
+                <ValentineCard
+                  data={{
+                    recipientName: "My Crush",
+                    senderName: "Secret Admirer",
+                    reason: "You make my heart skip a beat!",
+                  }}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center min-h-screen p-8 text-center">
+                  <div className="text-9xl mb-8 animate-bounce">
+                    {previewTemplate.emoji}
+                  </div>
+                  <h2 className="text-4xl font-serif font-bold mb-4">
+                    {previewTemplate.name}
+                  </h2>
+                  <p className="text-xl text-muted-foreground max-w-md mb-8">
+                    {previewTemplate.description}
+                  </p>
+                  <Link href={`/templates/${previewTemplate.id}`}>
+                    <button className="btn-primary px-8 py-4 rounded-full text-lg">
+                      Customize Template
+                    </button>
+                  </Link>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="relative z-10 container mx-auto px-6 py-12">
         {/* Navigation */}
@@ -166,16 +239,16 @@ export default function TemplatesPage() {
             </div>
 
             {/* Secondary: Recipient Filter */}
-            <div className="flex justify-center">
-              <div className="inline-flex items-center gap-2 bg-white/30 p-1.5 pl-4 rounded-full backdrop-blur-sm border border-white/40 shadow-sm">
-                <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-widest flex items-center gap-1.5 mr-1">
+            <div className="flex justify-center w-full px-4">
+              <div className="flex flex-wrap items-center justify-center gap-2 bg-white/30 p-2 pl-4 rounded-3xl backdrop-blur-sm border border-white/40 shadow-sm">
+                <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-widest flex items-center gap-1.5 mr-1 bg-white/40 px-2 py-1 rounded-md">
                   <Users size={12} /> For
                 </span>
                 {RECIPIENTS.map((recipient) => (
                   <button
                     key={recipient.id}
                     onClick={() => setActiveRecipient(recipient.id)}
-                    className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
                       activeRecipient === recipient.id
                         ? "bg-white shadow-sm text-primary font-semibold"
                         : "text-foreground/60 hover:text-foreground hover:bg-white/50"
@@ -192,7 +265,12 @@ export default function TemplatesPage() {
         {/* Templates Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredTemplates.map((template, index) => (
-            <TemplateCard key={template.id} template={template} index={index} />
+            <TemplateCard
+              key={template.id}
+              template={template}
+              index={index}
+              onQuickView={(t) => setPreviewTemplate(t)}
+            />
           ))}
         </div>
 

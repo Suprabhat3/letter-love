@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { createClient } from "@supabase/supabase-js";
 import { getTemplateById } from "@/lib/templates";
 
-export const runtime = "edge";
+// Route segment config
 export const alt = "LetterLove Card Preview";
 export const size = {
   width: 1200,
@@ -10,23 +10,94 @@ export const size = {
 };
 export const contentType = "image/png";
 
-// Initialize Supabase client for Edge Runtime
-// We recreate it here to ensure Edge compatibility if the main lib has node-specificdeps
+// Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function getCard(id: string) {
-  const { data } = await supabase
-    .from("cards")
-    .select("*")
-    .eq("id", id)
-    .single();
-  return data;
+  try {
+    const { data, error } = await supabase
+      .from("cards")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error("OG Image Supabase Error:", error);
+      return null;
+    }
+    return data;
+  } catch (e) {
+    console.error("OG Image Fetch Error:", e);
+    return null;
+  }
 }
 
-export default async function Image({ params }: { params: { id: string } }) {
-  const { id } = await params; // Await params in newer Next.js versions
+// Theme configuration helper
+function getThemeConfig(template: any) {
+  const category = template?.category || "love";
+  const id = template?.id || "";
+
+  // Base config
+  let config = {
+    bgGradient:
+      "linear-gradient(135deg, #fce7f3 0%, white 50%, #ec489920 100%)",
+    primaryColor: template?.colors?.primary || "#ec4899",
+    secondaryColor: template?.colors?.secondary || "#fce7f3",
+    mainIcon: template?.emoji || "💌",
+    decorations: "💕",
+    title: "A Letter For",
+  };
+
+  // Specific overrides
+  if (id === "birthday-wish" || category === "celebration") {
+    config = {
+      ...config,
+      bgGradient:
+        "linear-gradient(135deg, #fef3c7 0%, white 50%, #f59e0b20 100%)",
+      mainIcon: "🎂",
+      decorations: "🎈",
+      title: "Happy Birthday",
+    };
+  } else if (id === "sorry-card" || category === "apology") {
+    config = {
+      ...config,
+      bgGradient:
+        "linear-gradient(135deg, #dbeafe 0%, white 50%, #3b82f620 100%)",
+      mainIcon: "🥺",
+      decorations: "💙",
+      title: "Note of Apology",
+    };
+  } else if (id === "miss-you" || category === "longing") {
+    config = {
+      ...config,
+      bgGradient:
+        "linear-gradient(135deg, #cffafe 0%, white 50%, #06b6d420 100%)",
+      mainIcon: "💭",
+      decorations: "✨",
+      title: "Thinking of You",
+    };
+  } else if (id === "love-letter" || category === "love") {
+    config = {
+      ...config,
+      bgGradient:
+        "linear-gradient(135deg, #fce7f3 0%, white 50%, #ec489920 100%)",
+      mainIcon: "💌",
+      decorations: "💖",
+      title: "A Love Letter For",
+    };
+  }
+
+  return config;
+}
+
+export default async function Image({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
   const card = await getCard(id);
 
   if (!card) {
@@ -34,16 +105,18 @@ export default async function Image({ params }: { params: { id: string } }) {
       <div
         style={{
           fontSize: 40,
-          color: "black",
-          background: "white",
+          color: "#333",
+          background: "#fff",
           width: "100%",
           height: "100%",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          flexDirection: "column",
         }}
       >
-        LetterLove - Card Not Found
+        <div style={{ fontSize: 80, marginBottom: 20 }}>💔</div>
+        <div style={{ fontWeight: 600 }}>Letter Not Found</div>
       </div>,
       { ...size },
     );
@@ -53,12 +126,7 @@ export default async function Image({ params }: { params: { id: string } }) {
   const recipient = card.data.recipientName || "Someone Special";
   const sender = card.data.senderName || "Someone";
 
-  // Default colors if template not found
-  const primaryColor = template?.colors.primary || "#ec4899";
-  const secondaryColor = template?.colors.secondary || "#fce7f3";
-  const divStyle = {
-    display: "flex" as const, // Explicit cast for TS
-  };
+  const theme = getThemeConfig(template);
 
   return new ImageResponse(
     <div
@@ -69,119 +137,159 @@ export default async function Image({ params }: { params: { id: string } }) {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        background: `linear-gradient(135deg, ${secondaryColor} 0%, white 50%, ${primaryColor}20 100%)`,
+        backgroundColor: "white",
+        backgroundImage: theme.bgGradient,
         fontFamily: "sans-serif",
         position: "relative",
       }}
     >
-      {/* Decorative Circles */}
+      {/* Floating Background Elements */}
+      {/* Top Left */}
       <div
         style={{
           position: "absolute",
-          top: -100,
-          left: -100,
-          width: 400,
-          height: 400,
-          borderRadius: "50%",
-          background: `${primaryColor}20`,
-          filter: "blur(80px)",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          bottom: -100,
-          right: -100,
-          width: 400,
-          height: 400,
-          borderRadius: "50%",
-          background: `${secondaryColor}40`,
-          filter: "blur(80px)",
-        }}
-      />
-
-      {/* Card Container */}
-      <div
-        style={{
-          display: "flex",
-          background: "rgba(255, 255, 255, 0.8)",
-          borderRadius: 40,
-          padding: "60px 80px",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          boxShadow: "0 20px 50px rgba(0,0,0,0.1)",
-          border: "1px solid rgba(255,255,255,0.5)",
-          maxWidth: "900px",
+          top: 40,
+          left: 40,
+          fontSize: 80,
+          opacity: 0.2,
         }}
       >
-        {/* Category / Template Badge */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: `${primaryColor}20`,
-            color: primaryColor,
-            padding: "10px 24px",
-            borderRadius: 50,
-            fontSize: 24,
-            fontWeight: 600,
-            marginBottom: 20,
-            textTransform: "uppercase",
-            letterSpacing: "1px",
-          }}
-        >
-          {template?.emoji} {template?.name || "Letter"}
-        </div>
-
-        {/* Main Emoji */}
-        <div style={{ fontSize: 100, marginBottom: 30 }}>
-          {template?.emoji || "💌"}
-        </div>
-
-        {/* Text Content */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            textAlign: "center",
-          }}
-        >
-          <div style={{ fontSize: 32, color: "#666", marginBottom: 10 }}>
-            A letter for
-          </div>
-          <div
-            style={{
-              fontSize: 72,
-              fontWeight: "bold",
-              color: primaryColor,
-              marginBottom: 10,
-              lineHeight: 1.1,
-            }}
-          >
-            {recipient}
-          </div>
-          <div style={{ fontSize: 28, color: "#666" }}>from {sender}</div>
-        </div>
+        {theme.decorations}
       </div>
-
-      {/* Footer Branding */}
+      {/* Top Right */}
+      <div
+        style={{
+          position: "absolute",
+          top: 40,
+          right: 40,
+          fontSize: 80,
+          opacity: 0.2,
+        }}
+      >
+        {theme.decorations}
+      </div>
+      {/* Bottom Left */}
       <div
         style={{
           position: "absolute",
           bottom: 40,
+          left: 40,
+          fontSize: 80,
+          opacity: 0.2,
+        }}
+      >
+        {theme.decorations}
+      </div>
+      {/* Bottom Right */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 40,
+          right: 40,
+          fontSize: 80,
+          opacity: 0.2,
+        }}
+      >
+        {theme.decorations}
+      </div>
+
+      {/* Main Card Container */}
+      <div
+        style={{
           display: "flex",
+          background: "rgba(255, 255, 255, 0.9)",
+          borderRadius: 50,
+          padding: "60px 80px",
+          flexDirection: "column",
           alignItems: "center",
-          gap: 10,
-          fontSize: 24,
-          color: "#666",
+          justifyContent: "center",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
+          border: "2px solid rgba(255,255,255,0.8)",
+          width: "900px",
+        }}
+      >
+        {/* Top Label */}
+        <div
+          style={{
+            fontSize: 28,
+            fontWeight: 600,
+            textTransform: "uppercase",
+            letterSpacing: "4px",
+            color: theme.primaryColor,
+            marginBottom: 30,
+            background: `${theme.primaryColor}15`,
+            padding: "10px 30px",
+            borderRadius: "100px",
+          }}
+        >
+          {theme.title}
+        </div>
+
+        {/* Main Visual Icon Container */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 160,
+            height: 160,
+            background: `${theme.primaryColor}10`,
+            borderRadius: "50%",
+            marginBottom: 30,
+            border: `4px solid ${theme.primaryColor}30`,
+          }}
+        >
+          <div style={{ fontSize: 80 }}>{theme.mainIcon}</div>
+        </div>
+
+        {/* Recipient Name */}
+        <div
+          style={{
+            fontSize: 80,
+            fontWeight: 900,
+            color: "#1f2937",
+            textAlign: "center",
+            lineHeight: 1.1,
+            marginBottom: 20,
+            textOverflow: "ellipsis",
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+            maxWidth: "800px",
+          }}
+        >
+          {recipient}
+        </div>
+
+        {/* Sender Line */}
+        <div
+          style={{
+            fontSize: 32,
+            color: "#6b7280",
+            fontWeight: 500,
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            marginTop: 10,
+          }}
+        >
+          From{" "}
+          <span style={{ color: theme.primaryColor, fontWeight: 700 }}>
+            {sender}
+          </span>
+        </div>
+      </div>
+
+      {/* Branding Footer */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 30,
+          color: "#9ca3af",
+          fontSize: 20,
           fontWeight: 500,
         }}
       >
-        <span>Made with LetterLove 💕</span>
+        letterlove.ai
       </div>
     </div>,
     {

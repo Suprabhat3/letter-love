@@ -1,6 +1,29 @@
 import { Template } from "./types";
 
 export const templates: Template[] = [
+  // 💝 VALENTINE Category
+  {
+    id: "valentine-ask",
+    name: "Be My Valentine?",
+    description: "Ask the big question differently",
+    category: "love",
+    emoji: "💝",
+    tags: ["Romantic", "Propose", "Valentine", "Crush", "Partner"],
+    popularity: 5,
+    estimatedTime: "2 min",
+    previewText: "I've been wanting to ask you this for a while...",
+    colors: {
+      primary: "#e11d48",
+      secondary: "#fecdd3",
+      accent: "#be123c",
+    },
+    fields: [
+      { name: "recipientName", label: "Their Name", placeholder: "My Crush", type: "text", required: true },
+      { name: "senderName", label: "Your Name", placeholder: "Secret Admirer", type: "text", required: true },
+       { name: "reason", label: "Why them?", placeholder: "You make me smile every day...", type: "textarea", required: true },
+    ],
+  },
+
   // 💕 LOVE Category
   {
     id: "love-letter",

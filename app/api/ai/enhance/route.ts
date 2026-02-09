@@ -9,6 +9,8 @@ const client = new OpenAI({
 
 // List of free/performant models to rotate through
 const MODELS = [
+  "groq/compound",
+  "groq/compound-mini",
   "openai/gpt-oss-20b",
   "openai/gpt-oss-120b",
   "moonshotai/kimi-k2-instruct-0905",
@@ -56,10 +58,18 @@ export async function POST(req: Request) {
       max_tokens: 200,
     });
 
-    const enhancedText = completion.choices[0]?.message?.content || "";
+    let enhancedText = completion.choices[0]?.message?.content || "";
+    
+    // Strip any thinking/reasoning tags that might appear in the response
+    enhancedText = enhancedText
+      .replace(/<think>[\s\S]*?<\/think>/gi, '')
+      .replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '')
+      .replace(/\[REASONING\][\s\S]*?\[\/REASONING\]/gi, '')
+      .replace(/\[THINK\][\s\S]*?\[\/THINK\]/gi, '')
+      .trim();
 
     return NextResponse.json({ 
-      text: enhancedText.trim(),
+      text: enhancedText,
       model: selectedModel 
     });
 

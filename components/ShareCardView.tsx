@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 import { SharedCard, Template, CATEGORIES } from "@/lib/types";
+import SorryCard from "./templates/SorryCard";
+import BirthdayCard from "./templates/BirthdayCard";
+import ValentineCard from "./templates/ValentineCard";
 
 interface ShareCardViewProps {
   card: SharedCard;
@@ -11,6 +14,19 @@ interface ShareCardViewProps {
 }
 
 export default function ShareCardView({ card, template }: ShareCardViewProps) {
+  // Check for specific templates that have custom implementations
+  if (template.id === "sorry-card") {
+    return <SorryCard data={card.data} />;
+  }
+
+  if (template.id === "birthday-wish") {
+    return <BirthdayCard data={card.data} />;
+  }
+
+  if (template.id === "valentine-ask") {
+    return <ValentineCard data={card.data} />;
+  }
+
   const [showContent, setShowContent] = useState(false);
 
   const category = CATEGORIES.find((c) => c.id === template.category);
@@ -237,7 +253,7 @@ export default function ShareCardView({ card, template }: ShareCardViewProps) {
               href="/templates"
               className="btn-primary px-8 py-4 rounded-full font-bold shadow-lg shadow-pink-200/50 hover:shadow-pink-300/50 transition-all flex items-center justify-center gap-2 text-lg"
             >
-              Create Your Own Card 
+              Create Your Own Card
             </Link>
             <p className="text-muted-foreground/50 text-xs mt-4 font-serif italic">
               Made with LetterLove 💕
