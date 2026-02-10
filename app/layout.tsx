@@ -59,6 +59,11 @@ export const metadata: Metadata = {
     creator: "@LetterLoveAI",
   },
   metadataBase: new URL("https://letterlove.fun"),
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({
