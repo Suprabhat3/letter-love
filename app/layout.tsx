@@ -50,6 +50,26 @@ export const metadata: Metadata = {
     locale: "en_US",
     type: "website",
   },
+  // Icons & Favicons
+  icons: {
+    icon: [
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    other: [
+      {
+        rel: "android-chrome-192x192",
+        url: "/android-chrome-192x192.png",
+      },
+      {
+        rel: "android-chrome-512x512",
+        url: "/android-chrome-512x512.png",
+      },
+    ],
+  },
   twitter: {
     card: "summary_large_image",
     title: "LetterLove - AI Powered Cute & Valentine Letters",
@@ -59,11 +79,6 @@ export const metadata: Metadata = {
     creator: "@LetterLoveAI",
   },
   metadataBase: new URL("https://letterlove.fun"),
-  icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-    apple: "/apple-touch-icon.png",
-  },
 };
 
 export default function RootLayout({
@@ -73,6 +88,27 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+       <head>
+        <link
+          rel="apple-touch-icon"
+          sizes="180x180"
+          href="/apple-touch-icon.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href="/favicon-32x32.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="16x16"
+          href="/favicon-16x16.png"
+        />
+        <link rel="manifest" href="/site.webmanifest" />
+<script defer src="https://cloud.umami.is/script.js" data-website-id="8605b732-710b-4fe0-9820-13125e5e3bc4"></script>
+      </head>
       <body
         className={`${inter.variable} ${playfair.variable} ${dancing.variable} antialiased`}
       >
