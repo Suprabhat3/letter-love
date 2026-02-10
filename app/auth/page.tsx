@@ -27,6 +27,7 @@ export default function AuthPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +42,12 @@ export default function AuthPage() {
 
     if (!isLogin && !name.trim()) {
       setError("Please enter your name");
+      setLoading(false);
+      return;
+    }
+
+    if (!isLogin && !agreed) {
+      setError("Please agree to the Terms and Privacy Policy");
       setLoading(false);
       return;
     }
@@ -194,6 +201,7 @@ export default function AuthPage() {
                   onClick={() => {
                     setIsLogin(true);
                     setSuccess(false);
+                    setAgreed(false);
                   }}
                   className="w-full btn-primary py-3 rounded-xl font-semibold shadow-lg shadow-pink-200/50 hover:shadow-pink-300/50 transition-all text-sm"
                 >
@@ -291,6 +299,48 @@ export default function AuthPage() {
                       </motion.div>
                     )}
                   </AnimatePresence>
+
+                  <AnimatePresence>
+                    {!isLogin && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                        animate={{ opacity: 1, height: "auto", marginTop: 8 }}
+                        exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                        className="flex items-start gap-3 overflow-hidden pt-1"
+                      >
+                        <div className="flex items-center h-5 mt-0.5">
+                          <input
+                            id="terms"
+                            type="checkbox"
+                            checked={agreed}
+                            onChange={(e) => setAgreed(e.target.checked)}
+                            className="w-4 h-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500/20 focus:border-pink-500 cursor-pointer accent-pink-500"
+                          />
+                        </div>
+                        <label
+                          htmlFor="terms"
+                          className="text-xs text-muted-foreground leading-snug cursor-pointer select-none"
+                        >
+                          I agree to the{" "}
+                          <Link
+                            href="/terms"
+                            className="font-medium text-foreground hover:text-pink-600 underline decoration-pink-200 underline-offset-2 transition-colors"
+                            target="_blank"
+                          >
+                            Terms & Conditions
+                          </Link>{" "}
+                          and{" "}
+                          <Link
+                            href="/privacy"
+                            className="font-medium text-foreground hover:text-pink-600 underline decoration-pink-200 underline-offset-2 transition-colors"
+                            target="_blank"
+                          >
+                            Privacy Policy
+                          </Link>
+                        </label>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {error && (
@@ -375,6 +425,7 @@ export default function AuthPage() {
                       onClick={() => {
                         setIsLogin(!isLogin);
                         setError(null);
+                        setAgreed(false);
                       }}
                       className="font-semibold text-pink-600 hover:text-pink-700 dark:text-pink-400 dark:hover:text-pink-300 transition-colors hover:underline"
                     >

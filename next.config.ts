@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "tenor.com",
       },
+      {
+        protocol: "https",
+        hostname: "suprabhat.site",
+      },
     ],
   },
 };

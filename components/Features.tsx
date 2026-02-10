@@ -62,77 +62,79 @@ export default function Features() {
   });
 
   return (
-    <section
-      ref={containerRef}
-      className="py-24 md:py-32 relative overflow-hidden bg-gradient-to-b from-pink-50 to-rose-50"
-    >
-      {/* Background Decorative Blobs */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40">
-        <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-pink-200/30 rounded-full blur-3xl mix-blend-multiply filter" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-purple-200/30 rounded-full blur-3xl mix-blend-multiply filter" />
-      </div>
-
-      <div className="container mx-auto px-6 relative z-10">
-        <div className="text-center mb-20 max-w-3xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-100/50 border border-pink-200 text-pink-600 text-sm font-medium mb-4"
-          >
-            <Sparkles className="w-4 h-4" />
-            <span>Process</span>
-          </motion.div>
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="text-4xl md:text-6xl font-bold font-serif mb-6 text-foreground"
-          >
-            Your Journey to <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-600">
-              The Perfect Words
-            </span>
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="text-xl text-foreground/60 leading-relaxed"
-          >
-            Follow our simple path to create something truly meaningful. We
-            handle the complexity, so you can focus on the feeling.
-          </motion.p>
+    <div id="features" className="scroll-mt-20">
+      <section
+        ref={containerRef}
+        className="py-24 md:py-32 relative overflow-hidden bg-gradient-to-b from-pink-50 to-rose-50"
+      >
+        {/* Background Decorative Blobs */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40">
+          <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-pink-200/30 rounded-full blur-3xl mix-blend-multiply filter" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-purple-200/30 rounded-full blur-3xl mix-blend-multiply filter" />
         </div>
 
-        {/* Timeline Container */}
-        <div className="relative">
-          {/* Central Vertical Line (Desktop) */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 top-0 bottom-0 w-1 bg-gray-300 hidden md:block rounded-full">
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="text-center mb-20 max-w-3xl mx-auto">
             <motion.div
-              style={{ scaleY }}
-              className="absolute top-0 left-0 w-full bg-gradient-to-b from-pink-500 via-purple-500 to-orange-400 origin-top rounded-full"
-            />
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-100/50 border border-pink-200 text-pink-600 text-sm font-medium mb-4"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Process</span>
+            </motion.div>
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="text-4xl md:text-6xl font-bold font-serif mb-6 text-foreground"
+            >
+              Your Journey to <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-rose-600">
+                The Perfect Words
+              </span>
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="text-xl text-foreground/60 leading-relaxed"
+            >
+              Follow our simple path to create something truly meaningful. We
+              handle the complexity, so you can focus on the feeling.
+            </motion.p>
           </div>
 
-          {/* Mobile Vertical Line */}
-          <div className="absolute left-8 top-0 bottom-0 w-1 bg-gray-300 md:hidden rounded-full">
-            <motion.div
-              style={{ scaleY }}
-              className="absolute top-0 left-0 w-full bg-gradient-to-b from-pink-500 via-purple-500 to-orange-400 origin-top rounded-full"
-            />
-          </div>
+          {/* Timeline Container */}
+          <div className="relative">
+            {/* Central Vertical Line (Desktop) */}
+            <div className="absolute left-1/2 transform -translate-x-1/2 top-0 bottom-0 w-1 bg-gray-300 hidden md:block rounded-full">
+              <motion.div
+                style={{ scaleY }}
+                className="absolute top-0 left-0 w-full bg-gradient-to-b from-pink-500 via-purple-500 to-orange-400 origin-top rounded-full"
+              />
+            </div>
 
-          <div className="space-y-24 md:space-y-40">
-            {features.map((feature, index) => (
-              <FeatureItem key={index} feature={feature} index={index} />
-            ))}
+            {/* Mobile Vertical Line */}
+            <div className="absolute left-8 top-0 bottom-0 w-1 bg-gray-300 md:hidden rounded-full">
+              <motion.div
+                style={{ scaleY }}
+                className="absolute top-0 left-0 w-full bg-gradient-to-b from-pink-500 via-purple-500 to-orange-400 origin-top rounded-full"
+              />
+            </div>
+
+            <div className="space-y-24 md:space-y-40">
+              {features.map((feature, index) => (
+                <FeatureItem key={index} feature={feature} index={index} />
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }
 

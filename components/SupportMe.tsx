@@ -4,10 +4,11 @@ import { motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { Coffee, Heart, Sparkles } from "lucide-react";
+import { SparklesIcon } from "./SparklesIcon";
 
 export default function SupportMe() {
   return (
-    <section className="py-24 relative overflow-hidden">
+    <section id="support" className="py-24 relative overflow-hidden">
       {/* Background Ambience */}
       <div className="absolute inset-0 bg-gradient-to-b from-white via-pink-50/30 to-white -z-20" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-tr from-pink-200/20 via-purple-200/20 to-orange-200/20 rounded-full blur-[100px] -z-10 animate-pulse-slow" />
@@ -36,7 +37,7 @@ export default function SupportMe() {
                     transition={{ delay: 0.2 }}
                     className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-pink-100/80 text-pink-600 text-sm font-semibold border border-pink-200 shadow-sm mx-auto lg:mx-0"
                   >
-                    <Sparkles className="w-4 h-4 fill-pink-600" />
+                    <SparklesIcon className="w-4 h-4 fill-pink-600" />
                     <span>Support the Journey</span>
                   </motion.div>
 

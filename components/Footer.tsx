@@ -40,30 +40,42 @@ export default function Footer() {
               Write from the heart, with a little help from AI.
             </p>
             <div className="flex items-center gap-4 pt-2">
-              <SocialLink href="https://x.com/suprabhat_3" target="_blank" icon={Twitter} />
-              <SocialLink href="https://www.linkedin.com/in/suprabhatt/" target="_blank" icon={Linkedin} />
-              <SocialLink href="https://github.com/suprabhat3" target="_blank" icon={Github} />
+              <SocialLink
+                href="https://x.com/suprabhat_3"
+                target="_blank"
+                icon={Twitter}
+              />
+              <SocialLink
+                href="https://www.linkedin.com/in/suprabhatt/"
+                target="_blank"
+                icon={Linkedin}
+              />
+              <SocialLink
+                href="https://github.com/suprabhat3"
+                target="_blank"
+                icon={Github}
+              />
             </div>
           </div>
 
           {/* Links Columns */}
           <div className="lg:col-span-2 md:col-span-4">
-            <h4 className="font-bold text-foreground mb-6">Product</h4>
+            <h4 className="font-bold text-foreground mb-6">Explore</h4>
             <ul className="space-y-4 text-sm text-foreground/70">
-              <FooterLink href="#">Features</FooterLink>
-              <FooterLink href="#">Pricing</FooterLink>
-              <FooterLink href="#">Occasions</FooterLink>
-              <FooterLink href="#">Gift Cards</FooterLink>
+              <FooterLink href="/templates">Browse Templates</FooterLink>
+              <FooterLink href="/#features">How It Works</FooterLink>
+              <FooterLink href="/#testimonials">Love Stories</FooterLink>
+              <FooterLink href="/#support">Support Us</FooterLink>
             </ul>
           </div>
 
           <div className="lg:col-span-2 md:col-span-4">
             <h4 className="font-bold text-foreground mb-6">Company</h4>
             <ul className="space-y-4 text-sm text-foreground/70">
-              <FooterLink href="#">About Us</FooterLink>
-              <FooterLink href="#">Blog</FooterLink>
-              <FooterLink href="#">Careers</FooterLink>
-              <FooterLink href="#">Contact</FooterLink>
+              <FooterLink href="/about">About Us</FooterLink>
+              <FooterLink href="/privacy">Privacy Policy</FooterLink>
+              <FooterLink href="/terms">Terms & Conditions</FooterLink>
+              <FooterLink href="/contact">Contact</FooterLink>
             </ul>
           </div>
 
@@ -100,7 +112,15 @@ export default function Footer() {
   );
 }
 
-function SocialLink({ href, icon: Icon, target}: { href: string; icon: any, target: "_blank" }) {
+function SocialLink({
+  href,
+  icon: Icon,
+  target,
+}: {
+  href: string;
+  icon: any;
+  target: "_blank";
+}) {
   return (
     <Link
       href={href}

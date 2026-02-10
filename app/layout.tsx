@@ -19,8 +19,46 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "LetterLove - AI Love Letters",
-  description: "Craft perfect love letters with AI.",
+  title: "LetterLove - AI Powered Cute & Valentine Letters",
+  description:
+    "Create adorable, AI-powered valentine letters and love notes. Whether you need a cute confession or a heartfelt message, Eugene helps you express your feelings perfectly.",
+  keywords: [
+    "AI powered letter",
+    "cute letters",
+    "valentine letters",
+    "love letters",
+    "AI writing",
+    "romantic letters",
+    "confession letters",
+    "apology letters",
+    "Eugene love letters",
+  ],
+  openGraph: {
+    title: "LetterLove - AI Powered Cute & Valentine Letters",
+    description:
+      "Create adorable, AI-powered valentine letters and love notes. Whether you need a cute confession or a heartfelt message, Eugene helps you express your feelings perfectly.",
+    url: "https://letterlove.fun",
+    siteName: "LetterLove",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "LetterLove - AI Powered Letters",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LetterLove - AI Powered Cute & Valentine Letters",
+    description:
+      "Create adorable, AI-powered valentine letters and love notes. Whether you need a cute confession or a heartfelt message, Eugene helps you express your feelings perfectly.",
+    images: ["/og-image.png"],
+    creator: "@LetterLoveAI",
+  },
+  metadataBase: new URL("https://letterlove.fun"),
 };
 
 export default function RootLayout({

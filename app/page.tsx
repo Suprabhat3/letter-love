@@ -13,7 +13,6 @@ export default function Home() {
       <main>
         <HeroSection />
         <Features />
-        {/* We can add a filler section here if needed to separate Features and Testimonials */}
         <MilestoneTracker />
         <Testimonials />
         <SupportMe />
