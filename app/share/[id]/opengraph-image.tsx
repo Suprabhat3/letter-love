@@ -289,7 +289,7 @@ export default async function Image({
           fontWeight: 500,
         }}
       >
-        letterlove.ai
+        letterlove.fun
       </div>
     </div>,
     {
