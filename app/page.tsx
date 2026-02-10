@@ -4,6 +4,7 @@ import Features from "@/components/Features";
 import Testimonials from "@/components/Testimonials";
 import Footer from "@/components/Footer";
 import MilestoneTracker from "@/components/MilestoneTracker";
+import SupportMe from "@/components/SupportMe";
 
 export default function Home() {
   return (
@@ -15,6 +16,7 @@ export default function Home() {
         {/* We can add a filler section here if needed to separate Features and Testimonials */}
         <MilestoneTracker />
         <Testimonials />
+        <SupportMe />
       </main>
       <Footer />
     </div>

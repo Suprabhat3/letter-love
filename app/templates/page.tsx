@@ -188,9 +188,9 @@ export default function TemplatesPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-6xl md:text-8xl font-serif font-bold tracking-tight text-foreground drop-shadow-sm p-2"
+            className="text-6xl md:text-8xl font-serif font-bold tracking-tight text-foreground drop-shadow-sm"
           >
-            Find the Perfect <span className="text-gradient italic">Words</span>
+            Find the Perfect <span className="text-gradient italic p-2">Words</span>
           </motion.h1>
 
           <motion.p
