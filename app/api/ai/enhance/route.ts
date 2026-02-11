@@ -3,20 +3,9 @@ import OpenAI from "openai";
 import { NextResponse } from "next/server";
 
 const client = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: "https://api.groq.com/openai/v1",
+  apiKey: process.env.GEMINI_API_KEY,
+  baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
 });
-
-// List of free/performant models to rotate through
-const MODELS = [
-  "groq/compound",
-  "groq/compound-mini",
-  "openai/gpt-oss-20b",
-  "openai/gpt-oss-120b",
-  "moonshotai/kimi-k2-instruct-0905",
-  "qwen/qwen3-32b",
-  "llama-3.3-70b-versatile",
-];
 
 export async function POST(req: Request) {
   try {
@@ -30,7 +19,7 @@ export async function POST(req: Request) {
     }
 
     // Select a random model
-    const selectedModel = MODELS[Math.floor(Math.random() * MODELS.length)];
+    const selectedModel = "gemini-2.5-flash"
     
     // Construct a specialized system prompt
     const systemPrompt = `You are an expert creative writer and poet for 'LetterLove', specializing in Hinglish (Hindi-English mix) content for Indian users.
@@ -49,11 +38,13 @@ export async function POST(req: Request) {
     - You can use Hindi phrases like: "dil ki baat", "tujhe pata hai na", "mujhe lagta hai", "aisa lagta hai"
     
     Writing Guidelines:
+    - Response must feel complete, have a clouser in it.
     - Don't use "—" em dash and other special characters, you can use relevant emojis 💕
     - Enhance the user's rough draft to fit the "${templateName}" theme perfectly
-    - Keep it concise (under 50 words) unless the user wrote a long draft
+   - Write a well-developed response - don't be overly brief, but make it consice in 100-150 words approx.
     - Use emotional, heartfelt language that feels "apna" (relatable)
-    - Avoid overly formal or Shudh Hindi - keep it conversational Hinglish
+    - Avoid overly formal or Shudh Hindi - keep it conversational Hinglish or English.
+    - If user provides a rough draft, enhance it. If not, create a beautiful, heartfelt piece.
     - Return ONLY the enhanced text. No "Here is the improved version:" prefixes.`;
 
     const completion = await client.chat.completions.create({
@@ -63,21 +54,13 @@ export async function POST(req: Request) {
       ],
       model: selectedModel,
       temperature: 0.7,
-      max_tokens: 200,
+      max_tokens: 2000,
     });
 
-    let enhancedText = completion.choices[0]?.message?.content || "";
-    
-    // Strip any thinking/reasoning tags that might appear in the response
-    enhancedText = enhancedText
-      .replace(/<think>[\s\S]*?<\/think>/gi, '')
-      .replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '')
-      .replace(/\[REASONING\][\s\S]*?\[\/REASONING\]/gi, '')
-      .replace(/\[THINK\][\s\S]*?\[\/THINK\]/gi, '')
-      .trim();
+    const text = completion.choices[0].message.content || "";
 
     return NextResponse.json({ 
-      text: enhancedText,
+      text: text,
       model: selectedModel 
     });
 
