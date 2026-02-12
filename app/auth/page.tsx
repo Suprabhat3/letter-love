@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { SparklesIcon } from "@/components/SparklesIcon";
 
-export default function AuthPage() {
+function AuthPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect");
@@ -452,5 +452,19 @@ export default function AuthPage() {
         </motion.p>
       </div>
     </main>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen flex items-center justify-center bg-[#faf5f6] dark:bg-background">
+          <Loader2 className="w-10 h-10 animate-spin text-pink-500" />
+        </main>
+      }
+    >
+      <AuthPageContent />
+    </Suspense>
   );
 }
