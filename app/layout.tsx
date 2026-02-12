@@ -88,7 +88,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-       <head>
+      <head>
         <link
           rel="apple-touch-icon"
           sizes="180x180"
@@ -106,8 +106,12 @@ export default function RootLayout({
           sizes="16x16"
           href="/favicon-16x16.png"
         />
-        <link rel="manifest" href="/site.webmanifest" />
-<script defer src="https://cloud.umami.is/script.js" data-website-id="8605b732-710b-4fe0-9820-13125e5e3bc4"></script>
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <script
+          defer
+          src="https://cloud.umami.is/script.js"
+          data-website-id="8605b732-710b-4fe0-9820-13125e5e3bc4"
+        ></script>
       </head>
       <body
         className={`${inter.variable} ${playfair.variable} ${dancing.variable} antialiased`}

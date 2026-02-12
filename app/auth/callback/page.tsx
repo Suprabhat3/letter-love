@@ -1,18 +1,20 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const { session } = useAuth();
 
   useEffect(() => {
-    // If session exists, redirect to dashboard
+    // If session exists, redirect to the original page or dashboard
     if (session) {
-      router.push("/dashboard");
+      router.push(redirectTo || "/dashboard");
     } else {
       // If no session after a short timeout, maybe redirect to login?
       // Or rely on AuthProvider to set session eventually.
@@ -23,7 +25,7 @@ export default function AuthCallbackPage() {
       }, 5000);
       return () => clearTimeout(timeout);
     }
-  }, [session, router]);
+  }, [session, router, redirectTo]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#faf5f6] dark:bg-background">

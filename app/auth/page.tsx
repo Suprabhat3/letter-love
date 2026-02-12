@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
@@ -18,6 +18,8 @@ import { SparklesIcon } from "@/components/SparklesIcon";
 
 export default function AuthPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const { signIn, signUp, signInWithGoogle } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
@@ -70,7 +72,7 @@ export default function AuthPage() {
         setSuccess(true);
         setLoading(false);
       } else {
-        router.push("/dashboard");
+        router.push(redirectTo || "/dashboard");
       }
     }
   };
@@ -385,7 +387,9 @@ export default function AuthPage() {
                   type="button"
                   onClick={async () => {
                     setLoading(true);
-                    const result = await signInWithGoogle();
+                    const result = await signInWithGoogle(
+                      redirectTo || undefined,
+                    );
                     if (result.error) {
                       setError(result.error);
                       setLoading(false);

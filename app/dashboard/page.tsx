@@ -279,7 +279,7 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            className="bg-white/80 dark:bg-black/50 backdrop-blur-2xl border border-white/60 dark:border-white/10 p-3 rounded-3xl shadow-lg shadow-black/5 flex flex-col sm:flex-row gap-3"
+            className="bg-white/80 dark:bg-black/50 backdrop-blur-2xl border border-white/60 dark:border-white/10 p-3 rounded-3xl shadow-lg shadow-black/5 flex flex-col sm:flex-row gap-3 relative z-30"
           >
             <div className="relative flex-grow group">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/60 group-focus-within:text-pink-500 transition-colors" />
@@ -310,7 +310,7 @@ export default function DashboardPage() {
                     initial={{ opacity: 0, y: -10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    className="absolute right-0 mt-2 w-48 bg-white dark:bg-card border border-black/10 dark:border-white/10 rounded-2xl shadow-xl overflow-hidden backdrop-blur-xl"
+                    className="absolute right-0 mt-2 w-48 bg-white dark:bg-card border border-black/10 dark:border-white/10 rounded-2xl shadow-xl overflow-hidden backdrop-blur-xl z-50"
                   >
                     {[
                       { value: "newest" as SortOption, label: "Newest First" },

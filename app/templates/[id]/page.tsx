@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
@@ -24,7 +24,27 @@ export default function TemplateEditorPage({ params }: PageProps) {
   const { user, loading: authLoading } = useAuth();
   const template = getTemplateById(id);
 
-  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [formData, setFormData] = useState<Record<string, string>>(() => {
+    // Restore form data from sessionStorage if available (after auth redirect)
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem(`template-draft-${id}`);
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch {
+          return {};
+        }
+      }
+    }
+    return {};
+  });
+
+  // Clear saved draft from sessionStorage once user is authenticated and data is loaded
+  useEffect(() => {
+    if (user && formData && Object.keys(formData).length > 0) {
+      sessionStorage.removeItem(`template-draft-${id}`);
+    }
+  }, [user, id]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDemoPreview, setShowDemoPreview] = useState(false);
@@ -107,7 +127,10 @@ export default function TemplateEditorPage({ params }: PageProps) {
     setError(null);
 
     if (!user) {
-      router.push("/auth");
+      // Save form data to sessionStorage before redirecting to auth
+      sessionStorage.setItem(`template-draft-${id}`, JSON.stringify(formData));
+      const redirectUrl = `/templates/${id}`;
+      router.push(`/auth?redirect=${encodeURIComponent(redirectUrl)}`);
       return;
     }
 
@@ -180,7 +203,16 @@ export default function TemplateEditorPage({ params }: PageProps) {
               </Link>
             ) : (
               <Link
-                href="/auth"
+                href={`/auth?redirect=${encodeURIComponent(`/templates/${id}`)}`}
+                onClick={() => {
+                  // Save form data before navigating to auth
+                  if (Object.keys(formData).length > 0) {
+                    sessionStorage.setItem(
+                      `template-draft-${id}`,
+                      JSON.stringify(formData),
+                    );
+                  }
+                }}
                 className="group flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg hover:shadow-pink-500/25 hover:scale-105 transition-all font-medium text-sm md:text-base"
               >
                 <User size={18} />
