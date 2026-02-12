@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 import Image from "next/image";
 import Script from "next/script";
 import { getTemplateById } from "@/lib/templates";
-import { createCard } from "@/lib/supabase";
+import { createCard, getCard, updateCard } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { CATEGORIES } from "@/lib/types";
 
@@ -16,11 +16,46 @@ interface PageProps {
 }
 
 import ShareModal from "@/components/ShareModal";
-import { Sparkles, ArrowLeft, User, LayoutGrid } from "lucide-react";
+import { Sparkles, ArrowLeft, User, LayoutGrid, Type } from "lucide-react";
+
+const FONTS = [
+  {
+    id: "default",
+    name: "Classic",
+    headerClass: "font-handwriting",
+    bodyClass: "font-serif",
+  },
+  {
+    id: "rustic",
+    name: "Rustic",
+    headerClass: "font-rustic",
+    bodyClass: "font-rustic",
+  },
+  {
+    id: "lucy",
+    name: "Lucy",
+    headerClass: "font-lucy",
+    bodyClass: "font-lucy",
+  },
+  {
+    id: "valentine",
+    name: "Valentine",
+    headerClass: "font-valentine",
+    bodyClass: "font-valentine",
+  },
+  {
+    id: "valty",
+    name: "Valty",
+    headerClass: "font-valty",
+    bodyClass: "font-valty",
+  },
+];
 
 export default function TemplateEditorPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("editId");
   const { user, loading: authLoading } = useAuth();
   const template = getTemplateById(id);
 
@@ -41,10 +76,29 @@ export default function TemplateEditorPage({ params }: PageProps) {
 
   // Clear saved draft from sessionStorage once user is authenticated and data is loaded
   useEffect(() => {
-    if (user && formData && Object.keys(formData).length > 0) {
+    if (user && formData && Object.keys(formData).length > 0 && !editId) {
       sessionStorage.removeItem(`template-draft-${id}`);
     }
-  }, [user, id]);
+  }, [user, id, editId]);
+
+  // Load existing card data if editing
+  useEffect(() => {
+    async function loadCardData() {
+      if (!editId) return;
+
+      try {
+        const card = await getCard(editId);
+        if (card && card.data) {
+          setFormData(card.data);
+        }
+      } catch (err) {
+        console.error("Failed to load card for editing:", err);
+        setError("Failed to load generic card data");
+      }
+    }
+
+    loadCardData();
+  }, [editId]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDemoPreview, setShowDemoPreview] = useState(false);
@@ -142,15 +196,32 @@ export default function TemplateEditorPage({ params }: PageProps) {
 
     setIsSubmitting(true);
 
+    setIsSubmitting(true);
+
     try {
-      const result = await createCard(template.id, formData, user.id);
-      if ("error" in result) {
-        setError(result.error);
-        setIsSubmitting(false);
-        return;
+      let resultId = "";
+
+      if (editId && user) {
+        // Update existing card
+        const result = await updateCard(editId, formData, user.id);
+        if (!result.success) {
+          setError(result.error || "Failed to update card");
+          setIsSubmitting(false);
+          return;
+        }
+        resultId = editId;
+      } else {
+        // Create new card
+        const result = await createCard(template.id, formData, user?.id);
+        if ("error" in result) {
+          setError(result.error);
+          setIsSubmitting(false);
+          return;
+        }
+        resultId = result.id;
       }
 
-      const shareUrl = `${window.location.origin}/share/${result.id}`;
+      const shareUrl = `${window.location.origin}/share/${resultId}`;
       setCreatedCardLink(shareUrl);
       setShareModalOpen(true);
       // Wait for user to close modal to navigate
@@ -361,6 +432,33 @@ export default function TemplateEditorPage({ params }: PageProps) {
                   </div>
                 ))}
               </div>
+              {/* Font Selector */}
+              <div className="mt-8">
+                <label className="block text-sm font-medium text-foreground/80 mb-3 flex items-center gap-2">
+                  <Type size={16} /> Choose Font Style
+                </label>
+                <div className="grid grid-cols-2 xs:grid-cols-3 gap-3">
+                  {FONTS.map((font) => (
+                    <button
+                      key={font.id}
+                      type="button"
+                      onClick={() => handleInputChange("fontName", font.id)}
+                      className={`px-3 py-3 rounded-xl border transition-all text-sm relative overflow-hidden group ${
+                        (formData.fontName || "default") === font.id
+                          ? "bg-pink-50 border-pink-500 text-pink-700 font-medium ring-1 ring-pink-500/20"
+                          : "bg-white/60 border-white/80 hover:border-pink-300 hover:bg-white text-foreground/70"
+                      }`}
+                    >
+                      <span
+                        className={`block text-xl mb-1 ${font.headerClass}`}
+                      >
+                        Aa
+                      </span>
+                      {font.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               {error && (
                 <motion.p
@@ -415,7 +513,11 @@ export default function TemplateEditorPage({ params }: PageProps) {
                       Creating...
                     </span>
                   ) : user ? (
-                    "Save & Get Shareable Link ✨"
+                    editId ? (
+                      "Update Card ✨"
+                    ) : (
+                      "Save & Get Shareable Link ✨"
+                    )
                   ) : (
                     "Login to Save & Share 💕"
                   )}
@@ -494,13 +596,21 @@ export default function TemplateEditorPage({ params }: PageProps) {
                 )}
 
                 <h3
-                  className="font-handwriting text-4xl mb-4"
+                  className={`text-4xl mb-4 ${
+                    FONTS.find((f) => f.id === (formData.fontName || "default"))
+                      ?.headerClass || "font-handwriting"
+                  }`}
                   style={{ color: template.colors.primary }}
                 >
                   {formData.recipientName || template.fields[0].placeholder}
                 </h3>
 
-                <p className="text-foreground/80 font-serif text-lg leading-relaxed mb-6 max-w-sm mx-auto">
+                <p
+                  className={`text-foreground/80 text-lg leading-relaxed mb-6 max-w-sm mx-auto ${
+                    FONTS.find((f) => f.id === (formData.fontName || "default"))
+                      ?.bodyClass || "font-serif"
+                  }`}
+                >
                   {formData.message || formData.reason || template.previewText}
                 </p>
 
@@ -510,7 +620,12 @@ export default function TemplateEditorPage({ params }: PageProps) {
                   </p>
                 )}
 
-                <p className="text-foreground/50 mt-6 font-serif">
+                <p
+                  className={`text-foreground/50 mt-6 ${
+                    FONTS.find((f) => f.id === (formData.fontName || "default"))
+                      ?.headerClass || "font-handwriting"
+                  }`}
+                >
                   — {formData.senderName || template.fields[1].placeholder}
                 </p>
               </div>

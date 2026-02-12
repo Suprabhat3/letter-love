@@ -21,7 +21,7 @@ const features = [
     icon: SparklesIcon,
     title: "Share Your Story",
     description:
-      "Tell us a few details about your person, your memory, or your feelings. No writing skills needed—just speak from the heart.",
+      "Tell us a few details about your person, your memory, or your feelings. No writing skills needed, just speak from the heart.",
     image: "/share-input1.png",
     color: "from-orange-400 to-rose-500",
     bg: "bg-orange-50",
@@ -101,7 +101,7 @@ export default function Features() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="text-xl text-foreground/60 leading-relaxed"
+              className="text-xl text-foreground/60 leading-relaxed italic"
             >
               Follow our simple path to create something truly meaningful. We
               handle the complexity, so you can focus on the feeling.
@@ -196,7 +196,7 @@ function FeatureItem({ feature, index }: { feature: any; index: number }) {
           <h3 className="text-4xl md:text-5xl font-serif font-bold mb-6 text-foreground tracking-tight">
             {feature.title}
           </h3>
-          <p className="text-lg md:text-xl text-foreground/70 leading-relaxed font-sans font-light">
+          <p className="text-lg italic md:text-xl text-foreground/70 leading-relaxed font-sans font-light">
             {feature.description}
           </p>
         </motion.div>

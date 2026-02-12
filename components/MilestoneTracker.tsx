@@ -54,7 +54,7 @@ export default function MilestoneTracker() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-lg text-foreground/60 max-w-2xl mx-auto font-light"
+            className="text-lg text-foreground/60 max-w-2xl mx-auto font-light italic"
           >
             Every moment counts. Celebrate your journey together with words that
             last forever.
@@ -83,7 +83,7 @@ export default function MilestoneTracker() {
                 your <span className="text-purple-600">Forever</span>
               </h3>
 
-              <p className="text-foreground/70 mb-8 text-lg font-light leading-relaxed">
+              <p className="text-foreground/70 mb-8 text-lg font-light leading-relaxed italic">
                 Keep track of anniversaries, special memories, and little
                 moments. We'll remind you when to write something sweet.
               </p>

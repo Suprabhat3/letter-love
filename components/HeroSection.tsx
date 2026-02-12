@@ -59,18 +59,7 @@ export default function HeroSection() {
       </motion.div>
 
       {/* Mobile Character Image - Positioned at Bottom */}
-      <motion.div
-        className="absolute left-1/2 bottom-[5%] -translate-x-1/2 w-[280px] xs:w-[320px] md:hidden pointer-events-none z-0"
-        animate={{
-          y: [-5, -15, -5],
-          rotate: [0, 1, 0, -1, 0],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      >
+      <div className="absolute left-1/2 bottom-[5%] -translate-x-1/2 w-[280px] xs:w-[320px] md:hidden pointer-events-none z-0">
         <Image
           src="/hero3.png"
           alt="Couple Character"
@@ -78,89 +67,26 @@ export default function HeroSection() {
           height={800}
           className="w-full h-auto object-contain opacity-60 drop-shadow-2xl"
         />
-      </motion.div>
+      </div>
 
-      {/* Mobile Floating Hearts - Repositioned */}
-      <motion.div
-        className="absolute top-[15%] left-[8%] md:hidden pointer-events-none z-0"
-        animate={{
-          y: [0, -20, 0],
-          rotate: [0, 10, 0],
-          scale: [1, 1.1, 1],
-        }}
-        transition={{
-          duration: 4,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      >
+      {/* Mobile Floating Hearts - Static */}
+      <div className="absolute top-[15%] left-[8%] md:hidden pointer-events-none z-0">
         <div className="text-5xl opacity-30">💕</div>
-      </motion.div>
-      <motion.div
-        className="absolute top-[18%] right-[10%] md:hidden pointer-events-none z-0"
-        animate={{
-          y: [0, -15, 0],
-          rotate: [0, -10, 0],
-          scale: [1, 1.15, 1],
-        }}
-        transition={{
-          duration: 5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 1,
-        }}
-      >
+      </div>
+      <div className="absolute top-[18%] right-[10%] md:hidden pointer-events-none z-0">
         <div className="text-4xl opacity-25">💌</div>
-      </motion.div>
-      <motion.div
-        className="absolute top-[35%] left-[12%] md:hidden pointer-events-none z-0"
-        animate={{
-          y: [0, -10, 0],
-          scale: [1, 1.2, 1],
-          rotate: [0, 15, 0],
-        }}
-        transition={{
-          duration: 3,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 0.5,
-        }}
-      >
+      </div>
+      <div className="absolute top-[35%] left-[12%] md:hidden pointer-events-none z-0">
         <div className="text-3xl opacity-30">✨</div>
-      </motion.div>
-      <motion.div
-        className="absolute top-[32%] right-[8%] md:hidden pointer-events-none z-0"
-        animate={{
-          y: [0, -12, 0],
-          rotate: [0, -12, 0],
-          scale: [1, 1.1, 1],
-        }}
-        transition={{
-          duration: 4.5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 2,
-        }}
-      >
+      </div>
+      <div className="absolute top-[32%] right-[8%] md:hidden pointer-events-none z-0">
         <div className="text-4xl opacity-25">💖</div>
-      </motion.div>
-      <motion.div
-        className="absolute top-[48%] left-[15%] md:hidden pointer-events-none z-0"
-        animate={{
-          y: [0, -8, 0],
-          scale: [1, 1.15, 1],
-        }}
-        transition={{
-          duration: 3.5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 1.5,
-        }}
-      >
+      </div>
+      <div className="absolute top-[48%] left-[15%] md:hidden pointer-events-none z-0">
         <div className="text-3xl opacity-20">💝</div>
-      </motion.div>
+      </div>
 
-      <div className="container mx-auto px-6 relative z-10 flex flex-col items-center text-center">
+      <div className="container mx-auto px-6 relative z-10 flex flex-col items-center text-center pb-40 md:pb-0">
         {/* Badge */}
         <motion.div
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/70 backdrop-blur-sm border border-white shadow-md mb-6 md:mb-8"
@@ -169,33 +95,23 @@ export default function HeroSection() {
           transition={{ duration: 0.6 }}
         >
           <SparklesIcon className="text-pink-500" />
-          <span className="text-sm font-medium text-foreground/80 text-pink-500">
+          <span className="text-sm font-medium text-foreground/80 text-pink-500 italic">
             AI-Powered Love Letters
           </span>
         </motion.div>
 
         {/* Heading */}
-        <motion.h1
-          className="text-[2.5rem] leading-tight sm:text-5xl md:text-6xl lg:text-7xl font-bold font-serif tracking-tight mb-5 md:mb-6 max-w-4xl text-foreground px-4 sm:px-0"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
+        <h1 className="text-[2.5rem] leading-[0.9] sm:leading-none sm:text-5xl md:text-6xl lg:text-7xl font-bold font-valty mb-2 md:mb-6 max-w-4xl text-foreground px-4 sm:px-0">
           Know Your Heart, <br />
           <span className="text-gradient">Share Your Love.</span>
-        </motion.h1>
+        </h1>
 
         {/* Description */}
-        <motion.p
-          className="text-base sm:text-xl text-foreground/70 mb-8 md:mb-10 max-w-2xl leading-relaxed px-2 sm:px-0"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-        >
+        <p className="text-base sm:text-xl text-foreground/70 mb-4 md:mb-10 max-w-2xl leading-relaxed px-2 sm:px-0 italic">
           Transform your scattered thoughts and memories into beautifully
           crafted love letters, poems, and notes. The perfect way to say exactly
           what you mean.
-        </motion.p>
+        </p>
 
         {/* CTA Buttons */}
         <motion.div

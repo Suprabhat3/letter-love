@@ -47,10 +47,10 @@ export default function Navbar() {
         >
           {/* Logo */}
           <Link href="/" className="flex items-center gap-1 group">
-            <span className="text-xl md:text-2xl font-bold tracking-tight text-primary transition-colors group-hover:text-pink-600">
+            <span className="text-xl font-valty md:text-2xl font-bold tracking-tight text-primary transition-colors group-hover:text-pink-600">
               Letter
             </span>
-            <span className="text-foreground font-handwriting text-2xl md:text-3xl transition-transform group-hover:scale-110 group-hover:rotate-[-5deg] duration-300 origin-center text-pink-500 pb-1">
+            <span className="text-foreground font-valty text-2xl md:text-3xl transition-transform group-hover:scale-110 group-hover:rotate-[-5deg] duration-300 origin-center text-pink-500 pb-1">
               Love
             </span>
           </Link>

@@ -15,6 +15,39 @@ interface ShareCardViewProps {
   template: Template;
 }
 
+const FONTS = [
+  {
+    id: "default",
+    name: "Classic",
+    headerClass: "font-handwriting",
+    bodyClass: "font-serif",
+  },
+  {
+    id: "rustic",
+    name: "Rustic",
+    headerClass: "font-rustic",
+    bodyClass: "font-rustic",
+  },
+  {
+    id: "lucy",
+    name: "Lucy",
+    headerClass: "font-lucy",
+    bodyClass: "font-lucy",
+  },
+  {
+    id: "valentine",
+    name: "Valentine",
+    headerClass: "font-valentine",
+    bodyClass: "font-valentine",
+  },
+  {
+    id: "valty",
+    name: "Valty",
+    headerClass: "font-valty",
+    bodyClass: "font-valty",
+  },
+];
+
 export default function ShareCardView({ card, template }: ShareCardViewProps) {
   // Check for specific templates that have custom implementations
   if (template.id === "sorry-card") {
@@ -162,7 +195,10 @@ export default function ShareCardView({ card, template }: ShareCardViewProps) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="font-handwriting text-5xl md:text-6xl mb-4 relative z-10"
+                className={`text-5xl md:text-6xl mb-4 relative z-10 ${
+                  FONTS.find((f) => f.id === (data.fontName || "default"))
+                    ?.headerClass || "font-handwriting"
+                }`}
                 style={{ color: template.colors.primary }}
               >
                 {data.recipientName || "My Dear"}
@@ -173,7 +209,10 @@ export default function ShareCardView({ card, template }: ShareCardViewProps) {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.4 }}
-                  className="text-foreground/60 font-serif italic mb-6 relative z-10"
+                  className={`text-foreground/60 italic mb-6 relative z-10 ${
+                    FONTS.find((f) => f.id === (data.fontName || "default"))
+                      ?.bodyClass || "font-serif"
+                  }`}
                 >
                   {data.petName}
                 </motion.p>
@@ -183,7 +222,10 @@ export default function ShareCardView({ card, template }: ShareCardViewProps) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="text-lg md:text-xl text-foreground/80 font-serif leading-relaxed mb-8 relative z-10 max-w-md mx-auto whitespace-pre-line"
+                className={`text-lg md:text-xl text-foreground/80 leading-relaxed mb-8 relative z-10 max-w-md mx-auto whitespace-pre-line ${
+                  FONTS.find((f) => f.id === (data.fontName || "default"))
+                    ?.bodyClass || "font-serif"
+                }`}
               >
                 {data.message || data.reason || template.previewText}
               </motion.p>
@@ -195,7 +237,12 @@ export default function ShareCardView({ card, template }: ShareCardViewProps) {
                   transition={{ delay: 0.6 }}
                   className="border-t border-foreground/10 pt-6 mb-6 relative z-10"
                 >
-                  <p className="text-foreground/60 text-sm italic font-serif">
+                  <p
+                    className={`text-foreground/60 text-sm italic ${
+                      FONTS.find((f) => f.id === (data.fontName || "default"))
+                        ?.bodyClass || "font-serif"
+                    }`}
+                  >
                     "{data.memory || data.promise}"
                   </p>
                 </motion.div>
@@ -225,7 +272,10 @@ export default function ShareCardView({ card, template }: ShareCardViewProps) {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.7 }}
-                  className="text-foreground/70 font-medium mb-6 relative z-10"
+                  className={`text-foreground/70 font-medium mb-6 relative z-10 ${
+                    FONTS.find((f) => f.id === (data.fontName || "default"))
+                      ?.bodyClass || "font-serif"
+                  }`}
                 >
                   ✨ {data.wish}
                 </motion.p>
@@ -235,7 +285,10 @@ export default function ShareCardView({ card, template }: ShareCardViewProps) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.8 }}
-                className="text-foreground/60 font-serif relative z-10"
+                className={`text-foreground/60 relative z-10 ${
+                  FONTS.find((f) => f.id === (data.fontName || "default"))
+                    ?.headerClass || "font-handwriting"
+                }`}
               >
                 — {data.senderName || "With Love"}
               </motion.p>

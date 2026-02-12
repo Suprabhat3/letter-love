@@ -102,3 +102,23 @@ export function getShareUrl(cardId: string): string {
     : process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
   return `${baseUrl}/share/${cardId}`;
 }
+
+// Update an existing card
+export async function updateCard(
+  cardId: string,
+  data: Record<string, string>,
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase
+    .from("cards")
+    .update({ data })
+    .eq("id", cardId)
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("Error updating card:", error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}

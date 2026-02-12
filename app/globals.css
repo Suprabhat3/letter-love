@@ -69,6 +69,55 @@ h6 {
   font-family: var(--font-serif);
 }
 
+@font-face {
+  font-family: 'Rustic';
+  src: url('/fonts/RusticRoadway.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'lucy';
+  src: url('/fonts/Lucy.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'ValentineCalligraph';
+  src: url('/fonts/ValentineCalligraph.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+  size-adjust: 80%;
+}
+
+@font-face {
+  font-family: 'Valty';
+  src: url('/fonts/Valty.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.font-rustic {
+  font-family: 'Rustic', var(--font-dancing), cursive;
+}
+
+.font-valty {
+  font-family: 'Valty', var(--font-dancing), cursive;
+}
+
+.font-valentine {
+  font-family: 'ValentineCalligraph', var(--font-dancing), cursive;
+}
+
+.font-lucy {
+  font-family: 'lucy', var(--font-dancing), cursive;
+}
+
 .font-handwriting {
   font-family: var(--font-handwriting);
 }
@@ -323,12 +372,15 @@ h6 {
   0% {
     transform: translate(0px, 0px) scale(1);
   }
+
   33% {
     transform: translate(30px, -50px) scale(1.1);
   }
+
   66% {
     transform: translate(-20px, 20px) scale(0.9);
   }
+
   100% {
     transform: translate(0px, 0px) scale(1);
   }
@@ -351,10 +403,13 @@ h6 {
 }
 
 @keyframes bounce {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(-5%);
     animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
   }
+
   50% {
     transform: translateY(0);
     animation-timing-function: cubic-bezier(0, 0, 0.2, 1);

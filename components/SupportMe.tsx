@@ -46,7 +46,7 @@ export default function SupportMe() {
                     Code
                   </h2>
 
-                  <p className="text-lg text-foreground/70 leading-relaxed font-sans">
+                  <p className="text-lg text-foreground/70 leading-relaxed font-sans italic">
                     Building{" "}
                     <strong className="text-pink-600">LetterLove</strong> is a
                     passion project. If these templates have helped you express

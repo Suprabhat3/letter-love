@@ -100,7 +100,7 @@ export default function Testimonials() {
               Heart
             </span>
           </motion.h2>
-          <p className="text-stone-500 text-lg max-w-2xl mx-auto">
+          <p className="text-stone-500 text-lg max-w-2xl mx-auto italic">
             Real stories from people who found the right words at the right
             time.
           </p>
@@ -148,8 +148,6 @@ function Postcard({ testimonial, index }: { testimonial: any; index: number }) {
           <div className="absolute inset-0 border-[3px] border-white/30 border-dashed m-1 rounded-sm" />
           <Heart className="w-5 h-5 text-white fill-white" />
         </div>
-        {/* Fake stamp lines */}
-        <div className="w-16 h-8 bg-[url('/stamp-lines.svg')] opacity-20 -rotate-12" />
       </div>
 
       <div className="mb-8 pr-16">
@@ -166,7 +164,7 @@ function Postcard({ testimonial, index }: { testimonial: any; index: number }) {
 
       <div className="space-y-4">
         <Quote className="w-6 h-6 text-stone-300" />
-        <p className="text-lg font-handwriting text-stone-600 leading-relaxed">
+        <p className="text-lg italic text-stone-600 leading-relaxed">
           {testimonial.content}
         </p>
         <div className="pt-4 border-t border-dashed border-stone-200 flex justify-between items-center">

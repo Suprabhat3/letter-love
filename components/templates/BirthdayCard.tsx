@@ -10,6 +10,39 @@ interface BirthdayCardProps {
   data: Record<string, string>;
 }
 
+const FONTS = [
+  {
+    id: "default",
+    name: "Classic",
+    headerClass: "font-handwriting",
+    bodyClass: "font-serif",
+  },
+  {
+    id: "rustic",
+    name: "Rustic",
+    headerClass: "font-rustic",
+    bodyClass: "font-rustic",
+  },
+  {
+    id: "lucy",
+    name: "Lucy",
+    headerClass: "font-lucy",
+    bodyClass: "font-lucy",
+  },
+  {
+    id: "valentine",
+    name: "Valentine",
+    headerClass: "font-valentine",
+    bodyClass: "font-valentine",
+  },
+  {
+    id: "valty",
+    name: "Valty",
+    headerClass: "font-valty",
+    bodyClass: "font-valty",
+  },
+];
+
 export default function BirthdayCard({ data }: BirthdayCardProps) {
   const [candlesBlown, setCandlesBlown] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
@@ -111,11 +144,19 @@ export default function BirthdayCard({ data }: BirthdayCardProps) {
                 <motion.h1
                   initial={{ y: -20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
-                  className="font-handwriting text-4xl md:text-5xl text-foreground mb-4"
+                  className={`text-4xl md:text-5xl text-foreground mb-4 ${
+                    FONTS.find((f) => f.id === (data.fontName || "default"))
+                      ?.headerClass || "font-handwriting"
+                  }`}
                 >
                   Make a Wish!
                 </motion.h1>
-                <p className="text-muted-foreground mb-8 md:mb-12 font-serif italic text-sm md:text-base">
+                <p
+                  className={`text-muted-foreground mb-8 md:mb-12 italic text-sm md:text-base ${
+                    FONTS.find((f) => f.id === (data.fontName || "default"))
+                      ?.bodyClass || "font-serif"
+                  }`}
+                >
                   Tap the cake to blow out the candles
                 </p>
 
@@ -202,14 +243,29 @@ export default function BirthdayCard({ data }: BirthdayCardProps) {
                   )}
                 </div>
 
-                <h1 className="font-handwriting text-4xl md:text-5xl lg:text-6xl text-gradient mb-2 leading-tight py-2">
+                <h1
+                  className={`text-4xl md:text-5xl lg:text-6xl text-gradient mb-6 leading-relaxed py-2 ${
+                    FONTS.find((f) => f.id === (data.fontName || "default"))
+                      ?.headerClass || "font-handwriting"
+                  }`}
+                >
                   Happy Birthday
                 </h1>
-                <h2 className="font-serif text-xl md:text-2xl text-foreground.80 mb-4 md:mb-6">
+                <h2
+                  className={`text-xl md:text-2xl text-foreground/80 mb-6 md:mb-8 ${
+                    FONTS.find((f) => f.id === (data.fontName || "default"))
+                      ?.headerClass || "font-serif"
+                  }`}
+                >
                   {recipientName}!
                 </h2>
 
-                <p className="text-lg md:text-xl text-foreground/80 font-serif mb-4 md:mb-6 max-w-xs mx-auto leading-relaxed">
+                <p
+                  className={`text-lg md:text-xl text-foreground/80 mb-6 md:mb-8 max-w-sm md:max-w-md mx-auto leading-relaxed ${
+                    FONTS.find((f) => f.id === (data.fontName || "default"))
+                      ?.bodyClass || "font-serif"
+                  }`}
+                >
                   {message}
                 </p>
 
@@ -218,7 +274,12 @@ export default function BirthdayCard({ data }: BirthdayCardProps) {
                     <p className="text-sm text-foreground/60 uppercase tracking-widest text-[10px] mb-1">
                       A Special Wish
                     </p>
-                    <p className="text-base md:text-lg font-medium text-pink-600 font-handwriting">
+                    <p
+                      className={`text-base md:text-lg font-medium text-pink-600 ${
+                        FONTS.find((f) => f.id === (data.fontName || "default"))
+                          ?.headerClass || "font-handwriting"
+                      }`}
+                    >
                       "{wish}"
                     </p>
                   </div>
@@ -241,7 +302,12 @@ export default function BirthdayCard({ data }: BirthdayCardProps) {
                   </button>
                 </div>
 
-                <p className="text-sm text-muted-foreground mt-4 md:mt-6 font-serif">
+                <p
+                  className={`text-sm text-muted-foreground mt-4 md:mt-6 ${
+                    FONTS.find((f) => f.id === (data.fontName || "default"))
+                      ?.headerClass || "font-serif"
+                  }`}
+                >
                   — {senderName}
                 </p>
 

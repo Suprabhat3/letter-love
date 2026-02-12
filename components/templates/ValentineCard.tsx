@@ -21,6 +21,39 @@ const NO_PHRASES = [
   "Last chance!",
 ];
 
+const FONTS = [
+  {
+    id: "default",
+    name: "Classic",
+    headerClass: "font-handwriting",
+    bodyClass: "font-serif",
+  },
+  {
+    id: "rustic",
+    name: "Rustic",
+    headerClass: "font-rustic",
+    bodyClass: "font-rustic",
+  },
+  {
+    id: "lucy",
+    name: "Lucy",
+    headerClass: "font-lucy",
+    bodyClass: "font-lucy",
+  },
+  {
+    id: "valentine",
+    name: "Valentine",
+    headerClass: "font-valentine",
+    bodyClass: "font-valentine",
+  },
+  {
+    id: "valty",
+    name: "Valty",
+    headerClass: "font-valty",
+    bodyClass: "font-valty",
+  },
+];
+
 interface ValentineCardProps {
   data: Record<string, string>;
 }
@@ -115,15 +148,30 @@ export default function ValentineCard({ data }: ValentineCardProps) {
                   💝
                 </motion.div>
 
-                <h1 className="font-handwriting text-5xl md:text-6xl text-red-500 mb-2 drop-shadow-sm p-2">
+                <h1
+                  className={`text-5xl md:text-6xl text-red-500 mb-2 drop-shadow-sm p-2 ${
+                    FONTS.find((f) => f.id === (data.fontName || "default"))
+                      ?.headerClass || "font-handwriting"
+                  }`}
+                >
                   Will you be my Valentine?
                 </h1>
 
-                <h2 className="text-xl font-medium text-foreground/80 mb-6 font-serif">
+                <h2
+                  className={`text-xl md:text-2xl font-medium text-foreground/80 mb-6 md:mb-8 ${
+                    FONTS.find((f) => f.id === (data.fontName || "default"))
+                      ?.headerClass || "font-serif"
+                  }`}
+                >
                   {recipientName}
                 </h2>
 
-                <p className="text-muted-foreground font-serif text-lg mb-8 max-w-sm italic">
+                <p
+                  className={`text-muted-foreground text-lg mb-8 max-w-sm italic ${
+                    FONTS.find((f) => f.id === (data.fontName || "default"))
+                      ?.bodyClass || "font-serif"
+                  }`}
+                >
                   "{reason}"
                 </p>
 
@@ -171,11 +219,21 @@ export default function ValentineCard({ data }: ValentineCardProps) {
                   />
                 </div>
 
-                <h2 className="font-handwriting text-6xl text-red-500 mb-6">
+                <h2
+                  className={`text-6xl text-red-500 mb-6 ${
+                    FONTS.find((f) => f.id === (data.fontName || "default"))
+                      ?.headerClass || "font-handwriting"
+                  }`}
+                >
                   Wooohooo!!! 💖
                 </h2>
 
-                <p className="text-xl text-foreground/80 font-serif mb-8 max-w-xs mx-auto">
+                <p
+                  className={`text-xl text-foreground/80 mb-8 max-w-xs mx-auto ${
+                    FONTS.find((f) => f.id === (data.fontName || "default"))
+                      ?.bodyClass || "font-serif"
+                  }`}
+                >
                   I knew you'd say yes! <br /> Can't wait for our special day.
                 </p>
 
@@ -185,7 +243,12 @@ export default function ValentineCard({ data }: ValentineCardProps) {
                       Ask Someone Special
                     </button>
                   </Link>
-                  <p className="text-sm text-muted-foreground mt-4 font-serif">
+                  <p
+                    className={`text-sm text-muted-foreground mt-4 ${
+                      FONTS.find((f) => f.id === (data.fontName || "default"))
+                        ?.headerClass || "font-serif"
+                    }`}
+                  >
                     With endless love, <br /> {senderName}
                   </p>
                 </div>
@@ -227,7 +290,10 @@ export default function ValentineCard({ data }: ValentineCardProps) {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center text-muted-foreground/60 text-xs mt-8 font-serif italic"
+          className={`text-center text-muted-foreground/60 text-xs mt-8 italic ${
+            FONTS.find((f) => f.id === (data.fontName || "default"))
+              ?.bodyClass || "font-serif"
+          }`}
         >
           Made with LetterLove
         </motion.p>

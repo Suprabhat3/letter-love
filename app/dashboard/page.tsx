@@ -37,6 +37,8 @@ export default function DashboardPage() {
   const [activeShareUrl, setActiveShareUrl] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [cardToDelete, setCardToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -71,11 +73,18 @@ export default function DashboardPage() {
     setShareModalOpen(true);
   };
 
-  const deleteCard = async (cardId: string) => {
-    if (!confirm("Are you sure you want to delete this letter?")) return;
+  const deleteCard = (cardId: string) => {
+    setCardToDelete(cardId);
+    setDeleteModalOpen(true);
+  };
 
-    await supabase.from("cards").delete().eq("id", cardId);
-    setCards(cards.filter((c) => c.id !== cardId));
+  const confirmDelete = async () => {
+    if (!cardToDelete) return;
+
+    await supabase.from("cards").delete().eq("id", cardToDelete);
+    setCards(cards.filter((c) => c.id !== cardToDelete));
+    setDeleteModalOpen(false);
+    setCardToDelete(null);
   };
 
   const filteredCards = cards
@@ -142,6 +151,12 @@ export default function DashboardPage() {
         isOpen={shareModalOpen}
         onClose={() => setShareModalOpen(false)}
         shareUrl={activeShareUrl}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
       />
 
       {/* Enhanced Abstract Background */}
@@ -595,6 +610,14 @@ function LetterCard({
             </button>
             <div className="w-[1px] h-4 sm:h-5 bg-border" />
             <Link
+              href={`/templates/${card.template_id}?editId=${card.id}`}
+              className="p-2 sm:p-2.5 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 text-muted-foreground hover:text-purple-500 transition-all hover:scale-110"
+              title="Edit"
+            >
+              <PenLine className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
+            </Link>
+            <div className="w-[1px] h-4 sm:h-5 bg-border" />
+            <Link
               href={`/share/${card.id}`}
               target="_blank"
               className="p-2 sm:p-2.5 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 text-muted-foreground hover:text-blue-500 transition-all hover:scale-110"
@@ -614,5 +637,69 @@ function LetterCard({
         </div>
       </div>
     </motion.div>
+  );
+}
+
+function DeleteConfirmationModal({
+  isOpen,
+  onClose,
+  onConfirm,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-sm px-4"
+          >
+            <div className="bg-white dark:bg-card rounded-3xl p-6 shadow-2xl border border-white/20 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-red-100 dark:bg-red-900/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+
+              <div className="text-center mb-6 relative z-10">
+                <div className="w-16 h-16 bg-red-50 dark:bg-red-900/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Trash2 className="w-8 h-8 text-red-500" />
+                </div>
+                <h3 className="text-xl font-bold font-serif mb-2 text-foreground">
+                  Delete Letter?
+                </h3>
+                <p className="text-muted-foreground text-sm">
+                  This action cannot be undone. This letter will be permanently
+                  removed from your collection.
+                </p>
+              </div>
+
+              <div className="flex gap-3 relative z-10">
+                <button
+                  onClick={onClose}
+                  className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-secondary text-foreground font-medium hover:bg-gray-200 dark:hover:bg-secondary/80 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={onConfirm}
+                  className="flex-1 px-4 py-3 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 shadow-lg shadow-red-200 dark:shadow-red-900/20 transition-all hover:scale-[1.02]"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
