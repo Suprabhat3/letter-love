@@ -20,6 +20,7 @@ import {
 import SorryCard from "@/components/templates/SorryCard";
 import BirthdayCard from "@/components/templates/BirthdayCard";
 import ValentineCard from "@/components/templates/ValentineCard";
+import { SparklesIcon } from "@/components/SparklesIcon";
 
 const RECIPIENTS = [
   { id: "all", label: "Anyone" },
@@ -156,30 +157,14 @@ export default function TemplatesPage() {
 
       <div className="relative z-10 container mx-auto px-6 py-12">
         {/* Hero Section */}
-        <div className="text-center mb-16 space-y-6 max-w-4xl mx-auto pt-16 relative">
-          {/* Decorative Floating Elements */}
-          <motion.div
-            animate={{ y: [0, -10, 0], rotate: [0, 5, 0] }}
-            transition={{ duration: 4, repeat: Infinity }}
-            className="absolute top-20 left-10 md:left-20 text-4xl opacity-60 hidden md:block"
-          >
-            💌
-          </motion.div>
-          <motion.div
-            animate={{ y: [0, 15, 0], rotate: [0, -5, 0] }}
-            transition={{ duration: 5, repeat: Infinity, delay: 1 }}
-            className="absolute top-32 right-10 md:right-20 text-4xl opacity-60 hidden md:block"
-          >
-            ✨
-          </motion.div>
-
+        <div className="text-center mb-16 space-y-6 max-w-4xl mx-auto pt-18 relative">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/60 backdrop-blur-md border border-white/50 text-foreground/80 text-sm font-medium mb-4 shadow-sm"
           >
-            <Sparkles size={14} className="text-primary" />
-            <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent font-semibold">
+            <SparklesIcon size={14} className="text-pink-600" />
+            <span className="bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent font-semibold italic">
               AI-Powered Templates
             </span>
           </motion.div>
@@ -188,7 +173,7 @@ export default function TemplatesPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-6xl md:text-8xl font-serif font-bold tracking-tight text-foreground drop-shadow-sm"
+            className="text-6xl md:text-8xl font-serif font-bold tracking-tight text-foreground drop-shadow-sm font-valty"
           >
             Find the Perfect <span className="text-gradient italic p-2">Words</span>
           </motion.h1>
@@ -197,7 +182,7 @@ export default function TemplatesPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-2xl mx-auto font-serif"
+            className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-2xl mx-auto font-serif italic"
           >
             Browse our collection of handcrafted templates. From romantic
             letters to heartfelt apologies, let AI help you express exactly how
