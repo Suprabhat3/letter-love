@@ -38,6 +38,7 @@ export async function POST(req: Request) {
     - You can use Hindi phrases like: "dil ki baat", "tujhe pata hai na", "mujhe lagta hai", "aisa lagta hai"
     
     Writing Guidelines:
+    - don't write any thing in markdown symbols like *, #, -, etc, we want simple human like response.
     - Response must feel complete, have a clouser in it.
     - Don't use "—" em dash and other special characters, you can use relevant emojis 💕
     - Enhance the user's rough draft to fit the "${templateName}" theme perfectly
