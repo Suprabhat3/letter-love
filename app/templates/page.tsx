@@ -38,7 +38,7 @@ export default function TemplatesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
 
-  const featuredTemplate = templates.find((t) => t.id === "valentine-ask");
+  const featuredTemplate = templates.find((t) => t.id === "birthday-wish");
 
   const filteredTemplates = templates.filter((template) => {
     // 1. Filter by Category
@@ -73,7 +73,7 @@ export default function TemplatesPage() {
             rotate: [0, 45, 0],
           }}
           transition={{ duration: 15, repeat: Infinity }}
-          className="absolute top-[-10%] left-[-10%] bg-gradient-to-br from-pink-200/40 to-red-200/40 w-[800px] h-[800px] rounded-full blur-3xl"
+          className="absolute top-[-10%] left-[-10%] bg-linear-to-br from-pink-200/40 to-red-200/40 w-[800px] h-[800px] rounded-full blur-3xl"
         />
         <motion.div
           animate={{
@@ -201,7 +201,7 @@ export default function TemplatesPage() {
               transition={{ delay: 0.25 }}
               className="mb-16 max-w-5xl mx-auto"
             >
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-xl">
+              <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-pink-500 to-rose-500 text-white shadow-xl">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full blur-3xl -ml-10 -mb-10 pointer-events-none" />
 
