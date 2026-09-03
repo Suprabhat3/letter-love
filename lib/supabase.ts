@@ -15,11 +15,12 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Get a card by ID from Supabase
+// Get one of your own cards, for the editor. RLS makes this owner-scoped;
+// public share reads go through lib/cards-server.ts instead.
 export async function getCard(id: string): Promise<SharedCard | null> {
   const { data, error } = await supabase
     .from("cards")
-    .select("*")
+    .select("id, template_id, data, user_id, created_at")
     .eq("id", id)
     .single();
 
@@ -31,11 +32,19 @@ export async function getCard(id: string): Promise<SharedCard | null> {
   return data as SharedCard;
 }
 
-// Get all cards for a user
+// Get all cards for a user, with their Phase 4 receipts.
+//
+// The counters are denormalized onto the row precisely so this stays one
+// query — the dashboard needs no /api/me/receipts endpoint, because RLS
+// already scopes this to the caller. Columns are listed explicitly rather than
+// `*` so a server-side column added later (claim_token is the live example)
+// cannot start arriving in the browser by accident.
 export async function getUserCards(userId: string): Promise<SharedCard[]> {
   const { data, error } = await supabase
     .from("cards")
-    .select("*")
+    .select(
+      "id, template_id, data, user_id, created_at, view_count, unique_view_count, last_viewed_at, reaction_counts, reply_count",
+    )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 

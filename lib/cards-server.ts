@@ -16,6 +16,7 @@ import {
   writeCardData,
   type StoredCardData,
 } from "./cardStyle";
+import { readReactionCounts } from "./reactions";
 import { getTemplateById } from "./templates";
 import type { PublicCard } from "./types";
 
@@ -30,6 +31,8 @@ interface CardRow {
   user_id: string | null;
   created_at: string;
   claim_token?: string | null;
+  view_count?: number | null;
+  reaction_counts?: unknown;
 }
 
 const MAX_FIELDS = 64;
@@ -64,6 +67,10 @@ export function generateClaimToken(): string {
   );
 }
 
+// Built field by field, never by spreading the row. That is what keeps the raw
+// `data` JSONB — and anything else that lands on the table later, like
+// `claim_token` — out of the RSC payload entirely, rather than merely unused
+// by the components.
 function toPublicCard(row: CardRow): PublicCard {
   return {
     id: row.id,
@@ -71,6 +78,8 @@ function toPublicCard(row: CardRow): PublicCard {
     content: readCardContent(row.data),
     style: readCardStyle(row.data),
     createdAt: row.created_at,
+    reactionCounts: readReactionCounts(row.reaction_counts),
+    viewCount: row.view_count ?? 0,
   };
 }
 
@@ -80,7 +89,9 @@ export async function getPublicCard(id: string): Promise<PublicCard | null> {
 
   const { data, error } = await supabaseAdmin()
     .from("cards")
-    .select("id, template_id, data, user_id, created_at")
+    .select(
+      "id, template_id, data, user_id, created_at, view_count, reaction_counts",
+    )
     .eq("id", id)
     .maybeSingle();
 

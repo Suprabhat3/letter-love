@@ -17,6 +17,7 @@ import {
   writeCardData,
 } from "@/lib/cardStyle";
 import { track } from "@/lib/analytics";
+import { fetchReplyContext } from "@/lib/engagement-client";
 import CardPreview, { demoContent } from "@/components/card/CardPreview";
 import ShareModal from "@/components/ShareModal";
 import { Sparkles, ArrowLeft, User, LayoutGrid, Type } from "lucide-react";
@@ -54,6 +55,7 @@ export default function TemplateEditorPage({ params }: PageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get("editId");
+  const replyTo = searchParams.get("replyTo");
   const { user, loading: authLoading } = useAuth();
   const template = getTemplateById(id);
 
@@ -73,6 +75,8 @@ export default function TemplateEditorPage({ params }: PageProps) {
   const [isEnhancing, setIsEnhancing] = useState<string | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [createdCardLink, setCreatedCardLink] = useState("");
+  /** Who this letter answers, when arriving from a "Reply with a letter" button. */
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
 
   useEffect(() => {
     track("editor_start", { template: id });
@@ -109,6 +113,33 @@ export default function TemplateEditorPage({ params }: PageProps) {
 
     loadCardData();
   }, [editId]);
+
+  // Prefill a reply from the letter it answers.
+  //
+  // The two names are swapped: the person who wrote to you becomes the
+  // recipient, and you become the sender. They are fetched by card id rather
+  // than passed in the URL on purpose — a query string carrying names is a
+  // link anyone could craft to put arbitrary text into someone's editor, and
+  // the route deliberately returns nothing but those two names.
+  useEffect(() => {
+    if (!replyTo || editId) return;
+    let cancelled = false;
+
+    fetchReplyContext(replyTo).then((context) => {
+      if (cancelled || !context) return;
+      setReplyingTo(context.replyToSender || null);
+      setFormData((prev) => ({
+        ...prev,
+        // Never clobber something already typed — a restored draft wins.
+        recipientName: prev.recipientName?.trim() || context.replyToSender,
+        senderName: prev.senderName?.trim() || context.replyToRecipient,
+      }));
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [replyTo, editId]);
 
   const handleInputChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -219,7 +250,7 @@ export default function TemplateEditorPage({ params }: PageProps) {
         }
         resultId = editId;
       } else {
-        const result = await createCard(template.id, payload);
+        const result = await createCard(template.id, payload, replyTo);
         if ("error" in result) {
           setError(result.error);
           setIsSubmitting(false);
@@ -320,6 +351,13 @@ export default function TemplateEditorPage({ params }: PageProps) {
           >
             {category?.name} Template
           </span>
+          {/* Say so out loud. Fields that fill themselves in look like a bug
+              unless the page explains why. */}
+          {replyingTo && (
+            <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-pink-200 bg-pink-50 px-4 py-1.5 text-sm font-medium text-pink-700">
+              💌 Writing back to {replyingTo}
+            </p>
+          )}
           <h1 className="text-4xl md:text-6xl font-serif font-bold mb-4 text-foreground">
             Create Your{" "}
             <span

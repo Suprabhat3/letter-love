@@ -5,6 +5,7 @@ import {
   normaliseCardData,
   updateCardRow,
 } from "@/lib/cards-server";
+import { linkReply } from "@/lib/engagement-server";
 import { enforceLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -34,11 +35,20 @@ export const POST = withHandler(async (request) => {
     user ? "card_create" : "anon_create",
   );
 
-  return createCardRow({
+  const created = await createCardRow({
     templateId: requireString(body.templateId, "templateId"),
     data: normaliseCardData(body.data),
     userId: user?.id ?? null,
   });
+
+  // Linked after the fact, and never allowed to fail the create. A reply that
+  // saved but did not link is a slightly poorer dashboard row; a reply lost
+  // because the parent id was stale is someone's letter gone.
+  if (typeof body.replyTo === "string" && body.replyTo.length > 0) {
+    await linkReply(created.id, body.replyTo);
+  }
+
+  return created;
 });
 
 /** Update a card you own. Anonymous cards must be claimed before they can be edited. */

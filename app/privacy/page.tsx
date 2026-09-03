@@ -44,6 +44,16 @@ export default function PrivacyPage() {
                   <strong>Authentication Data:</strong> If you sign in, we
                   simply store your basic profile info to save your history.
                 </li>
+                <li>
+                  <strong>Letter Opens and Reactions:</strong> When someone
+                  opens a card you sent, we record that it was opened, and any
+                  emoji reaction they tap, so we can show you a read receipt.
+                  We do not store the reader&apos;s IP address, name, or email
+                  &mdash; only a one-way scrambled code that is different for
+                  every card, so opens of two different cards can never be
+                  linked back to the same person. Deleting a card deletes its
+                  opens and reactions with it.
+                </li>
               </ul>
 
               <h3 className="text-2xl font-serif font-bold text-gray-800 mt-8 mb-4">
@@ -75,7 +85,11 @@ export default function PrivacyPage() {
               </h3>
               <p>
                 We use cookies to remember your preferences and keep you logged
-                in. You can control cookie settings in your browser.
+                in. When you open a card, we also set one cookie holding a
+                random code, so that opening the same card twice is not counted
+                as two different readers. It contains nothing about you and is
+                not readable by any script on the page. You can control cookie
+                settings in your browser.
               </p>
 
               <h3 className="text-2xl font-serif font-bold text-gray-800 mt-8 mb-4">

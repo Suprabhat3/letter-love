@@ -1,6 +1,7 @@
 // Template & Card Types for LetterLove
 
 import type { ResolvedCardStyle } from "./cardStyle";
+import type { ReactionCounts } from "./reactions";
 
 // Feeling-based categories (extensible)
 export type TemplateCategory = 
@@ -54,6 +55,15 @@ export interface SharedCard {
   data: Record<string, unknown>;
   user_id?: string;
   created_at: string;
+
+  // Phase 4 counters, denormalized onto the row so the dashboard reads them in
+  // the query it already runs. Optional because a row written before migration
+  // 0003 — or a query that does not ask for them — simply has none.
+  view_count?: number;
+  unique_view_count?: number;
+  last_viewed_at?: string | null;
+  reaction_counts?: unknown;
+  reply_count?: number;
 }
 
 /**
@@ -70,6 +80,14 @@ export interface PublicCard {
   content: Record<string, string>;
   style: ResolvedCardStyle;
   createdAt: string;
+  /**
+   * Engagement, server-rendered so the reaction bar arrives with real numbers
+   * instead of counting up from zero after hydration. The viewer's *own*
+   * reactions are not here — those need the viewer cookie, which a page render
+   * cannot mint, so they come back from the view beacon instead.
+   */
+  reactionCounts: ReactionCounts;
+  viewCount: number;
 }
 
 // Category metadata for UI

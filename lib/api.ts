@@ -22,7 +22,9 @@ export interface ApiErrorBody {
   code?: string;
 }
 
-type Handler<T> = (request: Request) => Promise<T>;
+// The second argument is Next's route context — `{ params: Promise<…> }` for a
+// dynamic segment, and unused by the static routes, which simply ignore it.
+type Handler<T, C> = (request: Request, context: C) => Promise<T>;
 
 /**
  * Wrap a route handler.
@@ -33,10 +35,10 @@ type Handler<T> = (request: Request) => Promise<T>;
  * indistinguishable from a broken button, but the fix is a real error *body*,
  * not the raw exception.
  */
-export function withHandler<T>(handler: Handler<T>) {
-  return async (request: Request): Promise<NextResponse> => {
+export function withHandler<T, C = unknown>(handler: Handler<T, C>) {
+  return async (request: Request, context: C): Promise<NextResponse> => {
     try {
-      return NextResponse.json((await handler(request)) as object);
+      return NextResponse.json((await handler(request, context)) as object);
     } catch (err) {
       if (err instanceof ApiError) {
         return NextResponse.json<ApiErrorBody>(

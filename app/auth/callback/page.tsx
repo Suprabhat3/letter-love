@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
-import { track } from "@/lib/analytics";
+import { takeSignupSource, track } from "@/lib/analytics";
 
 const Spinner = ({ label }: { label: string }) => (
   <div className="flex flex-col items-center justify-center min-h-svh bg-[#faf5f6] dark:bg-background">
@@ -54,7 +54,9 @@ function AuthCallbackContent() {
     if (failure) return;
 
     if (session) {
-      track("signup_completed");
+      track("signup_completed", {
+        source: takeSignupSource() ?? "direct",
+      });
       router.replace(redirectTo || "/dashboard");
       return;
     }

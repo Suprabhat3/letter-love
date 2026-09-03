@@ -49,11 +49,13 @@ async function call<T>(
 export async function createCard(
   templateId: string,
   data: StoredCardData,
+  /** The card this one answers, when it was started from a "Reply" button. */
+  replyTo?: string | null,
 ): Promise<{ id: string } | { error: string }> {
   const result = await call<{ id: string; claimToken?: string }>(
     "POST",
     "/api/cards",
-    { templateId, data },
+    { templateId, data, replyTo: replyTo ?? undefined },
   );
   if ("error" in result) return result;
 

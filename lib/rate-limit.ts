@@ -20,9 +20,32 @@ export const LIMITS = {
   anon_create: 50,
   card_create: 100,
   ai_enhance: 30,
+
+  // Views and reactions are far higher because a single hostel or office
+  // behind one CGNAT address genuinely does open hundreds of cards a day, and
+  // because the real ceilings on abuse here are structural rather than
+  // numeric: `card_views` is one row per viewer per card, and the reactions
+  // primary key means one browser can add at most six rows to a card, ever.
+  // These caps only exist to make a scripted loop expensive.
+  card_view: 1000,
+  card_react: 500,
 } as const;
 
 export type LimitKind = keyof typeof LIMITS;
+
+/**
+ * What the user is told when they hit a cap.
+ *
+ * Per-kind, because "You have made a lot of cards today" shown to someone who
+ * merely opened a letter is nonsense, and a nonsense error is worse than none.
+ */
+const MESSAGES: Record<LimitKind, string> = {
+  anon_create: "You have made a lot of cards today. Please try again tomorrow.",
+  card_create: "You have made a lot of cards today. Please try again tomorrow.",
+  ai_enhance: "You have used AI a lot today. Please try again tomorrow.",
+  card_view: "Too many requests from your network. Please try again later.",
+  card_react: "Too many requests from your network. Please try again later.",
+};
 
 /**
  * Count one use and throw 429 if the subject is over its cap.
@@ -53,10 +76,6 @@ export async function enforceLimit(
 
   const row = Array.isArray(data) ? data[0] : data;
   if (row && row.allowed === false) {
-    throw new ApiError(
-      429,
-      "You have made a lot of cards today. Please try again tomorrow.",
-      "rate_limited",
-    );
+    throw new ApiError(429, MESSAGES[kind], "rate_limited");
   }
 }

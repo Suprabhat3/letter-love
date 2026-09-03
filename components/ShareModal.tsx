@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { track } from "@/lib/analytics";
 import {
   Facebook,
   Twitter,
@@ -50,6 +51,7 @@ export default function ShareModal({
   const encodedUrl = encodeURIComponent(shareUrl);
 
   const copyToClipboard = () => {
+    track("share_channel_click", { channel: "copy" });
     navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -136,6 +138,12 @@ export default function ShareModal({
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  // Closes the create funnel: without this the last step
+                  // before a card reaches anyone is invisible, and "did the
+                  // envelope help?" stops being a question we can answer.
+                  onClick={() =>
+                    track("share_channel_click", { channel: link.name })
+                  }
                   className="flex flex-col items-center gap-2 group"
                 >
                   <div
