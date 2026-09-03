@@ -1,57 +1,19 @@
 import { createClient } from "@supabase/supabase-js";
 import { SharedCard } from "./types";
-import { StoredCardData } from "./cardStyle";
+
+// The browser client. Since migration 0002 the anon key can SELECT only rows
+// the signed-in user owns, so everything here is owner-scoped: the dashboard
+// list, the delete, and loading your own card into the editor.
+//
+// WRITES DO NOT BELONG HERE. Creating and updating cards goes through
+// /api/cards (lib/cards-client.ts) so the server can rate-limit, generate an
+// unguessable id, and normalise `data` before it is stored. Public share-page
+// reads go through lib/cards-server.ts.
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-// Generate a short unique ID for shareable URLs
-export function generateCardId(): string {
-  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let result = "";
-  for (let i = 0; i < 8; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-}
-
-// Create a new card in Supabase
-export async function createCard(
-  templateId: string,
-  data: StoredCardData,
-  userId?: string
-): Promise<{ id: string } | { error: string }> {
-  const id = generateCardId();
-
-  const cardData: {
-    id: string;
-    template_id: string;
-    data: StoredCardData;
-    created_at: string;
-    user_id?: string;
-  } = {
-    id,
-    template_id: templateId,
-    data,
-    created_at: new Date().toISOString(),
-  };
-
-  // Only add user_id if provided (logged in user)
-  if (userId) {
-    cardData.user_id = userId;
-  }
-
-  const { error } = await supabase.from("cards").insert(cardData);
-
-  if (error) {
-    console.error("Error creating card:", error);
-    return { error: error.message };
-  }
-
-  return { id };
-}
 
 // Get a card by ID from Supabase
 export async function getCard(id: string): Promise<SharedCard | null> {
@@ -104,22 +66,3 @@ export function getShareUrl(cardId: string): string {
   return `${baseUrl}/share/${cardId}`;
 }
 
-// Update an existing card
-export async function updateCard(
-  cardId: string,
-  data: StoredCardData,
-  userId: string
-): Promise<{ success: boolean; error?: string }> {
-  const { error } = await supabase
-    .from("cards")
-    .update({ data })
-    .eq("id", cardId)
-    .eq("user_id", userId);
-
-  if (error) {
-    console.error("Error updating card:", error);
-    return { success: false, error: error.message };
-  }
-
-  return { success: true };
-}

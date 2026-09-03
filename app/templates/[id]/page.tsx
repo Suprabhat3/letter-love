@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { getTemplateById } from "@/lib/templates";
-import { createCard, getCard, updateCard } from "@/lib/supabase";
+import { getCard } from "@/lib/supabase";
+import { createCard, updateCard } from "@/lib/cards-client";
 import { useAuth } from "@/lib/auth-context";
 import { CATEGORIES } from "@/lib/types";
 import { FONTS, FontId } from "@/lib/fonts";
@@ -191,13 +192,10 @@ export default function TemplateEditorPage({ params }: PageProps) {
     e.preventDefault();
     setError(null);
 
-    if (!user) {
-      saveDraft();
-      const redirectUrl = `/templates/${id}`;
-      router.push(`/auth?redirect=${encodeURIComponent(redirectUrl)}`);
-      return;
-    }
-
+    // No login gate here any more. Writing a whole letter and only then being
+    // bounced to /auth was the biggest leak in the funnel; the card is created
+    // anonymously and the signup ask comes after the share succeeds, when it
+    // reads as a benefit rather than a toll.
     const missing = validateForm();
     if (missing.length > 0) {
       setError(`Please fill in: ${missing.join(", ")}`);
@@ -213,15 +211,15 @@ export default function TemplateEditorPage({ params }: PageProps) {
       let resultId = "";
 
       if (editId) {
-        const result = await updateCard(editId, payload, user.id);
-        if (!result.success) {
-          setError(result.error || "Failed to update card");
+        const result = await updateCard(editId, payload);
+        if ("error" in result) {
+          setError(result.error);
           setIsSubmitting(false);
           return;
         }
         resultId = editId;
       } else {
-        const result = await createCard(template.id, payload, user.id);
+        const result = await createCard(template.id, payload);
         if ("error" in result) {
           setError(result.error);
           setIsSubmitting(false);
@@ -245,7 +243,11 @@ export default function TemplateEditorPage({ params }: PageProps) {
     <main className="min-h-svh relative overflow-hidden bg-background">
       <ShareModal
         isOpen={shareModalOpen}
-        onClose={() => router.push("/dashboard")}
+        // Signing up is offered once the link exists, so it buys something
+        // concrete — keeping the card, and seeing when it gets opened.
+        onClose={() =>
+          router.push(user ? "/dashboard" : "/auth?redirect=%2Fdashboard")
+        }
         shareUrl={createdCardLink}
       />
 
@@ -499,14 +501,10 @@ export default function TemplateEditorPage({ params }: PageProps) {
                       </motion.span>
                       Creating...
                     </span>
-                  ) : user ? (
-                    editId ? (
-                      "Update Card ✨"
-                    ) : (
-                      "Save & Get Shareable Link ✨"
-                    )
+                  ) : editId ? (
+                    "Update Card ✨"
                   ) : (
-                    "Login to Save & Share 💕"
+                    "Save & Get Shareable Link ✨"
                   )}
                 </motion.button>
               </div>

@@ -1,8 +1,7 @@
 import { Metadata } from "next";
 import { cache } from "react";
-import { getCard } from "@/lib/supabase";
+import { getPublicCard } from "@/lib/cards-server";
 import { getTemplateById } from "@/lib/templates";
-import { readCardContent } from "@/lib/cardStyle";
 import CardView from "@/components/card/CardView";
 import { notFound } from "next/navigation";
 
@@ -12,7 +11,7 @@ interface PageProps {
 
 // generateMetadata and the page body both need the card. Without this the same
 // row is fetched twice per request.
-const loadCard = cache(getCard);
+const loadCard = cache(getPublicCard);
 
 export async function generateMetadata({
   params,
@@ -28,14 +27,14 @@ export async function generateMetadata({
     };
   }
 
-  const template = getTemplateById(card.template_id);
-  const data = readCardContent(card.data);
-  const recipient = data.recipientName || "Someone Special";
-  const sender = data.senderName || "Someone";
+  const template = getTemplateById(card.templateId);
+  const recipient = card.content.recipientName || "Someone Special";
+  const sender = card.content.senderName || "Someone";
 
   // Deliberately a teaser, never the letter body. The previous version put
   // `message.substring(0, 100)` here, so the WhatsApp link preview spoiled the
-  // letter before the recipient ever opened it.
+  // letter before the recipient ever opened it — which also defeats the whole
+  // point of the envelope.
   const teaser = `${sender} wrote something for you. Tap to read it. 💌`;
 
   return {
@@ -56,6 +55,10 @@ export async function generateMetadata({
 
 export default async function SharePage({ params }: PageProps) {
   const { id } = await params;
+
+  // Read through the service role: since migration 0002 there is no public
+  // SELECT policy on `cards`, so this is the only path a non-owner has to a
+  // card — and the only place that decides what a stranger may see.
   const card = await loadCard(id);
 
   if (!card) {
@@ -64,7 +67,7 @@ export default async function SharePage({ params }: PageProps) {
 
   // A card whose template was removed still resolves to a fallback theme, but
   // an unknown template id means a broken or tampered link, not a card.
-  if (!getTemplateById(card.template_id)) {
+  if (!getTemplateById(card.templateId)) {
     return notFound();
   }
 

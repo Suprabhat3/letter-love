@@ -3,8 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Phase } from "@/lib/theme";
 import { resolveTheme } from "@/lib/theme";
-import { readCardContent, readCardStyle } from "@/lib/cardStyle";
-import type { SharedCard } from "@/lib/types";
+import type { PublicCard } from "@/lib/types";
 import CardStage from "./CardStage";
 import CardRenderer from "./CardRenderer";
 import EnvelopeGate from "./EnvelopeGate";
@@ -20,12 +19,11 @@ import EnvelopeGate from "./EnvelopeGate";
  * the second half of the unwrap, and starting it while the letter is still
  * sealed would waste it behind an opacity-0 layer.
  */
-export default function CardView({ card }: { card: SharedCard }) {
-  const content = useMemo(() => readCardContent(card.data), [card.data]);
-  const style = useMemo(() => readCardStyle(card.data), [card.data]);
+export default function CardView({ card }: { card: PublicCard }) {
+  const { content, style } = card;
   const theme = useMemo(
-    () => resolveTheme(card.template_id, style),
-    [card.template_id, style],
+    () => resolveTheme(card.templateId, style),
+    [card.templateId, style],
   );
 
   const [phase, setPhase] = useState<Phase>(

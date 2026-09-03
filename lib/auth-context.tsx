@@ -9,6 +9,8 @@ import {
 } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
+import { claimPendingCards } from "./cards-client";
+import { clearClaimTokens, pendingClaimTokens } from "./claim";
 
 interface AuthContextType {
   user: User | null;
@@ -47,10 +49,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      // Attach any cards written while signed out. This is the whole payoff of
+      // anonymous create: someone writes a letter, shares it, and signs up
+      // later — on this device the cards follow them in.
+      if (event === "SIGNED_IN" && session) {
+        const tokens = pendingClaimTokens();
+        if (tokens.length > 0) {
+          claimPendingCards(tokens)
+            .then(({ claimed }) => {
+              if (claimed > 0) clearClaimTokens();
+            })
+            .catch(() => {
+              // Keep the tokens: a claim that failed on a flaky connection
+              // should be retried on the next sign-in, not thrown away.
+            });
+        }
+      }
     });
 
     return () => subscription.unsubscribe();

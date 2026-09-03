@@ -1,5 +1,7 @@
 // Template & Card Types for LetterLove
 
+import type { ResolvedCardStyle } from "./cardStyle";
+
 // Feeling-based categories (extensible)
 export type TemplateCategory = 
   | "love"        // 💕 Romantic feelings
@@ -52,6 +54,22 @@ export interface SharedCard {
   data: Record<string, unknown>;
   user_id?: string;
   created_at: string;
+}
+
+/**
+ * A card as a share-page visitor may see it: content and style already parsed,
+ * the raw `data` JSONB left on the server.
+ *
+ * Built by `getPublicCard` in lib/cards-server.ts. The type lives here rather
+ * than there so client components can reference it without importing a
+ * `server-only` module.
+ */
+export interface PublicCard {
+  id: string;
+  templateId: string;
+  content: Record<string, string>;
+  style: ResolvedCardStyle;
+  createdAt: string;
 }
 
 // Category metadata for UI

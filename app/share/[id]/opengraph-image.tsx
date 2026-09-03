@@ -1,6 +1,5 @@
 import { ImageResponse } from "next/og";
-import { createClient } from "@supabase/supabase-js";
-import { readCardContent, readCardStyle } from "@/lib/cardStyle";
+import { getPublicCard } from "@/lib/cards-server";
 import { resolveColor, resolveTheme } from "@/lib/theme";
 
 // Route segment config
@@ -11,31 +10,10 @@ export const size = {
 };
 export const contentType = "image/png";
 
-// This route runs in its own Satori bundle with its own Supabase client — it is
-// deliberately NOT sharing the React.cache()'d reader from page.tsx, which
-// belongs to a different request.
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-async function getCard(id: string) {
-  try {
-    const { data, error } = await supabase
-      .from("cards")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error) {
-      console.error("OG Image Supabase Error:", error);
-      return null;
-    }
-    return data;
-  } catch (e) {
-    console.error("OG Image Fetch Error:", e);
-    return null;
-  }
-}
+// This route runs in its own Satori bundle. It calls getPublicCard directly
+// rather than through the React.cache()'d wrapper in page.tsx — that cache
+// belongs to a different request — but it goes through the same reader, so the
+// preview can never show something the share page would withhold.
 
 export default async function Image({
   params,
@@ -43,7 +21,7 @@ export default async function Image({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const card = await getCard(id);
+  const card = await getPublicCard(id);
 
   if (!card) {
     return new ImageResponse(
@@ -67,7 +45,7 @@ export default async function Image({
     );
   }
 
-  const content = readCardContent(card.data);
+  const content = card.content;
   const recipient = content.recipientName || "Someone Special";
   const sender = content.senderName || "Someone";
 
@@ -76,7 +54,7 @@ export default async function Image({
   // components (no grid, no backdrop-filter, no animation, and every
   // multi-child div needs an explicit `display: flex`), so what is shared here
   // is the *config*, not the markup.
-  const theme = resolveTheme(card.template_id, readCardStyle(card.data));
+  const theme = resolveTheme(card.templateId, card.style);
   const og = theme.og;
   // Follow the resolved palette so a per-card palette override also recolours
   // the link preview, not just the card.
