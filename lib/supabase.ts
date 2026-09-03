@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { SharedCard } from "./types";
+import { StoredCardData } from "./cardStyle";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -19,15 +20,15 @@ export function generateCardId(): string {
 // Create a new card in Supabase
 export async function createCard(
   templateId: string,
-  data: Record<string, string>,
+  data: StoredCardData,
   userId?: string
 ): Promise<{ id: string } | { error: string }> {
   const id = generateCardId();
-  
+
   const cardData: {
     id: string;
     template_id: string;
-    data: Record<string, string>;
+    data: StoredCardData;
     created_at: string;
     user_id?: string;
   } = {
@@ -106,7 +107,7 @@ export function getShareUrl(cardId: string): string {
 // Update an existing card
 export async function updateCard(
   cardId: string,
-  data: Record<string, string>,
+  data: StoredCardData,
   userId: string
 ): Promise<{ success: boolean; error?: string }> {
   const { error } = await supabase

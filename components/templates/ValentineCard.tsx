@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { useMemo, useState } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import Image from "next/image";
+import { FontId, getFontClasses } from "@/lib/fonts";
+import { seededSeries } from "@/lib/rand";
 
 // Phrases that appear on the "No" button
 const NO_PHRASES = [
@@ -21,46 +23,24 @@ const NO_PHRASES = [
   "Last chance!",
 ];
 
-const FONTS = [
-  {
-    id: "default",
-    name: "Classic",
-    headerClass: "font-handwriting",
-    bodyClass: "font-serif",
-  },
-  {
-    id: "rustic",
-    name: "Rustic",
-    headerClass: "font-rustic",
-    bodyClass: "font-rustic",
-  },
-  {
-    id: "lucy",
-    name: "Lucy",
-    headerClass: "font-lucy",
-    bodyClass: "font-lucy",
-  },
-  {
-    id: "valentine",
-    name: "Valentine",
-    headerClass: "font-valentine",
-    bodyClass: "font-valentine",
-  },
-  {
-    id: "valty",
-    name: "Valty",
-    headerClass: "font-valty",
-    bodyClass: "font-valty",
-  },
-];
+const HEART_COUNT = 14;
+const CONFETTI_COUNT = 24;
 
 interface ValentineCardProps {
   data: Record<string, string>;
+  font?: FontId;
+  cardId?: string;
 }
 
-export default function ValentineCard({ data }: ValentineCardProps) {
+export default function ValentineCard({
+  data,
+  font,
+  cardId = "valentine",
+}: ValentineCardProps) {
   const [noCount, setNoCount] = useState(0);
   const [isAccepted, setIsAccepted] = useState(false);
+  const reduceMotion = useReducedMotion();
+  const fontClasses = getFontClasses(font);
 
   const recipientName = data.recipientName || "My Love";
   const senderName = data.senderName || "Admirer";
@@ -68,56 +48,64 @@ export default function ValentineCard({ data }: ValentineCardProps) {
 
   const yesButtonSize = noCount * 20 + 20; // Increases by 20px per 'No' click
 
-  const handleNoClick = () => {
-    setNoCount(noCount + 1);
-  };
+  // Seeded so the layout is hydration-safe and stable across visits.
+  const hearts = useMemo(
+    () => seededSeries(`${cardId}:hearts`, HEART_COUNT, 4),
+    [cardId],
+  );
+  const confetti = useMemo(
+    () => seededSeries(`${cardId}:confetti`, CONFETTI_COUNT, 5),
+    [cardId],
+  );
 
-  const getNoText = () => {
-    return NO_PHRASES[noCount % NO_PHRASES.length];
-  };
+  const handleNoClick = () => setNoCount(noCount + 1);
+  const getNoText = () => NO_PHRASES[noCount % NO_PHRASES.length];
 
   return (
-    <main className="min-h-screen relative flex items-center justify-center overflow-hidden bg-background p-6">
+    <main className="min-h-[100svh] relative flex items-center justify-center overflow-hidden bg-background p-6">
       {/* Background Elements */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none z-0">
         <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-          }}
+          animate={
+            reduceMotion
+              ? undefined
+              : { scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }
+          }
           transition={{ duration: 8, repeat: Infinity }}
           className="blob-bg top-[10%] left-[10%] bg-pink-300/40 w-[600px] h-[600px] opacity-40 blur-3xl rounded-full"
         />
         <motion.div
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.3, 0.5, 0.3],
-          }}
+          animate={
+            reduceMotion
+              ? undefined
+              : { scale: [1.2, 1, 1.2], opacity: [0.3, 0.5, 0.3] }
+          }
           transition={{ duration: 10, repeat: Infinity }}
           className="blob-bg bottom-[10%] right-[10%] bg-red-300/40 w-[500px] h-[500px] opacity-40 blur-3xl rounded-full"
         />
 
         {/* Floating Hearts Animation */}
-        {Array.from({ length: 20 }).map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ y: "110vh", x: Math.random() * 100 + "vw", opacity: 0 }}
-            animate={{
-              y: "-10vh",
-              opacity: [0, 0.6, 0],
-              rotate: Math.random() * 360,
-            }}
-            transition={{
-              duration: 10 + Math.random() * 10,
-              repeat: Infinity,
-              delay: Math.random() * 5,
-              ease: "linear",
-            }}
-            className="absolute text-2xl text-pink-400 opacity-30"
-          >
-            {["❤️", "💖", "💘", "💓", "💕"][i % 5]}
-          </motion.div>
-        ))}
+        {!reduceMotion &&
+          hearts.map(([x, dur, delay, rot], i) => (
+            <motion.div
+              key={i}
+              initial={{ y: "110vh", x: `${x * 100}vw`, opacity: 0 }}
+              animate={{
+                y: "-10vh",
+                opacity: [0, 0.6, 0],
+                rotate: rot * 360,
+              }}
+              transition={{
+                duration: 10 + dur * 10,
+                repeat: Infinity,
+                delay: delay * 5,
+                ease: "linear",
+              }}
+              className="absolute text-2xl text-pink-400 opacity-30"
+            >
+              {["❤️", "💖", "💘", "💓", "💕"][i % 5]}
+            </motion.div>
+          ))}
       </div>
 
       <div className="z-10 w-full max-w-lg relative">
@@ -139,9 +127,7 @@ export default function ValentineCard({ data }: ValentineCardProps) {
                 className="w-full relative z-10 flex flex-col items-center"
               >
                 <motion.div
-                  animate={{
-                    scale: [1, 1.1, 1],
-                  }}
+                  animate={reduceMotion ? undefined : { scale: [1, 1.1, 1] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
                   className="text-8xl mb-6 filter drop-shadow-md"
                 >
@@ -149,35 +135,27 @@ export default function ValentineCard({ data }: ValentineCardProps) {
                 </motion.div>
 
                 <h1
-                  className={`text-5xl md:text-6xl text-red-500 mb-2 drop-shadow-sm p-2 ${
-                    FONTS.find((f) => f.id === (data.fontName || "default"))
-                      ?.headerClass || "font-handwriting"
-                  }`}
+                  className={`text-5xl md:text-6xl text-red-500 mb-2 drop-shadow-sm p-2 ${fontClasses.header}`}
                 >
                   Will you be my Valentine?
                 </h1>
 
                 <h2
-                  className={`text-xl md:text-2xl font-medium text-foreground/80 mb-6 md:mb-8 ${
-                    FONTS.find((f) => f.id === (data.fontName || "default"))
-                      ?.headerClass || "font-serif"
-                  }`}
+                  className={`text-xl md:text-2xl font-medium text-foreground/80 mb-6 md:mb-8 ${fontClasses.header}`}
                 >
                   {recipientName}
                 </h2>
 
                 <p
-                  className={`text-muted-foreground text-lg mb-8 max-w-sm italic ${
-                    FONTS.find((f) => f.id === (data.fontName || "default"))
-                      ?.bodyClass || "font-serif"
-                  }`}
+                  className={`text-muted-foreground text-lg mb-8 max-w-sm italic ${fontClasses.body}`}
                 >
-                  "{reason}"
+                  &ldquo;{reason}&rdquo;
                 </p>
 
                 {/* Interactive Buttons */}
                 <div className="flex flex-wrap items-center justify-center gap-6 w-full min-h-[100px] relative">
                   <motion.button
+                    type="button"
                     className="btn-primary rounded-xl font-bold shadow-pink-500/30 shadow-xl transition-all z-20"
                     style={{
                       fontSize: Math.min(yesButtonSize, 60),
@@ -191,10 +169,10 @@ export default function ValentineCard({ data }: ValentineCardProps) {
                   </motion.button>
 
                   <motion.button
+                    type="button"
                     className="px-6 py-3 rounded-xl bg-gray-100 text-gray-500 font-medium hover:bg-gray-200 transition-colors text-sm whitespace-nowrap z-10"
                     onClick={handleNoClick}
-                    // onMouseEnter={handleNoClick} // Moves away/shrinks on desktop hover for fun
-                    whileHover={{ x: (Math.random() - 0.5) * 50 }}
+                    whileHover={{ x: (hearts[noCount % HEART_COUNT][0] - 0.5) * 50 }}
                     whileTap={{ scale: 0.9 }}
                   >
                     {getNoText()}
@@ -220,68 +198,64 @@ export default function ValentineCard({ data }: ValentineCardProps) {
                 </div>
 
                 <h2
-                  className={`text-6xl text-red-500 mb-6 ${
-                    FONTS.find((f) => f.id === (data.fontName || "default"))
-                      ?.headerClass || "font-handwriting"
-                  }`}
+                  className={`text-6xl text-red-500 mb-6 ${fontClasses.header}`}
                 >
                   Wooohooo!!! 💖
                 </h2>
 
                 <p
-                  className={`text-xl text-foreground/80 mb-8 max-w-xs mx-auto ${
-                    FONTS.find((f) => f.id === (data.fontName || "default"))
-                      ?.bodyClass || "font-serif"
-                  }`}
+                  className={`text-xl text-foreground/80 mb-8 max-w-xs mx-auto ${fontClasses.body}`}
                 >
-                  I knew you'd say yes! <br /> Can't wait for our special day.
+                  I knew you&apos;d say yes! <br /> Can&apos;t wait for our
+                  special day.
                 </p>
 
                 <div className="flex flex-col gap-2">
                   <Link href="/templates">
-                    <button className="btn-primary px-8 py-3 rounded-full text-lg font-semibold shadow-lg hover:scale-105 transition-transform">
+                    <button
+                      type="button"
+                      className="btn-primary px-8 py-3 rounded-full text-lg font-semibold shadow-lg hover:scale-105 transition-transform"
+                    >
                       Ask Someone Special
                     </button>
                   </Link>
                   <p
-                    className={`text-sm text-muted-foreground mt-4 ${
-                      FONTS.find((f) => f.id === (data.fontName || "default"))
-                        ?.headerClass || "font-serif"
-                    }`}
+                    className={`text-sm text-muted-foreground mt-4 ${fontClasses.header}`}
                   >
                     With endless love, <br /> {senderName}
                   </p>
                 </div>
 
                 {/* Explosion Confetti */}
-                {Array.from({ length: 50 }).map((_, i) => (
-                  <motion.div
-                    key={`confetti-${i}`}
-                    className="absolute top-1/2 left-1/2 w-3 h-3 rounded-full pointer-events-none"
-                    style={{
-                      backgroundColor: [
-                        "#ff0000",
-                        "#ff69b4",
-                        "#ffffff",
-                        "#ff1493",
-                      ][i % 4],
-                    }}
-                    initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
-                    animate={{
-                      x: (Math.random() - 0.5) * 800,
-                      y: (Math.random() - 0.5) * 800,
-                      opacity: [1, 1, 0],
-                      scale: [0, 1, 0],
-                      rotate: Math.random() * 720,
-                    }}
-                    transition={{
-                      duration: 2 + Math.random() * 1.5,
-                      ease: "easeOut",
-                      repeat: Infinity,
-                      repeatDelay: Math.random() * 3,
-                    }}
-                  />
-                ))}
+                {!reduceMotion &&
+                  confetti.map(([x, y, dur, rot, gap], i) => (
+                    <motion.div
+                      key={`confetti-${i}`}
+                      className="absolute top-1/2 left-1/2 w-3 h-3 rounded-full pointer-events-none"
+                      style={{
+                        backgroundColor: [
+                          "#ff0000",
+                          "#ff69b4",
+                          "#ffffff",
+                          "#ff1493",
+                        ][i % 4],
+                      }}
+                      initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
+                      animate={{
+                        x: (x - 0.5) * 800,
+                        y: (y - 0.5) * 800,
+                        opacity: [1, 1, 0],
+                        scale: [0, 1, 0],
+                        rotate: rot * 720,
+                      }}
+                      transition={{
+                        duration: 2 + dur * 1.5,
+                        ease: "easeOut",
+                        repeat: Infinity,
+                        repeatDelay: gap * 3,
+                      }}
+                    />
+                  ))}
               </motion.div>
             )}
           </AnimatePresence>
@@ -290,10 +264,7 @@ export default function ValentineCard({ data }: ValentineCardProps) {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className={`text-center text-muted-foreground/60 text-xs mt-8 italic ${
-            FONTS.find((f) => f.id === (data.fontName || "default"))
-              ?.bodyClass || "font-serif"
-          }`}
+          className={`text-center text-muted-foreground/60 text-xs mt-8 italic ${fontClasses.body}`}
         >
           Made with LetterLove
         </motion.p>

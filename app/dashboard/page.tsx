@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import { supabase } from "@/lib/supabase";
+import { deleteCard as deleteCardRow, getUserCards } from "@/lib/supabase";
 import { getTemplateById } from "@/lib/templates";
-import { SharedCard, CATEGORIES } from "@/lib/types";
+import { SharedCard } from "@/lib/types";
+import { readCardContent } from "@/lib/cardStyle";
 import ShareModal from "@/components/ShareModal";
 import {
   Search,
@@ -49,16 +50,7 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadCards() {
       if (!user) return;
-
-      const { data, error } = await supabase
-        .from("cards")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (!error && data) {
-        setCards(data as SharedCard[]);
-      }
+      setCards(await getUserCards(user.id));
       setLoading(false);
     }
 
@@ -79,23 +71,26 @@ export default function DashboardPage() {
   };
 
   const confirmDelete = async () => {
-    if (!cardToDelete) return;
+    if (!cardToDelete || !user) return;
 
-    await supabase.from("cards").delete().eq("id", cardToDelete);
-    setCards(cards.filter((c) => c.id !== cardToDelete));
+    // deleteCard() scopes the delete by user_id as well as id. The previous
+    // inline query omitted that guard entirely and relied on RLS alone.
+    const ok = await deleteCardRow(cardToDelete, user.id);
+    if (ok) {
+      setCards(cards.filter((c) => c.id !== cardToDelete));
+    }
     setDeleteModalOpen(false);
     setCardToDelete(null);
   };
 
   const filteredCards = cards
     .filter((card) => {
-      const matchesSearch =
-        card.data.recipientName
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        card.data.message?.toLowerCase().includes(searchQuery.toLowerCase());
-
-      return matchesSearch;
+      const content = readCardContent(card.data);
+      const query = searchQuery.toLowerCase();
+      return (
+        content.recipientName?.toLowerCase().includes(query) ||
+        content.message?.toLowerCase().includes(query)
+      );
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -108,9 +103,9 @@ export default function DashboardPage() {
             new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
           );
         case "recipient":
-          return (a.data.recipientName || "").localeCompare(
-            b.data.recipientName || "",
-          );
+          return (
+            readCardContent(a.data).recipientName || ""
+          ).localeCompare(readCardContent(b.data).recipientName || "");
         default:
           return 0;
       }
@@ -124,7 +119,11 @@ export default function DashboardPage() {
     return cardDate >= weekAgo;
   }).length;
 
-  const uniqueRecipients = new Set(cards.map((c) => c.data.recipientName)).size;
+  const uniqueRecipients = new Set(
+    cards
+      .map((c) => readCardContent(c.data).recipientName)
+      .filter((name): name is string => Boolean(name)),
+  ).size;
 
   if (authLoading || !user) {
     return (
@@ -503,6 +502,7 @@ function LetterCard({
   onShare: (id: string) => void;
 }) {
   const template = getTemplateById(card.template_id);
+  const content = readCardContent(card.data);
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -578,10 +578,10 @@ function LetterCard({
           className="flex-1 block group-hover:opacity-90 transition-opacity mb-4"
         >
           <h3 className="font-bold text-foreground mb-2 truncate text-base sm:text-lg">
-            To: {card.data.recipientName || "Someone Special"}
+            To: {content.recipientName || "Someone Special"}
           </h3>
           <p className="text-muted-foreground text-sm line-clamp-3 font-serif italic leading-relaxed">
-            "{card.data.message || "No message content..."}"
+            &ldquo;{content.message || "No message content..."}&rdquo;
           </p>
         </Link>
 

@@ -42,11 +42,14 @@ export interface CardData {
   createdAt: string;
 }
 
-// Stored card in Supabase
+// Stored card in Supabase.
+// `data` mixes user content (string values) with the namespaced `_style` object,
+// so it is deliberately `unknown`-valued — read it through lib/cardStyle.ts
+// (`readCardContent` / `readCardStyle`) rather than indexing it directly.
 export interface SharedCard {
   id: string;
   template_id: string;
-  data: Record<string, string>;
+  data: Record<string, unknown>;
   user_id?: string;
   created_at: string;
 }

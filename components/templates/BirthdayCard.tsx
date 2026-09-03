@@ -1,51 +1,31 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { useMemo, useState } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import Link from "next/link";
-import Script from "next/script";
 import Image from "next/image";
+import { FontId, getFontClasses } from "@/lib/fonts";
+import { seededSeries } from "@/lib/rand";
+
+const BALLOON_COUNT = 12;
+const CONFETTI_COUNT = 24;
+const BALLOON_COLORS = ["#ff718d", "#fdb66d", "#71e5ff", "#9d71ff", "#ffeb71"];
 
 interface BirthdayCardProps {
   data: Record<string, string>;
+  font?: FontId;
+  cardId?: string;
 }
 
-const FONTS = [
-  {
-    id: "default",
-    name: "Classic",
-    headerClass: "font-handwriting",
-    bodyClass: "font-serif",
-  },
-  {
-    id: "rustic",
-    name: "Rustic",
-    headerClass: "font-rustic",
-    bodyClass: "font-rustic",
-  },
-  {
-    id: "lucy",
-    name: "Lucy",
-    headerClass: "font-lucy",
-    bodyClass: "font-lucy",
-  },
-  {
-    id: "valentine",
-    name: "Valentine",
-    headerClass: "font-valentine",
-    bodyClass: "font-valentine",
-  },
-  {
-    id: "valty",
-    name: "Valty",
-    headerClass: "font-valty",
-    bodyClass: "font-valty",
-  },
-];
-
-export default function BirthdayCard({ data }: BirthdayCardProps) {
+export default function BirthdayCard({
+  data,
+  font,
+  cardId = "birthday",
+}: BirthdayCardProps) {
   const [candlesBlown, setCandlesBlown] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
+  const reduceMotion = useReducedMotion();
+  const fontClasses = getFontClasses(font);
 
   const recipientName = data.recipientName || "Friend";
   const senderName = data.senderName || "Your Friend";
@@ -53,75 +33,88 @@ export default function BirthdayCard({ data }: BirthdayCardProps) {
   const message = data.message || "Wishing you a wonderful day!";
   const wish = data.wish;
 
-  // Generate random balloons
-  const balloons = Array.from({ length: 15 }).map((_, i) => ({
-    id: i,
-    x: Math.random() * 100,
-    delay: Math.random() * 5,
-    color: ["#ff718d", "#fdb66d", "#71e5ff", "#9d71ff", "#ffeb71"][i % 5],
-  }));
+  // Seeded so the layout is hydration-safe and stable across visits.
+  const balloons = useMemo(
+    () =>
+      seededSeries(`${cardId}:balloons`, BALLOON_COUNT, 3).map(
+        ([x, delay, dur], i) => ({
+          id: i,
+          x: x * 100,
+          delay: delay * 5,
+          duration: 15 + dur * 10,
+          color: BALLOON_COLORS[i % BALLOON_COLORS.length],
+        }),
+      ),
+    [cardId],
+  );
+  const confetti = useMemo(
+    () => seededSeries(`${cardId}:confetti`, CONFETTI_COUNT, 5),
+    [cardId],
+  );
 
   const handleBlowCandles = () => {
     if (candlesBlown) return;
     setCandlesBlown(true);
 
     // Delay for the smoke/magic effect before showing the message
-    setTimeout(() => {
-      setShowMessage(true);
-    }, 1500);
+    setTimeout(() => setShowMessage(true), reduceMotion ? 0 : 1500);
   };
 
   return (
-    <main className="min-h-screen relative flex items-center justify-center overflow-hidden bg-background p-4 md:p-6">
+    <main className="min-h-[100svh] relative flex items-center justify-center overflow-hidden bg-background p-4 md:p-6">
       {/* Background Gradients */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-          }}
+          animate={
+            reduceMotion
+              ? undefined
+              : { scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }
+          }
           transition={{ duration: 10, repeat: Infinity }}
           className="absolute top-[-10%] left-[-10%] bg-blue-300/30 w-[300px] h-[300px] md:w-[600px] md:h-[600px] rounded-full blur-3xl"
         />
         <motion.div
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.3, 0.5, 0.3],
-          }}
+          animate={
+            reduceMotion
+              ? undefined
+              : { scale: [1.2, 1, 1.2], opacity: [0.3, 0.5, 0.3] }
+          }
           transition={{ duration: 12, repeat: Infinity, delay: 2 }}
           className="absolute bottom-[-10%] right-[-10%] bg-purple-300/30 w-[300px] h-[300px] md:w-[600px] md:h-[600px] rounded-full blur-3xl"
         />
       </div>
 
       {/* Floating Balloons */}
-      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-        {balloons.map((b) => (
-          <motion.div
-            key={b.id}
-            initial={{ y: "110vh", x: `${b.x}vw` }}
-            animate={{ y: "-20vh" }}
-            transition={{
-              duration: 15 + Math.random() * 10,
-              repeat: Infinity,
-              delay: b.delay,
-              ease: "linear",
-            }}
-            className="absolute text-4xl md:text-6xl opacity-60"
-            style={{
-              left: `${b.x}%`,
-              filter: `drop-shadow(0 4px 6px ${b.color})`,
-            }}
-          >
-            <div style={{ color: b.color }} className="relative">
-              🎈
-              <div
-                className="absolute top-full left-1/2 w-[1px] h-8 md:h-12 bg-gray-400/50 -translate-x-1/2"
-                style={{ transformOrigin: "top" }}
-              />
-            </div>
-          </motion.div>
-        ))}
-      </div>
+      {!reduceMotion && (
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+          {balloons.map((b) => (
+            <motion.div
+              key={b.id}
+              initial={{ y: "110vh" }}
+              animate={{ y: "-20vh" }}
+              transition={{
+                duration: b.duration,
+                repeat: Infinity,
+                delay: b.delay,
+                ease: "linear",
+              }}
+              className="absolute text-4xl md:text-6xl opacity-60"
+              style={{
+                left: `${b.x}%`,
+                filter: `drop-shadow(0 4px 6px ${b.color})`,
+              }}
+            >
+              <div style={{ color: b.color }} className="relative">
+                🎈
+                <div
+                  className="absolute top-full left-1/2 w-[1px] h-8 md:h-12 bg-gray-400/50 -translate-x-1/2"
+                  style={{ transformOrigin: "top" }}
+                />
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       <div className="z-10 w-full max-w-lg relative">
         <motion.div
@@ -144,24 +137,20 @@ export default function BirthdayCard({ data }: BirthdayCardProps) {
                 <motion.h1
                   initial={{ y: -20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
-                  className={`text-4xl md:text-5xl text-foreground mb-4 ${
-                    FONTS.find((f) => f.id === (data.fontName || "default"))
-                      ?.headerClass || "font-handwriting"
-                  }`}
+                  className={`text-4xl md:text-5xl text-foreground mb-4 ${fontClasses.header}`}
                 >
                   Make a Wish!
                 </motion.h1>
                 <p
-                  className={`text-muted-foreground mb-8 md:mb-12 italic text-sm md:text-base ${
-                    FONTS.find((f) => f.id === (data.fontName || "default"))
-                      ?.bodyClass || "font-serif"
-                  }`}
+                  className={`text-muted-foreground mb-8 md:mb-12 italic text-sm md:text-base ${fontClasses.body}`}
                 >
                   Tap the cake to blow out the candles
                 </p>
 
                 {/* Interactive Cake */}
-                <motion.div
+                <motion.button
+                  type="button"
+                  aria-label="Blow out the candles"
                   className="relative cursor-pointer group"
                   onClick={handleBlowCandles}
                   whileHover={{ scale: 1.05 }}
@@ -177,10 +166,11 @@ export default function BirthdayCard({ data }: BirthdayCardProps) {
                       {[1, 2, 3].map((i) => (
                         <motion.div
                           key={i}
-                          animate={{
-                            scale: [1, 1.2, 1],
-                            rotate: [-5, 5, -5],
-                          }}
+                          animate={
+                            reduceMotion
+                              ? undefined
+                              : { scale: [1, 1.2, 1], rotate: [-5, 5, -5] }
+                          }
                           transition={{
                             duration: 0.5,
                             repeat: Infinity,
@@ -218,7 +208,7 @@ export default function BirthdayCard({ data }: BirthdayCardProps) {
                   )}
 
                   <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-28 md:w-40 h-6 md:h-8 bg-black/10 rounded-[100%] blur-md z-0 group-hover:w-36 md:group-hover:w-48 transition-all duration-300" />
-                </motion.div>
+                </motion.button>
               </motion.div>
             ) : (
               <motion.div
@@ -244,54 +234,46 @@ export default function BirthdayCard({ data }: BirthdayCardProps) {
                 </div>
 
                 <h1
-                  className={`text-4xl md:text-5xl lg:text-6xl text-gradient mb-6 leading-relaxed py-2 ${
-                    FONTS.find((f) => f.id === (data.fontName || "default"))
-                      ?.headerClass || "font-handwriting"
-                  }`}
+                  className={`text-4xl md:text-5xl lg:text-6xl text-gradient mb-6 leading-relaxed py-2 ${fontClasses.header}`}
                 >
                   Happy Birthday
                 </h1>
                 <h2
-                  className={`text-xl md:text-2xl text-foreground/80 mb-6 md:mb-8 ${
-                    FONTS.find((f) => f.id === (data.fontName || "default"))
-                      ?.headerClass || "font-serif"
-                  }`}
+                  className={`text-xl md:text-2xl text-foreground/80 mb-6 md:mb-8 ${fontClasses.header}`}
                 >
                   {recipientName}!
                 </h2>
 
                 <p
-                  className={`text-lg md:text-xl text-foreground/80 mb-6 md:mb-8 max-w-sm md:max-w-md mx-auto leading-relaxed ${
-                    FONTS.find((f) => f.id === (data.fontName || "default"))
-                      ?.bodyClass || "font-serif"
-                  }`}
+                  className={`text-lg md:text-xl text-foreground/80 mb-6 md:mb-8 max-w-sm md:max-w-md mx-auto leading-relaxed whitespace-pre-line ${fontClasses.body}`}
                 >
                   {message}
                 </p>
 
                 {wish && (
                   <div className="bg-white/40 p-4 rounded-xl mb-6 md:mb-8 w-full max-w-xs mx-auto backdrop-blur-sm">
-                    <p className="text-sm text-foreground/60 uppercase tracking-widest text-[10px] mb-1">
+                    <p className="text-foreground/60 uppercase tracking-widest text-[10px] mb-1">
                       A Special Wish
                     </p>
                     <p
-                      className={`text-base md:text-lg font-medium text-pink-600 ${
-                        FONTS.find((f) => f.id === (data.fontName || "default"))
-                          ?.headerClass || "font-handwriting"
-                      }`}
+                      className={`text-base md:text-lg font-medium text-pink-600 ${fontClasses.header}`}
                     >
-                      "{wish}"
+                      &ldquo;{wish}&rdquo;
                     </p>
                   </div>
                 )}
 
                 <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-2 w-full sm:w-auto">
                   <Link href="/templates" className="w-full sm:w-auto">
-                    <button className="btn-primary w-full sm:w-auto px-6 md:px-8 py-2 md:py-3 rounded-full text-base md:text-lg font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all">
+                    <button
+                      type="button"
+                      className="btn-primary w-full sm:w-auto px-6 md:px-8 py-2 md:py-3 rounded-full text-base md:text-lg font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+                    >
                       Send One Too
                     </button>
                   </Link>
                   <button
+                    type="button"
                     onClick={() => {
                       setCandlesBlown(false);
                       setShowMessage(false);
@@ -303,45 +285,43 @@ export default function BirthdayCard({ data }: BirthdayCardProps) {
                 </div>
 
                 <p
-                  className={`text-sm text-muted-foreground mt-4 md:mt-6 ${
-                    FONTS.find((f) => f.id === (data.fontName || "default"))
-                      ?.headerClass || "font-serif"
-                  }`}
+                  className={`text-sm text-muted-foreground mt-4 md:mt-6 ${fontClasses.header}`}
                 >
                   — {senderName}
                 </p>
 
                 {/* Confetti Particles */}
-                {Array.from({ length: 40 }).map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute top-1/2 left-1/2 w-3 h-3 rounded-sm pointer-events-none"
-                    style={{
-                      backgroundColor: [
-                        "#ff0000",
-                        "#00ff00",
-                        "#0000ff",
-                        "#ffff00",
-                        "#ff00ff",
-                      ][i % 5],
-                    }}
-                    initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
-                    animate={{
-                      x: (Math.random() - 0.5) * 800,
-                      y: (Math.random() - 0.5) * 800,
-                      opacity: [1, 1, 0],
-                      scale: [0, 1, 0],
-                      rotate: Math.random() * 720,
-                    }}
-                    transition={{
-                      duration: 2 + Math.random() * 2,
-                      ease: "easeOut",
-                      repeat: Infinity,
-                      repeatDelay: Math.random() * 3,
-                      delay: 0.5,
-                    }}
-                  />
-                ))}
+                {!reduceMotion &&
+                  confetti.map(([x, y, dur, rot, gap], i) => (
+                    <motion.div
+                      key={i}
+                      className="absolute top-1/2 left-1/2 w-3 h-3 rounded-sm pointer-events-none"
+                      style={{
+                        backgroundColor: [
+                          "#ff0000",
+                          "#00ff00",
+                          "#0000ff",
+                          "#ffff00",
+                          "#ff00ff",
+                        ][i % 5],
+                      }}
+                      initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
+                      animate={{
+                        x: (x - 0.5) * 800,
+                        y: (y - 0.5) * 800,
+                        opacity: [1, 1, 0],
+                        scale: [0, 1, 0],
+                        rotate: rot * 720,
+                      }}
+                      transition={{
+                        duration: 2 + dur * 2,
+                        ease: "easeOut",
+                        repeat: Infinity,
+                        repeatDelay: gap * 3,
+                        delay: 0.5,
+                      }}
+                    />
+                  ))}
               </motion.div>
             )}
           </AnimatePresence>

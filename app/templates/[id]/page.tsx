@@ -2,54 +2,51 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import Link from "next/link";
 import Image from "next/image";
-import Script from "next/script";
 import { getTemplateById } from "@/lib/templates";
 import { createCard, getCard, updateCard } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { CATEGORIES } from "@/lib/types";
+import { FONTS, FontId, getFontClasses } from "@/lib/fonts";
+import {
+  CardStyle,
+  readCardContent,
+  readCardStyle,
+  writeCardData,
+} from "@/lib/cardStyle";
+import { track } from "@/lib/analytics";
+import ShareModal from "@/components/ShareModal";
+import { Sparkles, ArrowLeft, User, LayoutGrid, Type } from "lucide-react";
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-import ShareModal from "@/components/ShareModal";
-import { Sparkles, ArrowLeft, User, LayoutGrid, Type } from "lucide-react";
+// Bumped from v1: pre-split drafts were a flat object mixing `fontName` into
+// the content fields, so an old draft would restore into the wrong shape.
+const draftKey = (id: string) => `template-draft-v2-${id}`;
 
-const FONTS = [
-  {
-    id: "default",
-    name: "Classic",
-    headerClass: "font-handwriting",
-    bodyClass: "font-serif",
-  },
-  {
-    id: "rustic",
-    name: "Rustic",
-    headerClass: "font-rustic",
-    bodyClass: "font-rustic",
-  },
-  {
-    id: "lucy",
-    name: "Lucy",
-    headerClass: "font-lucy",
-    bodyClass: "font-lucy",
-  },
-  {
-    id: "valentine",
-    name: "Valentine",
-    headerClass: "font-valentine",
-    bodyClass: "font-valentine",
-  },
-  {
-    id: "valty",
-    name: "Valty",
-    headerClass: "font-valty",
-    bodyClass: "font-valty",
-  },
-];
+interface Draft {
+  content: Record<string, string>;
+  font: FontId;
+}
+
+function readDraft(id: string): Draft | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const saved = sessionStorage.getItem(draftKey(id));
+    if (!saved) return null;
+    const parsed = JSON.parse(saved) as Partial<Draft>;
+    return {
+      content: parsed.content ?? {},
+      font: parsed.font ?? "default",
+    };
+  } catch {
+    return null;
+  }
+}
 
 export default function TemplateEditorPage({ params }: PageProps) {
   const { id } = use(params);
@@ -59,25 +56,27 @@ export default function TemplateEditorPage({ params }: PageProps) {
   const { user, loading: authLoading } = useAuth();
   const template = getTemplateById(id);
 
-  const [formData, setFormData] = useState<Record<string, string>>(() => {
-    // Restore form data from sessionStorage if available (after auth redirect)
-    if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem(`template-draft-${id}`);
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          return {};
-        }
-      }
-    }
-    return {};
-  });
+  const [formData, setFormData] = useState<Record<string, string>>(
+    () => readDraft(id)?.content ?? {},
+  );
+  // Style is held separately from content so it can never collide with a
+  // template field name, and is persisted under the namespaced `_style` slot.
+  const [font, setFont] = useState<FontId>(() => readDraft(id)?.font ?? "default");
 
-  // Clear saved draft from sessionStorage once user is authenticated and data is loaded
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isEnhancing, setIsEnhancing] = useState<string | null>(null);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [createdCardLink, setCreatedCardLink] = useState("");
+
   useEffect(() => {
-    if (user && formData && Object.keys(formData).length > 0 && !editId) {
-      sessionStorage.removeItem(`template-draft-${id}`);
+    track("editor_start", { template: id });
+  }, [id]);
+
+  // Clear the auth-redirect draft once the user is back and signed in.
+  useEffect(() => {
+    if (user && !editId) {
+      sessionStorage.removeItem(draftKey(id));
     }
   }, [user, id, editId]);
 
@@ -88,28 +87,32 @@ export default function TemplateEditorPage({ params }: PageProps) {
 
       try {
         const card = await getCard(editId);
-        if (card && card.data) {
-          setFormData(card.data);
+        if (card?.data) {
+          // Must split: assigning the raw row to formData would pull `_style`
+          // into the form, re-save it nested inside itself, and render the
+          // object as a text field.
+          setFormData(readCardContent(card.data));
+          setFont(readCardStyle(card.data).font);
         }
       } catch (err) {
         console.error("Failed to load card for editing:", err);
-        setError("Failed to load generic card data");
+        setError("Couldn't load this card for editing.");
       }
     }
 
     loadCardData();
   }, [editId]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showDemoPreview, setShowDemoPreview] = useState(false);
-  const [isEnhancing, setIsEnhancing] = useState<string | null>(null);
-  const [shareModalOpen, setShareModalOpen] = useState(false);
-  const [createdCardLink, setCreatedCardLink] = useState("");
+
+  const handleInputChange = (name: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleAiEnhance = async (fieldName: string, currentValue: string) => {
-    if (!currentValue?.trim()) return;
+    if (!currentValue?.trim() || !template) return;
 
+    track("ai_enhance_click", { template: template.id, field: fieldName });
     setIsEnhancing(fieldName);
+    setError(null);
     try {
       const response = await fetch("/api/ai/enhance", {
         method: "POST",
@@ -117,18 +120,24 @@ export default function TemplateEditorPage({ params }: PageProps) {
         body: JSON.stringify({
           prompt: currentValue,
           fieldType: fieldName,
-          templateName: template?.name,
-          templateDescription: template?.description,
-          tone: "Emotional and sincere",
+          // Only the template *id* is sent. The route looks the name and
+          // description up server-side — accepting those as strings let a
+          // crafted request rewrite the system prompt.
+          templateId: template.id,
         }),
       });
 
       const data = await response.json();
+      if (!response.ok) {
+        setError(data?.error || "AI is busy right now. Try again in a moment.");
+        return;
+      }
       if (data.text) {
         handleInputChange(fieldName, data.text);
       }
     } catch (err) {
       console.error("AI Enhance failed", err);
+      setError("Couldn't reach the AI. Check your connection and try again.");
     } finally {
       setIsEnhancing(null);
     }
@@ -136,16 +145,13 @@ export default function TemplateEditorPage({ params }: PageProps) {
 
   if (!template) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-background">
+      <main className="min-h-[100svh] flex items-center justify-center bg-background">
         <div className="text-center">
           <p className="text-6xl mb-4">😕</p>
           <h1 className="text-2xl font-serif font-bold mb-4">
             Template Not Found
           </h1>
-          <Link
-            href="/templates"
-            className="btn-primary px-6 py-3 rounded-full"
-          >
+          <Link href="/templates" className="btn-primary px-6 py-3 rounded-full">
             Browse Templates
           </Link>
         </div>
@@ -154,26 +160,19 @@ export default function TemplateEditorPage({ params }: PageProps) {
   }
 
   const category = CATEGORIES.find((c) => c.id === template.category);
-
-  const handleInputChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const previewFontClasses = getFontClasses(font);
 
   const validateForm = () => {
-    const missingFields = template.fields
+    return template.fields
       .filter((f) => f.required && !formData[f.name]?.trim())
       .map((f) => f.label);
-    return missingFields;
   };
 
-  const handleDemoPreview = () => {
-    const missing = validateForm();
-    if (missing.length > 0) {
-      setError(`Please fill in: ${missing.join(", ")}`);
-      return;
-    }
-    setError(null);
-    setShowDemoPreview(true);
+  const saveDraft = () => {
+    sessionStorage.setItem(
+      draftKey(id),
+      JSON.stringify({ content: formData, font } satisfies Draft),
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -181,8 +180,7 @@ export default function TemplateEditorPage({ params }: PageProps) {
     setError(null);
 
     if (!user) {
-      // Save form data to sessionStorage before redirecting to auth
-      sessionStorage.setItem(`template-draft-${id}`, JSON.stringify(formData));
+      saveDraft();
       const redirectUrl = `/templates/${id}`;
       router.push(`/auth?redirect=${encodeURIComponent(redirectUrl)}`);
       return;
@@ -196,14 +194,14 @@ export default function TemplateEditorPage({ params }: PageProps) {
 
     setIsSubmitting(true);
 
-    setIsSubmitting(true);
+    const style: CardStyle = { font };
+    const payload = writeCardData(formData, style);
 
     try {
       let resultId = "";
 
-      if (editId && user) {
-        // Update existing card
-        const result = await updateCard(editId, formData, user.id);
+      if (editId) {
+        const result = await updateCard(editId, payload, user.id);
         if (!result.success) {
           setError(result.error || "Failed to update card");
           setIsSubmitting(false);
@@ -211,8 +209,7 @@ export default function TemplateEditorPage({ params }: PageProps) {
         }
         resultId = editId;
       } else {
-        // Create new card
-        const result = await createCard(template.id, formData, user?.id);
+        const result = await createCard(template.id, payload, user.id);
         if ("error" in result) {
           setError(result.error);
           setIsSubmitting(false);
@@ -221,10 +218,11 @@ export default function TemplateEditorPage({ params }: PageProps) {
         resultId = result.id;
       }
 
-      const shareUrl = `${window.location.origin}/share/${resultId}`;
-      setCreatedCardLink(shareUrl);
+      track("card_created", { template: template.id, edit: Boolean(editId) });
+      setCreatedCardLink(`${window.location.origin}/share/${resultId}`);
       setShareModalOpen(true);
-      // Wait for user to close modal to navigate
+      setIsSubmitting(false);
+      // Navigation happens when the user closes the share modal.
     } catch {
       setError("Something went wrong. Please try again.");
       setIsSubmitting(false);
@@ -232,7 +230,7 @@ export default function TemplateEditorPage({ params }: PageProps) {
   };
 
   return (
-    <main className="min-h-screen relative overflow-hidden bg-background">
+    <main className="min-h-[100svh] relative overflow-hidden bg-background">
       <ShareModal
         isOpen={shareModalOpen}
         onClose={() => router.push("/dashboard")}
@@ -275,15 +273,7 @@ export default function TemplateEditorPage({ params }: PageProps) {
             ) : (
               <Link
                 href={`/auth?redirect=${encodeURIComponent(`/templates/${id}`)}`}
-                onClick={() => {
-                  // Save form data before navigating to auth
-                  if (Object.keys(formData).length > 0) {
-                    sessionStorage.setItem(
-                      `template-draft-${id}`,
-                      JSON.stringify(formData),
-                    );
-                  }
-                }}
+                onClick={saveDraft}
                 className="group flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg hover:shadow-pink-500/25 hover:scale-105 transition-all font-medium text-sm md:text-base"
               >
                 <User size={18} />
@@ -312,9 +302,7 @@ export default function TemplateEditorPage({ params }: PageProps) {
 
           <span
             className="px-4 py-1.5 rounded-full text-sm font-bold tracking-wide uppercase mb-6 inline-block bg-white/50 backdrop-blur-sm border border-white/60 shadow-sm"
-            style={{
-              color: template.colors.primary,
-            }}
+            style={{ color: template.colors.primary }}
           >
             {category?.name} Template
           </span>
@@ -399,7 +387,8 @@ export default function TemplateEditorPage({ params }: PageProps) {
                           onClick={() =>
                             handleAiEnhance(field.name, formData[field.name])
                           }
-                          className="absolute bottom-3 right-3 p-2 rounded-full bg-white/90 shadow-sm text-pink-500 hover:text-pink-600 hover:shadow-md border border-pink-100 transition-colors z-10"
+                          disabled={isEnhancing !== null}
+                          className="absolute bottom-3 right-3 p-2 rounded-full bg-white/90 shadow-sm text-pink-500 hover:text-pink-600 hover:shadow-md border border-pink-100 transition-colors z-10 disabled:opacity-60"
                           title="Enhance with AI ✨"
                         >
                           {isEnhancing === field.name ? (
@@ -432,29 +421,30 @@ export default function TemplateEditorPage({ params }: PageProps) {
                   </div>
                 ))}
               </div>
+
               {/* Font Selector */}
               <div className="mt-8">
-                <label className="block text-sm font-medium text-foreground/80 mb-3 flex items-center gap-2">
+                <label className="text-sm font-medium text-foreground/80 mb-3 flex items-center gap-2">
                   <Type size={16} /> Choose Font Style
                 </label>
                 <div className="grid grid-cols-2 xs:grid-cols-3 gap-3">
-                  {FONTS.map((font) => (
+                  {FONTS.map((option) => (
                     <button
-                      key={font.id}
+                      key={option.id}
                       type="button"
-                      onClick={() => handleInputChange("fontName", font.id)}
+                      onClick={() => setFont(option.id)}
                       className={`px-3 py-3 rounded-xl border transition-all text-sm relative overflow-hidden group ${
-                        (formData.fontName || "default") === font.id
+                        font === option.id
                           ? "bg-pink-50 border-pink-500 text-pink-700 font-medium ring-1 ring-pink-500/20"
                           : "bg-white/60 border-white/80 hover:border-pink-300 hover:bg-white text-foreground/70"
                       }`}
                     >
                       <span
-                        className={`block text-xl mb-1 ${font.headerClass}`}
+                        className={`block text-xl mb-1 ${option.headerClass}`}
                       >
                         Aa
                       </span>
-                      {font.name}
+                      {option.name}
                     </button>
                   ))}
                 </div>
@@ -465,29 +455,14 @@ export default function TemplateEditorPage({ params }: PageProps) {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="text-red-500 text-sm mt-4 p-3 bg-red-50 rounded-lg"
+                  role="alert"
                 >
                   {error}
                 </motion.p>
               )}
 
-              {/* Action buttons */}
-              <div className="mt-6 space-y-3">
-                {/* Demo Preview button - always available */}
-                <motion.button
-                  type="button"
-                  onClick={handleDemoPreview}
-                  className="w-full py-4 rounded-xl text-lg font-semibold bg-white border-2 transition-all"
-                  style={{
-                    borderColor: template.colors.primary,
-                    color: template.colors.primary,
-                  }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  👁️ Preview Demo
-                </motion.button>
-
-                {/* Save button */}
+              {/* Save button */}
+              <div className="mt-6">
                 <motion.button
                   type="submit"
                   disabled={isSubmitting}
@@ -552,36 +527,14 @@ export default function TemplateEditorPage({ params }: PageProps) {
 
               {/* Card Content Container */}
               <div className="relative z-10 text-center py-4">
-                {template.id === "love-letter" ? (
-                  <div className="mb-6 relative w-full max-w-[280px] mx-auto">
+                {PREVIEW_GIFS[template.id] ? (
+                  <div className="mb-6 relative w-full max-w-[280px] mx-auto overflow-hidden rounded-xl">
                     <Image
-                      src="https://media1.tenor.com/m/HI7GdDJ1yq0AAAAC/us-you-and-me.gif"
-                      alt="Us You And Me Sticker"
+                      src={PREVIEW_GIFS[template.id].src}
+                      alt={PREVIEW_GIFS[template.id].alt}
                       width={280}
                       height={280}
                       className="w-full h-auto rounded-lg"
-                      unoptimized
-                    />
-                  </div>
-                ) : template.id === "miss-you" ? (
-                  <div className="mb-6 relative w-full max-w-[280px] mx-auto">
-                    <Image
-                      src="https://media1.tenor.com/m/rzG9YBjxW-0AAAAC/peach-sad.gif"
-                      alt="Peach Sad GIF"
-                      width={280}
-                      height={280}
-                      className="w-full h-auto rounded-lg"
-                      unoptimized
-                    />
-                  </div>
-                ) : template.id === "anniversary" ? (
-                  <div className="mb-6 relative w-full max-w-[280px] overflow-hidden rounded-xl mx-auto">
-                    <Image
-                      src="https://media1.tenor.com/m/K6WkauZF1ToAAAAC/happy-valentines-day-valentines-day.gif"
-                      alt="Happy Valentines Day Hugs Sticker"
-                      width={280}
-                      height={280}
-                      className="w-full h-auto object-contain"
                       unoptimized
                     />
                   </div>
@@ -596,35 +549,26 @@ export default function TemplateEditorPage({ params }: PageProps) {
                 )}
 
                 <h3
-                  className={`text-4xl mb-4 ${
-                    FONTS.find((f) => f.id === (formData.fontName || "default"))
-                      ?.headerClass || "font-handwriting"
-                  }`}
+                  className={`text-4xl mb-4 ${previewFontClasses.header}`}
                   style={{ color: template.colors.primary }}
                 >
                   {formData.recipientName || template.fields[0].placeholder}
                 </h3>
 
                 <p
-                  className={`text-foreground/80 text-lg leading-relaxed mb-6 max-w-sm mx-auto ${
-                    FONTS.find((f) => f.id === (formData.fontName || "default"))
-                      ?.bodyClass || "font-serif"
-                  }`}
+                  className={`text-foreground/80 text-lg leading-relaxed mb-6 max-w-sm mx-auto whitespace-pre-line ${previewFontClasses.body}`}
                 >
                   {formData.message || formData.reason || template.previewText}
                 </p>
 
                 {(formData.memory || formData.promise) && (
                   <p className="text-foreground/60 text-sm italic border-t border-foreground/10 pt-4">
-                    "{formData.memory || formData.promise}"
+                    &ldquo;{formData.memory || formData.promise}&rdquo;
                   </p>
                 )}
 
                 <p
-                  className={`text-foreground/50 mt-6 ${
-                    FONTS.find((f) => f.id === (formData.fontName || "default"))
-                      ?.headerClass || "font-handwriting"
-                  }`}
+                  className={`text-foreground/50 mt-6 ${previewFontClasses.header}`}
                 >
                   — {formData.senderName || template.fields[1].placeholder}
                 </p>
@@ -642,3 +586,20 @@ export default function TemplateEditorPage({ params }: PageProps) {
     </main>
   );
 }
+
+// TODO(phase-1): these live in the theme config once the theme engine lands,
+// and the preview mounts the real card renderer instead of this mini-card.
+const PREVIEW_GIFS: Record<string, { src: string; alt: string }> = {
+  "love-letter": {
+    src: "https://media1.tenor.com/m/HI7GdDJ1yq0AAAAC/us-you-and-me.gif",
+    alt: "Us You And Me Sticker",
+  },
+  "miss-you": {
+    src: "https://media1.tenor.com/m/rzG9YBjxW-0AAAAC/peach-sad.gif",
+    alt: "Peach Sad GIF",
+  },
+  anniversary: {
+    src: "https://media1.tenor.com/m/K6WkauZF1ToAAAAC/happy-valentines-day-valentines-day.gif",
+    alt: "Happy Valentines Day Hugs Sticker",
+  },
+};

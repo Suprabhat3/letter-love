@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
-import { motion } from "motion/react";
+import { useMemo, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import Image from "next/image";
-import { CardData } from "@/lib/types";
+import { FontId, getFontClasses } from "@/lib/fonts";
+import { seededSeries } from "@/lib/rand";
 
 // Phrases that appear on the "No" button
 const NO_PHRASES = [
@@ -23,46 +24,25 @@ const NO_PHRASES = [
   "You're breaking my heart ;(",
 ];
 
+const DROP_COUNT = 14;
+const HEART_COUNT = 14;
+const CONFETTI_COUNT = 24;
+
 interface SorryCardProps {
   data: Record<string, string>;
+  font?: FontId;
+  cardId?: string;
 }
 
-const FONTS = [
-  {
-    id: "default",
-    name: "Classic",
-    headerClass: "font-handwriting",
-    bodyClass: "font-serif",
-  },
-  {
-    id: "rustic",
-    name: "Rustic",
-    headerClass: "font-rustic",
-    bodyClass: "font-rustic",
-  },
-  {
-    id: "lucy",
-    name: "Lucy",
-    headerClass: "font-lucy",
-    bodyClass: "font-lucy",
-  },
-  {
-    id: "valentine",
-    name: "Valentine",
-    headerClass: "font-valentine",
-    bodyClass: "font-valentine",
-  },
-  {
-    id: "valty",
-    name: "Valty",
-    headerClass: "font-valty",
-    bodyClass: "font-valty",
-  },
-];
-
-export default function SorryCard({ data }: SorryCardProps) {
+export default function SorryCard({
+  data,
+  font,
+  cardId = "sorry",
+}: SorryCardProps) {
   const [noCount, setNoCount] = useState(0);
   const [isForgiven, setIsForgiven] = useState(false);
+  const reduceMotion = useReducedMotion();
+  const fontClasses = getFontClasses(font);
 
   const recipientName = data.recipientName || "Dear Friend";
   const senderName = data.senderName || "Sincerely Sorry";
@@ -71,64 +51,71 @@ export default function SorryCard({ data }: SorryCardProps) {
 
   const yesButtonSize = noCount * 20 + 16; // Increases by 20px per 'No' click
 
-  const handleNoClick = () => {
-    setNoCount(noCount + 1);
-  };
+  // Seeded so the layout is hydration-safe and stable across visits.
+  const drops = useMemo(
+    () => seededSeries(`${cardId}:drops`, DROP_COUNT, 3),
+    [cardId],
+  );
+  const hearts = useMemo(
+    () => seededSeries(`${cardId}:hearts`, HEART_COUNT, 3),
+    [cardId],
+  );
+  const confetti = useMemo(
+    () => seededSeries(`${cardId}:confetti`, CONFETTI_COUNT, 5),
+    [cardId],
+  );
 
-  const getNoText = () => {
-    return NO_PHRASES[noCount % NO_PHRASES.length];
-  };
-
-  // Generate particles for celebration
-  const particles = Array.from({ length: 50 });
+  const handleNoClick = () => setNoCount(noCount + 1);
+  const getNoText = () => NO_PHRASES[noCount % NO_PHRASES.length];
 
   return (
-    <main className="min-h-screen relative flex items-center justify-center overflow-hidden bg-background p-6">
+    <main className="min-h-[100svh] relative flex items-center justify-center overflow-hidden bg-background p-6">
       {/* Background Elements */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none z-0">
         <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-          }}
+          animate={
+            reduceMotion
+              ? undefined
+              : { scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }
+          }
           transition={{ duration: 8, repeat: Infinity }}
           className="blob-bg top-[10%] left-[10%] bg-pink-200/40 w-[600px] h-[600px] opacity-40 blur-3xl"
         />
         <motion.div
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.3, 0.5, 0.3],
-          }}
+          animate={
+            reduceMotion
+              ? undefined
+              : { scale: [1.2, 1, 1.2], opacity: [0.3, 0.5, 0.3] }
+          }
           transition={{ duration: 10, repeat: Infinity }}
           className="blob-bg bottom-[10%] right-[10%] bg-purple-200/40 w-[500px] h-[500px] opacity-40 blur-3xl"
         />
 
         {/* Rain/Teardrop Effect (Only when not forgiven) */}
-        {!isForgiven &&
-          Array.from({ length: 20 }).map((_, i) => (
+        {!reduceMotion &&
+          !isForgiven &&
+          drops.map(([x, dur, delay], i) => (
             <motion.div
               key={`rain-${i}`}
               initial={{ y: -50, opacity: 0 }}
-              animate={{
-                y: ["0vh", "100vh"],
-                opacity: [0, 0.5, 0],
-              }}
+              animate={{ y: ["0vh", "100vh"], opacity: [0, 0.5, 0] }}
               transition={{
-                duration: 2 + Math.random() * 3,
+                duration: 2 + dur * 3,
                 repeat: Infinity,
-                delay: Math.random() * 5,
+                delay: delay * 5,
                 ease: "linear",
               }}
               className="absolute text-2xl opacity-30"
-              style={{ left: `${Math.random() * 100}%` }}
+              style={{ left: `${x * 100}%` }}
             >
               {i % 2 === 0 ? "💧" : "💔"}
             </motion.div>
           ))}
 
         {/* Floating Hearts (Only when forgiven) */}
-        {isForgiven &&
-          Array.from({ length: 20 }).map((_, i) => (
+        {!reduceMotion &&
+          isForgiven &&
+          hearts.map(([x, dur, delay], i) => (
             <motion.div
               key={`hearts-${i}`}
               initial={{ y: "100vh", opacity: 0, scale: 0.5 }}
@@ -138,13 +125,13 @@ export default function SorryCard({ data }: SorryCardProps) {
                 scale: [0.5, 1, 0.5],
               }}
               transition={{
-                duration: 4 + Math.random() * 3,
+                duration: 4 + dur * 3,
                 repeat: Infinity,
-                delay: Math.random() * 2,
+                delay: delay * 2,
                 ease: "easeOut",
               }}
               className="absolute text-3xl opacity-40"
-              style={{ left: `${Math.random() * 100}%` }}
+              style={{ left: `${x * 100}%` }}
             >
               {["💖", "🥰", "✨", "🌸"][i % 4]}
             </motion.div>
@@ -180,40 +167,28 @@ export default function SorryCard({ data }: SorryCardProps) {
               </motion.div>
 
               <h1
-                className={`text-5xl md:text-6xl text-gradient mb-2 drop-shadow-sm p-3 ${
-                  FONTS.find((f) => f.id === (data.fontName || "default"))
-                    ?.headerClass || "font-handwriting"
-                }`}
+                className={`text-5xl md:text-6xl text-gradient mb-2 drop-shadow-sm p-3 ${fontClasses.header}`}
               >
-                I'm So Sorry
+                I&apos;m So Sorry
               </h1>
 
               <h2
-                className={`text-xl md:text-2xl font-medium text-foreground/80 mb-6 font-serif ${
-                  FONTS.find((f) => f.id === (data.fontName || "default"))
-                    ?.headerClass || "font-serif"
-                }`}
+                className={`text-xl md:text-2xl font-medium text-foreground/80 mb-6 ${fontClasses.header}`}
               >
                 {recipientName}
               </h2>
 
               <p
-                className={`text-muted-foreground text-lg mb-6 max-w-sm ${
-                  FONTS.find((f) => f.id === (data.fontName || "default"))
-                    ?.bodyClass || "font-serif"
-                }`}
+                className={`text-muted-foreground text-lg mb-6 max-w-sm ${fontClasses.body}`}
               >
                 for {reason}
               </p>
 
               {promise && (
                 <p
-                  className={`text-foreground/70 italic mb-8 max-w-sm border-t border-foreground/10 pt-4 ${
-                    FONTS.find((f) => f.id === (data.fontName || "default"))
-                      ?.bodyClass || "font-serif"
-                  }`}
+                  className={`text-foreground/70 italic mb-8 max-w-sm border-t border-foreground/10 pt-4 ${fontClasses.body}`}
                 >
-                  "I promise to {promise}"
+                  &ldquo;I promise to {promise}&rdquo;
                 </p>
               )}
 
@@ -224,6 +199,7 @@ export default function SorryCard({ data }: SorryCardProps) {
               {/* Dynamic Button Game */}
               <div className="flex flex-wrap items-center justify-center gap-4 w-full min-h-[100px]">
                 <motion.button
+                  type="button"
                   className="btn-primary rounded-xl font-bold shadow-pink-500/20 shadow-xl transition-all"
                   style={{
                     fontSize: Math.min(yesButtonSize, 60),
@@ -237,6 +213,7 @@ export default function SorryCard({ data }: SorryCardProps) {
                 </motion.button>
 
                 <motion.button
+                  type="button"
                   className="px-6 py-3 rounded-xl bg-gray-100 text-gray-500 font-medium hover:bg-gray-200 transition-colors text-sm whitespace-nowrap"
                   onClick={handleNoClick}
                   whileHover={{ scale: 0.95, rotate: -2 }}
@@ -265,74 +242,65 @@ export default function SorryCard({ data }: SorryCardProps) {
               </div>
 
               <h2
-                className={`text-6xl text-pink-500 mb-6 underline-offset-8 ${
-                  FONTS.find((f) => f.id === (data.fontName || "default"))
-                    ?.headerClass || "font-handwriting"
-                }`}
+                className={`text-6xl text-pink-500 mb-6 underline-offset-8 ${fontClasses.header}`}
               >
                 Yippeee!!
               </h2>
 
               <p
-                className={`text-xl text-foreground/80 mb-8 ${
-                  FONTS.find((f) => f.id === (data.fontName || "default"))
-                    ?.bodyClass || "font-serif"
-                }`}
+                className={`text-xl text-foreground/80 mb-8 ${fontClasses.body}`}
               >
-                Thank you for forgiving me! <br /> You're the absolute best.
+                Thank you for forgiving me! <br /> You&apos;re the absolute
+                best.
               </p>
 
               <div className="flex flex-col gap-2">
                 <Link href="/templates">
-                  <button className="btn-primary px-8 py-3 rounded-full text-lg font-semibold shadow-lg hover:scale-105 transition-transform">
+                  <button
+                    type="button"
+                    className="btn-primary px-8 py-3 rounded-full text-lg font-semibold shadow-lg hover:scale-105 transition-transform"
+                  >
                     Send One Back
                   </button>
                 </Link>
                 <p
-                  className={`text-sm text-muted-foreground mt-2 ${
-                    FONTS.find((f) => f.id === (data.fontName || "default"))
-                      ?.headerClass || "font-serif"
-                  }`}
+                  className={`text-sm text-muted-foreground mt-2 ${fontClasses.header}`}
                 >
                   — {senderName}
                 </p>
               </div>
 
               {/* Confetti Particles */}
-              {particles.map((_, i) => (
-                <motion.div
-                  key={i}
-                  className="absolute top-1/2 left-1/2 w-2 h-2 rounded-full pointer-events-none"
-                  style={{
-                    backgroundColor: [
-                      "#ff0000",
-                      "#00ff00",
-                      "#0000ff",
-                      "#ffff00",
-                      "#ff00ff",
-                    ][i % 5],
-                  }}
-                  initial={{
-                    x: 0,
-                    y: 0,
-                    opacity: 1,
-                    scale: 0,
-                  }}
-                  animate={{
-                    x: (Math.random() - 0.5) * 600,
-                    y: (Math.random() - 0.5) * 600,
-                    opacity: 0,
-                    scale: [0, 1, 0],
-                    rotate: Math.random() * 360,
-                  }}
-                  transition={{
-                    duration: 2 + Math.random(),
-                    ease: "easeOut",
-                    repeat: Infinity,
-                    repeatDelay: Math.random() * 2,
-                  }}
-                />
-              ))}
+              {!reduceMotion &&
+                confetti.map(([x, y, dur, rot, gap], i) => (
+                  <motion.div
+                    key={i}
+                    className="absolute top-1/2 left-1/2 w-2 h-2 rounded-full pointer-events-none"
+                    style={{
+                      backgroundColor: [
+                        "#ff0000",
+                        "#00ff00",
+                        "#0000ff",
+                        "#ffff00",
+                        "#ff00ff",
+                      ][i % 5],
+                    }}
+                    initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
+                    animate={{
+                      x: (x - 0.5) * 600,
+                      y: (y - 0.5) * 600,
+                      opacity: 0,
+                      scale: [0, 1, 0],
+                      rotate: rot * 360,
+                    }}
+                    transition={{
+                      duration: 2 + dur,
+                      ease: "easeOut",
+                      repeat: Infinity,
+                      repeatDelay: gap * 2,
+                    }}
+                  />
+                ))}
             </motion.div>
           )}
         </motion.div>
@@ -340,10 +308,7 @@ export default function SorryCard({ data }: SorryCardProps) {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className={`text-center text-muted-foreground/60 text-xs mt-8 italic ${
-            FONTS.find((f) => f.id === (data.fontName || "default"))
-              ?.bodyClass || "font-serif"
-          }`}
+          className={`text-center text-muted-foreground/60 text-xs mt-8 italic ${fontClasses.body}`}
         >
           Made with LetterLove
         </motion.p>

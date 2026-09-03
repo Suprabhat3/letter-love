@@ -107,10 +107,13 @@ export default function RootLayout({
           href="/favicon-16x16.png"
         />
         <link rel="manifest" href="/manifest.webmanifest" />
+        {/* data-domains keeps localhost and preview deploys out of production
+            analytics, so funnel numbers reflect real users only. */}
         <script
           defer
           src="https://cloud.umami.is/script.js"
           data-website-id="8605b732-710b-4fe0-9820-13125e5e3bc4"
+          data-domains="letterlove.fun"
         ></script>
       </head>
       <body

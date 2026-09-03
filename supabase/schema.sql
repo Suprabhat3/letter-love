@@ -23,15 +23,18 @@ CREATE POLICY "Cards are publicly readable"
   ON cards FOR SELECT
   USING (true);
 
--- Policy: Anyone can insert cards (including anonymous users)
-CREATE POLICY "Anyone can create cards"
+-- Policy: Anyone can insert cards, including anonymous ones (user_id IS NULL),
+-- but nobody can insert a row claiming another user's id.
+CREATE POLICY "cards_insert_self_or_anon"
   ON cards FOR INSERT
-  WITH CHECK (true);
+  WITH CHECK (user_id IS NULL OR auth.uid() = user_id);
 
--- Policy: Only card owner can update their cards
-CREATE POLICY "Users can update own cards"
+-- Policy: Only card owner can update their cards.
+-- WITH CHECK is required as well as USING, or ownership can be reassigned.
+CREATE POLICY "cards_update_own"
   ON cards FOR UPDATE
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 -- Policy: Only card owner can delete their cards
 CREATE POLICY "Users can delete own cards"
