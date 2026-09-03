@@ -1,0 +1,4 @@
+- Never commit any things, until user ask you to do so.
+- Always ask for clarification if the user’s request is ambiguous or unclear.
+- Only build if changes are big otherwise just do typechecks and linting.
+- 
