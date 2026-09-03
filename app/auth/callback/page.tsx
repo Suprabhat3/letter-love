@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
@@ -14,26 +14,41 @@ const Spinner = ({ label }: { label: string }) => (
   </div>
 );
 
+// Supabase returns OAuth errors in the URL *hash*, which useSearchParams cannot
+// see — without reading it, a denied consent screen just spins forever.
+//
+// The hash is an external store, so it is read as one: a lazy useState would
+// have to touch `window` during render (hydration mismatch), and setting state
+// from an effect body is the cascading-render pattern React now warns about.
+const subscribeToHash = (onChange: () => void) => {
+  window.addEventListener("hashchange", onChange);
+  return () => window.removeEventListener("hashchange", onChange);
+};
+
+const readHashError = (): string | null => {
+  const hash = window.location.hash.replace(/^#/, "");
+  if (!hash) return null;
+  const params = new URLSearchParams(hash);
+  const error = params.get("error");
+  if (!error) return null;
+  // Returns a plain string, so React's Object.is check on the snapshot is
+  // stable across renders.
+  return params.get("error_description")?.replace(/\+/g, " ") || error;
+};
+
 function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect");
   const { session, loading } = useAuth();
-  const [failure, setFailure] = useState<string | null>(null);
+  const [timedOut, setTimedOut] = useState<string | null>(null);
 
-  // Supabase returns OAuth errors in the URL *hash*, which useSearchParams
-  // cannot see. Read them directly so a denied consent screen doesn't just spin.
-  useEffect(() => {
-    const hash = window.location.hash.replace(/^#/, "");
-    if (!hash) return;
-    const params = new URLSearchParams(hash);
-    const error = params.get("error");
-    if (error) {
-      setFailure(
-        params.get("error_description")?.replace(/\+/g, " ") || error,
-      );
-    }
-  }, []);
+  const hashError = useSyncExternalStore(
+    subscribeToHash,
+    readHashError,
+    () => null, // server snapshot
+  );
+  const failure = hashError ?? timedOut;
 
   useEffect(() => {
     if (failure) return;
@@ -50,7 +65,7 @@ function AuthCallbackContent() {
     // code had this recovery path commented out, which left the user on an
     // infinite spinner with no way forward.
     const timeout = setTimeout(() => {
-      setFailure("We couldn't complete your sign in. Please try again.");
+      setTimedOut("We couldn't complete your sign in. Please try again.");
     }, 5000);
     return () => clearTimeout(timeout);
   }, [session, loading, router, redirectTo, failure]);

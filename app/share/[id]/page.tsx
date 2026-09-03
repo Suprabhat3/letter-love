@@ -8,6 +8,7 @@ import { notFound } from "next/navigation";
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 // generateMetadata and the page body both need the card. Without this the same
@@ -54,7 +55,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function SharePage({ params }: PageProps) {
+export default async function SharePage({ params, searchParams }: PageProps) {
   const { id } = await params;
   const card = await loadCard(id);
 
@@ -68,5 +69,16 @@ export default async function SharePage({ params }: PageProps) {
     return notFound();
   }
 
-  return <ShareCardView card={card} template={template} />;
+  // `?renderer=new` opts a single page load into the theme engine, so the two
+  // renderers can be compared side by side on real card ids before the bespoke
+  // components are deleted. Remove this once step 4 of the migration lands.
+  const renderer = (await searchParams).renderer;
+
+  return (
+    <ShareCardView
+      card={card}
+      template={template}
+      renderer={renderer === "new" ? "new" : "legacy"}
+    />
+  );
 }
