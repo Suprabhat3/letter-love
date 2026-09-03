@@ -3,12 +3,11 @@ import { cache } from "react";
 import { getCard } from "@/lib/supabase";
 import { getTemplateById } from "@/lib/templates";
 import { readCardContent } from "@/lib/cardStyle";
-import ShareCardView from "@/components/ShareCardView";
+import CardView from "@/components/card/CardView";
 import { notFound } from "next/navigation";
 
 interface PageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 // generateMetadata and the page body both need the card. Without this the same
@@ -55,7 +54,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function SharePage({ params, searchParams }: PageProps) {
+export default async function SharePage({ params }: PageProps) {
   const { id } = await params;
   const card = await loadCard(id);
 
@@ -63,22 +62,11 @@ export default async function SharePage({ params, searchParams }: PageProps) {
     return notFound();
   }
 
-  const template = getTemplateById(card.template_id);
-
-  if (!template) {
+  // A card whose template was removed still resolves to a fallback theme, but
+  // an unknown template id means a broken or tampered link, not a card.
+  if (!getTemplateById(card.template_id)) {
     return notFound();
   }
 
-  // `?renderer=new` opts a single page load into the theme engine, so the two
-  // renderers can be compared side by side on real card ids before the bespoke
-  // components are deleted. Remove this once step 4 of the migration lands.
-  const renderer = (await searchParams).renderer;
-
-  return (
-    <ShareCardView
-      card={card}
-      template={template}
-      renderer={renderer === "new" ? "new" : "legacy"}
-    />
-  );
+  return <CardView card={card} />;
 }

@@ -7,19 +7,8 @@ import { templates } from "@/lib/templates";
 import { CATEGORIES, TemplateCategory, Template } from "@/lib/types";
 import TemplateCard from "@/components/templates/TemplateCard";
 import Navbar from "@/components/Navbar";
-import {
-  Search,
-  Sparkles,
-  Filter,
-  Users,
-  X,
-  Heart,
-  Star,
-  Zap,
-} from "lucide-react";
-import SorryCard from "@/components/templates/SorryCard";
-import BirthdayCard from "@/components/templates/BirthdayCard";
-import ValentineCard from "@/components/templates/ValentineCard";
+import { Search, Users, X, Star, Zap } from "lucide-react";
+import CardPreview, { demoContent } from "@/components/card/CardPreview";
 import { SparklesIcon } from "@/components/SparklesIcon";
 
 const RECIPIENTS = [
@@ -73,7 +62,7 @@ export default function TemplatesPage() {
             rotate: [0, 45, 0],
           }}
           transition={{ duration: 15, repeat: Infinity }}
-          className="absolute top-[-10%] left-[-10%] bg-linear-to-br from-pink-200/40 to-red-200/40 w-[800px] h-[800px] rounded-full blur-3xl"
+          className="absolute top-[-10%] left-[-10%] bg-linear-to-br from-pink-200/40 to-red-200/40 w-200 h-200 rounded-full blur-3xl"
         />
         <motion.div
           animate={{
@@ -82,9 +71,9 @@ export default function TemplatesPage() {
             rotate: [0, -30, 0],
           }}
           transition={{ duration: 18, repeat: Infinity, delay: 2 }}
-          className="absolute bottom-[-10%] right-[-10%] bg-gradient-to-tr from-purple-200/40 to-blue-200/40 w-[700px] h-[700px] rounded-full blur-3xl"
+          className="absolute bottom-[-10%] right-[-10%] bg-linear-to-tr from-purple-200/40 to-blue-200/40 w-175 h-175 rounded-full blur-3xl"
         />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[1200px] bg-white/40 blur-[100px] rounded-full pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-300 h-300 bg-white/40 blur-[100px] rounded-full pointer-events-none" />
       </div>
 
       <AnimatePresence>
@@ -104,52 +93,26 @@ export default function TemplatesPage() {
               <X size={24} />
             </motion.button>
 
+            {/* Every template previews through the real renderer now, so this
+                is what the recipient actually gets — and a new template needs
+                no demo markup of its own. Interactive, so the yes/no game and
+                the candles are playable here. */}
             <div className="w-full h-full overflow-y-auto">
-              {previewTemplate.id === "sorry-card" ? (
-                <SorryCard
-                  data={{
-                    recipientName: "Demo Friend",
-                    senderName: "You",
-                    reason: "forgetting the date",
-                    promise: "make it up to you",
-                  }}
-                />
-              ) : previewTemplate.id === "birthday-wish" ? (
-                <BirthdayCard
-                  data={{
-                    recipientName: "Birthday Star",
-                    senderName: "You",
-                    age: "21",
-                    message: "Wishing you the happiest of birthdays!",
-                    wish: "Infinite Joy",
-                  }}
-                />
-              ) : previewTemplate.id === "valentine-ask" ? (
-                <ValentineCard
-                  data={{
-                    recipientName: "My Crush",
-                    senderName: "Secret Admirer",
-                    reason: "You make my heart skip a beat!",
-                  }}
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center min-h-screen p-8 text-center">
-                  <div className="text-9xl mb-8 animate-bounce">
-                    {previewTemplate.emoji}
-                  </div>
-                  <h2 className="text-4xl font-serif font-bold mb-4">
-                    {previewTemplate.name}
-                  </h2>
-                  <p className="text-xl text-muted-foreground max-w-md mb-8">
-                    {previewTemplate.description}
-                  </p>
-                  <Link href={`/templates/${previewTemplate.id}`}>
-                    <button className="btn-primary px-8 py-4 rounded-full text-lg">
-                      Customize Template
-                    </button>
-                  </Link>
-                </div>
-              )}
+              <CardPreview
+                key={previewTemplate.id}
+                templateId={previewTemplate.id}
+                content={demoContent(previewTemplate)}
+                variant="page"
+                interactive
+                seed={previewTemplate.id}
+              />
+              <div className="pb-12 text-center">
+                <Link href={`/templates/${previewTemplate.id}`}>
+                  <button className="btn-primary px-8 py-4 rounded-full text-lg">
+                    Customize Template
+                  </button>
+                </Link>
+              </div>
             </div>
           </motion.div>
         )}
@@ -164,7 +127,7 @@ export default function TemplatesPage() {
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/60 backdrop-blur-md border border-white/50 text-foreground/80 text-sm font-medium mb-4 shadow-sm"
           >
             <SparklesIcon size={14} className="text-pink-600" />
-            <span className="bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent font-semibold italic">
+            <span className="bg-linear-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent font-semibold italic">
               AI-Powered Templates
             </span>
           </motion.div>

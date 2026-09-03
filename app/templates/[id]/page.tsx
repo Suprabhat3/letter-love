@@ -4,12 +4,11 @@ import { useState, useEffect, use } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
 import Link from "next/link";
-import Image from "next/image";
 import { getTemplateById } from "@/lib/templates";
 import { createCard, getCard, updateCard } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { CATEGORIES } from "@/lib/types";
-import { FONTS, FontId, getFontClasses } from "@/lib/fonts";
+import { FONTS, FontId } from "@/lib/fonts";
 import {
   CardStyle,
   readCardContent,
@@ -17,6 +16,7 @@ import {
   writeCardData,
 } from "@/lib/cardStyle";
 import { track } from "@/lib/analytics";
+import CardPreview, { demoContent } from "@/components/card/CardPreview";
 import ShareModal from "@/components/ShareModal";
 import { Sparkles, ArrowLeft, User, LayoutGrid, Type } from "lucide-react";
 
@@ -62,6 +62,10 @@ export default function TemplateEditorPage({ params }: PageProps) {
   // Style is held separately from content so it can never collide with a
   // template field name, and is persisted under the namespaced `_style` slot.
   const [font, setFont] = useState<FontId>(() => readDraft(id)?.font ?? "default");
+  // New cards arrive sealed. Editing an existing card keeps whatever it was
+  // stored with, so a link already sitting in someone's chat does not change
+  // behaviour underneath them.
+  const [envelope, setEnvelope] = useState(true);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,7 +96,9 @@ export default function TemplateEditorPage({ params }: PageProps) {
           // into the form, re-save it nested inside itself, and render the
           // object as a text field.
           setFormData(readCardContent(card.data));
-          setFont(readCardStyle(card.data).font);
+          const stored = readCardStyle(card.data);
+          setFont(stored.font);
+          setEnvelope(stored.envelope.enabled);
         }
       } catch (err) {
         console.error("Failed to load card for editing:", err);
@@ -145,7 +151,7 @@ export default function TemplateEditorPage({ params }: PageProps) {
 
   if (!template) {
     return (
-      <main className="min-h-[100svh] flex items-center justify-center bg-background">
+      <main className="min-h-svh flex items-center justify-center bg-background">
         <div className="text-center">
           <p className="text-6xl mb-4">😕</p>
           <h1 className="text-2xl font-serif font-bold mb-4">
@@ -160,7 +166,13 @@ export default function TemplateEditorPage({ params }: PageProps) {
   }
 
   const category = CATEGORIES.find((c) => c.id === template.category);
-  const previewFontClasses = getFontClasses(font);
+
+  // Empty fields fall back to their placeholder, so the preview is a whole
+  // card from the first paint rather than a scaffold that fills in as you type.
+  const previewContent: Record<string, string> = demoContent(template);
+  for (const [key, value] of Object.entries(formData)) {
+    if (value.trim()) previewContent[key] = value;
+  }
 
   const validateForm = () => {
     return template.fields
@@ -194,7 +206,7 @@ export default function TemplateEditorPage({ params }: PageProps) {
 
     setIsSubmitting(true);
 
-    const style: CardStyle = { font };
+    const style: CardStyle = { font, envelope: { enabled: envelope } };
     const payload = writeCardData(formData, style);
 
     try {
@@ -230,7 +242,7 @@ export default function TemplateEditorPage({ params }: PageProps) {
   };
 
   return (
-    <main className="min-h-[100svh] relative overflow-hidden bg-background">
+    <main className="min-h-svh relative overflow-hidden bg-background">
       <ShareModal
         isOpen={shareModalOpen}
         onClose={() => router.push("/dashboard")}
@@ -274,7 +286,7 @@ export default function TemplateEditorPage({ params }: PageProps) {
               <Link
                 href={`/auth?redirect=${encodeURIComponent(`/templates/${id}`)}`}
                 onClick={saveDraft}
-                className="group flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg hover:shadow-pink-500/25 hover:scale-105 transition-all font-medium text-sm md:text-base"
+                className="group flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 rounded-full bg-linear-to-r from-pink-500 to-rose-500 text-white shadow-lg hover:shadow-pink-500/25 hover:scale-105 transition-all font-medium text-sm md:text-base"
               >
                 <User size={18} />
                 <span>
@@ -508,73 +520,25 @@ export default function TemplateEditorPage({ params }: PageProps) {
             transition={{ delay: 0.3 }}
             className="lg:sticky lg:top-24 self-start"
           >
-            <div
-              className="glass-panel p-8 md:p-12 rounded-3xl relative overflow-hidden border border-white/60 shadow-2xl"
-              style={{
-                background: `linear-gradient(135deg, rgba(255,255,255,0.8) 0%, ${template.colors.secondary}40 100%)`,
-              }}
-            >
+            <div className="relative overflow-hidden rounded-3xl border border-white/60 shadow-2xl">
               <div className="absolute top-4 right-4 z-20">
                 <span className="px-3 py-1 bg-black/5 text-foreground/60 text-[10px] font-bold tracking-widest uppercase rounded-full border border-black/5">
                   Live Preview
                 </span>
               </div>
 
-              <div
-                className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-40 pointer-events-none"
-                style={{ backgroundColor: template.colors.primary }}
+              {/* The real renderer, not a look-alike. What you see here is what
+                  the recipient gets, minus the envelope and the paced reveal —
+                  both would fight typing. */}
+              <CardPreview
+                templateId={template.id}
+                content={previewContent}
+                font={font}
+                variant="panel"
+                seed={template.id}
               />
 
-              {/* Card Content Container */}
-              <div className="relative z-10 text-center py-4">
-                {PREVIEW_GIFS[template.id] ? (
-                  <div className="mb-6 relative w-full max-w-[280px] mx-auto overflow-hidden rounded-xl">
-                    <Image
-                      src={PREVIEW_GIFS[template.id].src}
-                      alt={PREVIEW_GIFS[template.id].alt}
-                      width={280}
-                      height={280}
-                      className="w-full h-auto rounded-lg"
-                      unoptimized
-                    />
-                  </div>
-                ) : (
-                  <motion.div
-                    className="text-7xl mb-6 filter drop-shadow-lg"
-                    animate={{ scale: [1, 1.05, 1], rotate: [0, 2, -2, 0] }}
-                    transition={{ duration: 3, repeat: Infinity }}
-                  >
-                    {template.emoji}
-                  </motion.div>
-                )}
-
-                <h3
-                  className={`text-4xl mb-4 ${previewFontClasses.header}`}
-                  style={{ color: template.colors.primary }}
-                >
-                  {formData.recipientName || template.fields[0].placeholder}
-                </h3>
-
-                <p
-                  className={`text-foreground/80 text-lg leading-relaxed mb-6 max-w-sm mx-auto whitespace-pre-line ${previewFontClasses.body}`}
-                >
-                  {formData.message || formData.reason || template.previewText}
-                </p>
-
-                {(formData.memory || formData.promise) && (
-                  <p className="text-foreground/60 text-sm italic border-t border-foreground/10 pt-4">
-                    &ldquo;{formData.memory || formData.promise}&rdquo;
-                  </p>
-                )}
-
-                <p
-                  className={`text-foreground/50 mt-6 ${previewFontClasses.header}`}
-                >
-                  — {formData.senderName || template.fields[1].placeholder}
-                </p>
-              </div>
-
-              <div className="text-center pt-4 border-t border-foreground/10">
+              <div className="text-center py-4 border-t border-foreground/10">
                 <p className="text-xs text-foreground/40 font-serif italic">
                   Made with LetterLove 💕
                 </p>
@@ -586,20 +550,3 @@ export default function TemplateEditorPage({ params }: PageProps) {
     </main>
   );
 }
-
-// TODO(phase-1): these live in the theme config once the theme engine lands,
-// and the preview mounts the real card renderer instead of this mini-card.
-const PREVIEW_GIFS: Record<string, { src: string; alt: string }> = {
-  "love-letter": {
-    src: "https://media1.tenor.com/m/HI7GdDJ1yq0AAAAC/us-you-and-me.gif",
-    alt: "Us You And Me Sticker",
-  },
-  "miss-you": {
-    src: "https://media1.tenor.com/m/rzG9YBjxW-0AAAAC/peach-sad.gif",
-    alt: "Peach Sad GIF",
-  },
-  anniversary: {
-    src: "https://media1.tenor.com/m/K6WkauZF1ToAAAAC/happy-valentines-day-valentines-day.gif",
-    alt: "Happy Valentines Day Hugs Sticker",
-  },
-};

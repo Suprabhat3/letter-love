@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import Image from "next/image";
 import type { BlockSpec, LayoutVariant, MediaSpec, Theme } from "@/lib/theme";
@@ -70,13 +70,19 @@ function PacedText({
 }) {
   const lines = text.split("\n");
   const total = mode === "typewriter" ? text.length : lines.length;
-  const [shown, setShown] = useState(() => (active ? 0 : total));
+
+  // A paced reveal IS motion, so reduced motion gets the whole body at once —
+  // dimming or shortening it would not be respecting the setting.
+  const reduceMotion = useReducedMotion();
+  const running = active && !reduceMotion;
+
+  const [shown, setShown] = useState(() => (running ? 0 : total));
 
   // No reset here: the caller keys this component on the text, so a change
   // remounts it with a fresh initial count. Resetting from inside the effect
   // would be the cascading-render pattern React now warns about.
   useEffect(() => {
-    if (!active) return;
+    if (!running) return;
     const timer = setInterval(() => {
       setShown((n) => {
         if (n >= total) {
@@ -87,7 +93,16 @@ function PacedText({
       });
     }, stepMs);
     return () => clearInterval(timer);
-  }, [active, total, stepMs]);
+  }, [running, total, stepMs]);
+
+  // Nobody should be held hostage by the stagger: a tap anywhere jumps to the
+  // fully revealed letter.
+  useEffect(() => {
+    if (!running) return;
+    const finish = () => setShown(total);
+    window.addEventListener("pointerdown", finish);
+    return () => window.removeEventListener("pointerdown", finish);
+  }, [running, total]);
 
   if (mode === "typewriter") {
     return <p className={className}>{text.slice(0, shown)}</p>;

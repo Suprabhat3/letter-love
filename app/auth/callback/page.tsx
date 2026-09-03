@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 import { track } from "@/lib/analytics";
 
 const Spinner = ({ label }: { label: string }) => (
-  <div className="flex flex-col items-center justify-center min-h-[100svh] bg-[#faf5f6] dark:bg-background">
+  <div className="flex flex-col items-center justify-center min-h-svh bg-[#faf5f6] dark:bg-background">
     <Loader2 className="w-10 h-10 animate-spin text-pink-500 mb-4" />
     <p className="text-muted-foreground font-medium">{label}</p>
   </div>
@@ -72,7 +72,7 @@ function AuthCallbackContent() {
 
   if (failure) {
     return (
-      <main className="min-h-[100svh] flex items-center justify-center bg-[#faf5f6] dark:bg-background p-6">
+      <main className="min-h-svh flex items-center justify-center bg-[#faf5f6] dark:bg-background p-6">
         <div className="glass-panel max-w-md w-full rounded-3xl p-10 text-center border border-white/60 shadow-xl">
           <p className="text-5xl mb-4">😕</p>
           <h1 className="text-2xl font-serif font-bold mb-3 text-foreground">

@@ -45,7 +45,7 @@ export default function BlowCandles({
       </div>
 
       {!blown && (
-        <div className="absolute top-[18px] md:top-[25px] left-1/2 -translate-x-1/2 flex gap-2 md:gap-4 justify-center">
+        <div className="absolute top-4.5 md:top-6.25 left-1/2 -translate-x-1/2 flex gap-2 md:gap-4 justify-center">
           {Array.from({ length: spec.candles }, (_, i) => (
             <motion.span
               key={i}
