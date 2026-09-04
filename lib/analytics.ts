@@ -6,6 +6,15 @@ export type AnalyticsEvent =
   | "template_view"
   | "editor_start"
   | "ai_enhance_click"
+  | "ai_tone_select"
+  // memory interview funnel: how many people who open it reach a letter, and
+  // how many of those keep it. The drop-off between the last two is the only
+  // honest measure of whether the AI is any good.
+  | "interview_open"
+  | "interview_answer"
+  | "interview_generate"
+  | "interview_variants"
+  | "interview_apply"
   | "card_created"
   | "share_channel_click"
   // loop funnel

@@ -18,9 +18,12 @@ import {
 } from "@/lib/cardStyle";
 import { track } from "@/lib/analytics";
 import { fetchReplyContext } from "@/lib/engagement-client";
+import { enhanceField } from "@/lib/ai/browser";
+import { TONES, ToneId, defaultToneForTemplate } from "@/lib/tones";
 import CardPreview, { demoContent } from "@/components/card/CardPreview";
+import MemoryInterview from "@/components/MemoryInterview";
 import ShareModal from "@/components/ShareModal";
-import { Sparkles, ArrowLeft, User, LayoutGrid, Type } from "lucide-react";
+import { Sparkles, ArrowLeft, User, LayoutGrid, Type, Wand2 } from "lucide-react";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -69,6 +72,14 @@ export default function TemplateEditorPage({ params }: PageProps) {
   // stored with, so a link already sitting in someone's chat does not change
   // behaviour underneath them.
   const [envelope, setEnvelope] = useState(true);
+
+  // The tone every AI call uses. It opens on something appropriate to the
+  // template — an apology card defaulting to "Romantic" reads as the product
+  // not paying attention, and most people never touch the chips.
+  const [tone, setTone] = useState<ToneId>(() =>
+    defaultToneForTemplate(template?.category),
+  );
+  const [interviewOpen, setInterviewOpen] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -148,37 +159,26 @@ export default function TemplateEditorPage({ params }: PageProps) {
   const handleAiEnhance = async (fieldName: string, currentValue: string) => {
     if (!currentValue?.trim() || !template) return;
 
-    track("ai_enhance_click", { template: template.id, field: fieldName });
+    track("ai_enhance_click", { template: template.id, field: fieldName, tone });
     setIsEnhancing(fieldName);
     setError(null);
-    try {
-      const response = await fetch("/api/ai/enhance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: currentValue,
-          fieldType: fieldName,
-          // Only the template *id* is sent. The route looks the name and
-          // description up server-side — accepting those as strings let a
-          // crafted request rewrite the system prompt.
-          templateId: template.id,
-        }),
-      });
 
-      const data = await response.json();
-      if (!response.ok) {
-        setError(data?.error || "AI is busy right now. Try again in a moment.");
-        return;
-      }
-      if (data.text) {
-        handleInputChange(fieldName, data.text);
-      }
-    } catch (err) {
-      console.error("AI Enhance failed", err);
-      setError("Couldn't reach the AI. Check your connection and try again.");
-    } finally {
-      setIsEnhancing(null);
+    // Only the template *id* is sent. The route looks the name and description
+    // up server-side — accepting those as strings let a crafted request rewrite
+    // the system prompt.
+    const result = await enhanceField({
+      prompt: currentValue,
+      fieldType: fieldName,
+      templateId: template.id,
+      tone,
+    });
+    setIsEnhancing(null);
+
+    if ("error" in result) {
+      setError(result.error);
+      return;
     }
+    handleInputChange(fieldName, result.text);
   };
 
   if (!template) {
@@ -198,6 +198,13 @@ export default function TemplateEditorPage({ params }: PageProps) {
   }
 
   const category = CATEGORIES.find((c) => c.id === template.category);
+
+  // Where a generated letter lands: the first required textarea, falling back
+  // to any textarea. Every template has one; if one ever doesn't, the
+  // interview button simply doesn't render rather than dropping the letter.
+  const letterField =
+    template.fields.find((f) => f.type === "textarea" && f.required)?.name ??
+    template.fields.find((f) => f.type === "textarea")?.name;
 
   // Empty fields fall back to their placeholder, so the preview is a whole
   // card from the first paint rather than a scaffold that fills in as you type.
@@ -281,6 +288,21 @@ export default function TemplateEditorPage({ params }: PageProps) {
         }
         shareUrl={createdCardLink}
       />
+
+      {letterField && interviewOpen && (
+        <MemoryInterview
+          onClose={() => setInterviewOpen(false)}
+          template={template}
+          tone={tone}
+          onToneChange={setTone}
+          signedIn={Boolean(user)}
+          // The draft was parked when the modal opened, so the round trip
+          // through /auth does not cost them what they had already typed. The
+          // interview answers persist on their own.
+          authHref={`/auth?redirect=${encodeURIComponent(`/templates/${id}`)}`}
+          onApply={(letter) => handleInputChange(letterField, letter)}
+        />
+      )}
 
       <div className="relative z-10 container mx-auto px-4 md:px-6 py-6 md:py-6">
         {/* Top Navigation */}
@@ -401,6 +423,65 @@ export default function TemplateEditorPage({ params }: PageProps) {
                 <span className="text-3xl">{template.emoji}</span>
                 Fill in the Details
               </h2>
+
+              {/* The interview, offered before the blank fields rather than
+                  after. Someone staring at an empty "Your Message" box is
+                  exactly who this is for, and once they have written it
+                  themselves the offer is worth much less. */}
+              {letterField && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Signed out, the modal's own wall leads to /auth, so the
+                    // form has to be parked before they can leave from it.
+                    if (!user) saveDraft();
+                    setInterviewOpen(true);
+                  }}
+                  className="mb-6 flex w-full items-center gap-3 rounded-2xl border border-pink-200 bg-linear-to-r from-pink-50 to-rose-50 p-4 text-left transition-all hover:border-pink-400 hover:shadow-md"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-pink-500 shadow-sm">
+                    <Wand2 size={18} />
+                  </span>
+                  <span>
+                    <span className="block font-semibold text-foreground">
+                      Likh do mere liye ✨
+                    </span>
+                    <span className="block text-sm text-muted-foreground">
+                      Chaar chhote sawaal, aur poora letter ready
+                    </span>
+                  </span>
+                </button>
+              )}
+
+              {/* Tone applies to both AI paths, so it lives out here rather
+                  than inside the modal alone. The prompt has always taken a
+                  tone; until now the UI never varied it. */}
+              <div className="mb-6">
+                <label className="mb-2 block text-sm font-medium text-foreground/80">
+                  AI ka vibe
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {TONES.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => {
+                        setTone(option.id);
+                        track("ai_tone_select", { tone: option.id });
+                      }}
+                      title={option.hint}
+                      aria-pressed={tone === option.id}
+                      className={`rounded-full border px-3 py-1.5 text-sm transition-all ${
+                        tone === option.id
+                          ? "border-pink-500 bg-pink-50 font-medium text-pink-700 ring-1 ring-pink-500/20"
+                          : "border-white/80 bg-white/60 text-foreground/70 hover:border-pink-300"
+                      }`}
+                    >
+                      {option.emoji} {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               <div className="space-y-5">
                 {template.fields.map((field) => (
