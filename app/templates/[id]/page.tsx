@@ -4,12 +4,12 @@ import { useState, useEffect, use } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
 import Link from "next/link";
-import Image from "next/image";
 import { getTemplateById } from "@/lib/templates";
-import { createCard, getCard, updateCard } from "@/lib/supabase";
+import { getCard } from "@/lib/supabase";
+import { createCard, updateCard } from "@/lib/cards-client";
 import { useAuth } from "@/lib/auth-context";
 import { CATEGORIES } from "@/lib/types";
-import { FONTS, FontId, getFontClasses } from "@/lib/fonts";
+import { FONTS, FontId } from "@/lib/fonts";
 import {
   CardStyle,
   readCardContent,
@@ -17,8 +17,13 @@ import {
   writeCardData,
 } from "@/lib/cardStyle";
 import { track } from "@/lib/analytics";
+import { fetchReplyContext } from "@/lib/engagement-client";
+import { enhanceField } from "@/lib/ai/browser";
+import { TONES, ToneId, defaultToneForTemplate } from "@/lib/tones";
+import CardPreview, { demoContent } from "@/components/card/CardPreview";
+import MemoryInterview from "@/components/MemoryInterview";
 import ShareModal from "@/components/ShareModal";
-import { Sparkles, ArrowLeft, User, LayoutGrid, Type } from "lucide-react";
+import { Sparkles, ArrowLeft, User, LayoutGrid, Type, Wand2 } from "lucide-react";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -53,6 +58,7 @@ export default function TemplateEditorPage({ params }: PageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get("editId");
+  const replyTo = searchParams.get("replyTo");
   const { user, loading: authLoading } = useAuth();
   const template = getTemplateById(id);
 
@@ -62,12 +68,26 @@ export default function TemplateEditorPage({ params }: PageProps) {
   // Style is held separately from content so it can never collide with a
   // template field name, and is persisted under the namespaced `_style` slot.
   const [font, setFont] = useState<FontId>(() => readDraft(id)?.font ?? "default");
+  // New cards arrive sealed. Editing an existing card keeps whatever it was
+  // stored with, so a link already sitting in someone's chat does not change
+  // behaviour underneath them.
+  const [envelope, setEnvelope] = useState(true);
+
+  // The tone every AI call uses. It opens on something appropriate to the
+  // template — an apology card defaulting to "Romantic" reads as the product
+  // not paying attention, and most people never touch the chips.
+  const [tone, setTone] = useState<ToneId>(() =>
+    defaultToneForTemplate(template?.category),
+  );
+  const [interviewOpen, setInterviewOpen] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isEnhancing, setIsEnhancing] = useState<string | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [createdCardLink, setCreatedCardLink] = useState("");
+  /** Who this letter answers, when arriving from a "Reply with a letter" button. */
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
 
   useEffect(() => {
     track("editor_start", { template: id });
@@ -92,7 +112,9 @@ export default function TemplateEditorPage({ params }: PageProps) {
           // into the form, re-save it nested inside itself, and render the
           // object as a text field.
           setFormData(readCardContent(card.data));
-          setFont(readCardStyle(card.data).font);
+          const stored = readCardStyle(card.data);
+          setFont(stored.font);
+          setEnvelope(stored.envelope.enabled);
         }
       } catch (err) {
         console.error("Failed to load card for editing:", err);
@@ -103,6 +125,33 @@ export default function TemplateEditorPage({ params }: PageProps) {
     loadCardData();
   }, [editId]);
 
+  // Prefill a reply from the letter it answers.
+  //
+  // The two names are swapped: the person who wrote to you becomes the
+  // recipient, and you become the sender. They are fetched by card id rather
+  // than passed in the URL on purpose — a query string carrying names is a
+  // link anyone could craft to put arbitrary text into someone's editor, and
+  // the route deliberately returns nothing but those two names.
+  useEffect(() => {
+    if (!replyTo || editId) return;
+    let cancelled = false;
+
+    fetchReplyContext(replyTo).then((context) => {
+      if (cancelled || !context) return;
+      setReplyingTo(context.replyToSender || null);
+      setFormData((prev) => ({
+        ...prev,
+        // Never clobber something already typed — a restored draft wins.
+        recipientName: prev.recipientName?.trim() || context.replyToSender,
+        senderName: prev.senderName?.trim() || context.replyToRecipient,
+      }));
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [replyTo, editId]);
+
   const handleInputChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -110,42 +159,31 @@ export default function TemplateEditorPage({ params }: PageProps) {
   const handleAiEnhance = async (fieldName: string, currentValue: string) => {
     if (!currentValue?.trim() || !template) return;
 
-    track("ai_enhance_click", { template: template.id, field: fieldName });
+    track("ai_enhance_click", { template: template.id, field: fieldName, tone });
     setIsEnhancing(fieldName);
     setError(null);
-    try {
-      const response = await fetch("/api/ai/enhance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: currentValue,
-          fieldType: fieldName,
-          // Only the template *id* is sent. The route looks the name and
-          // description up server-side — accepting those as strings let a
-          // crafted request rewrite the system prompt.
-          templateId: template.id,
-        }),
-      });
 
-      const data = await response.json();
-      if (!response.ok) {
-        setError(data?.error || "AI is busy right now. Try again in a moment.");
-        return;
-      }
-      if (data.text) {
-        handleInputChange(fieldName, data.text);
-      }
-    } catch (err) {
-      console.error("AI Enhance failed", err);
-      setError("Couldn't reach the AI. Check your connection and try again.");
-    } finally {
-      setIsEnhancing(null);
+    // Only the template *id* is sent. The route looks the name and description
+    // up server-side — accepting those as strings let a crafted request rewrite
+    // the system prompt.
+    const result = await enhanceField({
+      prompt: currentValue,
+      fieldType: fieldName,
+      templateId: template.id,
+      tone,
+    });
+    setIsEnhancing(null);
+
+    if ("error" in result) {
+      setError(result.error);
+      return;
     }
+    handleInputChange(fieldName, result.text);
   };
 
   if (!template) {
     return (
-      <main className="min-h-[100svh] flex items-center justify-center bg-background">
+      <main className="min-h-svh flex items-center justify-center bg-background">
         <div className="text-center">
           <p className="text-6xl mb-4">😕</p>
           <h1 className="text-2xl font-serif font-bold mb-4">
@@ -160,7 +198,20 @@ export default function TemplateEditorPage({ params }: PageProps) {
   }
 
   const category = CATEGORIES.find((c) => c.id === template.category);
-  const previewFontClasses = getFontClasses(font);
+
+  // Where a generated letter lands: the first required textarea, falling back
+  // to any textarea. Every template has one; if one ever doesn't, the
+  // interview button simply doesn't render rather than dropping the letter.
+  const letterField =
+    template.fields.find((f) => f.type === "textarea" && f.required)?.name ??
+    template.fields.find((f) => f.type === "textarea")?.name;
+
+  // Empty fields fall back to their placeholder, so the preview is a whole
+  // card from the first paint rather than a scaffold that fills in as you type.
+  const previewContent: Record<string, string> = demoContent(template);
+  for (const [key, value] of Object.entries(formData)) {
+    if (value.trim()) previewContent[key] = value;
+  }
 
   const validateForm = () => {
     return template.fields
@@ -179,13 +230,10 @@ export default function TemplateEditorPage({ params }: PageProps) {
     e.preventDefault();
     setError(null);
 
-    if (!user) {
-      saveDraft();
-      const redirectUrl = `/templates/${id}`;
-      router.push(`/auth?redirect=${encodeURIComponent(redirectUrl)}`);
-      return;
-    }
-
+    // No login gate here any more. Writing a whole letter and only then being
+    // bounced to /auth was the biggest leak in the funnel; the card is created
+    // anonymously and the signup ask comes after the share succeeds, when it
+    // reads as a benefit rather than a toll.
     const missing = validateForm();
     if (missing.length > 0) {
       setError(`Please fill in: ${missing.join(", ")}`);
@@ -194,22 +242,22 @@ export default function TemplateEditorPage({ params }: PageProps) {
 
     setIsSubmitting(true);
 
-    const style: CardStyle = { font };
+    const style: CardStyle = { font, envelope: { enabled: envelope } };
     const payload = writeCardData(formData, style);
 
     try {
       let resultId = "";
 
       if (editId) {
-        const result = await updateCard(editId, payload, user.id);
-        if (!result.success) {
-          setError(result.error || "Failed to update card");
+        const result = await updateCard(editId, payload);
+        if ("error" in result) {
+          setError(result.error);
           setIsSubmitting(false);
           return;
         }
         resultId = editId;
       } else {
-        const result = await createCard(template.id, payload, user.id);
+        const result = await createCard(template.id, payload, replyTo);
         if ("error" in result) {
           setError(result.error);
           setIsSubmitting(false);
@@ -230,12 +278,31 @@ export default function TemplateEditorPage({ params }: PageProps) {
   };
 
   return (
-    <main className="min-h-[100svh] relative overflow-hidden bg-background">
+    <main className="min-h-svh relative overflow-hidden bg-background">
       <ShareModal
         isOpen={shareModalOpen}
-        onClose={() => router.push("/dashboard")}
+        // Signing up is offered once the link exists, so it buys something
+        // concrete — keeping the card, and seeing when it gets opened.
+        onClose={() =>
+          router.push(user ? "/dashboard" : "/auth?redirect=%2Fdashboard")
+        }
         shareUrl={createdCardLink}
       />
+
+      {letterField && interviewOpen && (
+        <MemoryInterview
+          onClose={() => setInterviewOpen(false)}
+          template={template}
+          tone={tone}
+          onToneChange={setTone}
+          signedIn={Boolean(user)}
+          // The draft was parked when the modal opened, so the round trip
+          // through /auth does not cost them what they had already typed. The
+          // interview answers persist on their own.
+          authHref={`/auth?redirect=${encodeURIComponent(`/templates/${id}`)}`}
+          onApply={(letter) => handleInputChange(letterField, letter)}
+        />
+      )}
 
       <div className="relative z-10 container mx-auto px-4 md:px-6 py-6 md:py-6">
         {/* Top Navigation */}
@@ -274,7 +341,7 @@ export default function TemplateEditorPage({ params }: PageProps) {
               <Link
                 href={`/auth?redirect=${encodeURIComponent(`/templates/${id}`)}`}
                 onClick={saveDraft}
-                className="group flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg hover:shadow-pink-500/25 hover:scale-105 transition-all font-medium text-sm md:text-base"
+                className="group flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 rounded-full bg-linear-to-r from-pink-500 to-rose-500 text-white shadow-lg hover:shadow-pink-500/25 hover:scale-105 transition-all font-medium text-sm md:text-base"
               >
                 <User size={18} />
                 <span>
@@ -306,6 +373,13 @@ export default function TemplateEditorPage({ params }: PageProps) {
           >
             {category?.name} Template
           </span>
+          {/* Say so out loud. Fields that fill themselves in look like a bug
+              unless the page explains why. */}
+          {replyingTo && (
+            <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-pink-200 bg-pink-50 px-4 py-1.5 text-sm font-medium text-pink-700">
+              💌 Writing back to {replyingTo}
+            </p>
+          )}
           <h1 className="text-4xl md:text-6xl font-serif font-bold mb-4 text-foreground">
             Create Your{" "}
             <span
@@ -349,6 +423,65 @@ export default function TemplateEditorPage({ params }: PageProps) {
                 <span className="text-3xl">{template.emoji}</span>
                 Fill in the Details
               </h2>
+
+              {/* The interview, offered before the blank fields rather than
+                  after. Someone staring at an empty "Your Message" box is
+                  exactly who this is for, and once they have written it
+                  themselves the offer is worth much less. */}
+              {letterField && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Signed out, the modal's own wall leads to /auth, so the
+                    // form has to be parked before they can leave from it.
+                    if (!user) saveDraft();
+                    setInterviewOpen(true);
+                  }}
+                  className="mb-6 flex w-full items-center gap-3 rounded-2xl border border-pink-200 bg-linear-to-r from-pink-50 to-rose-50 p-4 text-left transition-all hover:border-pink-400 hover:shadow-md"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-pink-500 shadow-sm">
+                    <Wand2 size={18} />
+                  </span>
+                  <span>
+                    <span className="block font-semibold text-foreground">
+                      Likh do mere liye ✨
+                    </span>
+                    <span className="block text-sm text-muted-foreground">
+                      Chaar chhote sawaal, aur poora letter ready
+                    </span>
+                  </span>
+                </button>
+              )}
+
+              {/* Tone applies to both AI paths, so it lives out here rather
+                  than inside the modal alone. The prompt has always taken a
+                  tone; until now the UI never varied it. */}
+              <div className="mb-6">
+                <label className="mb-2 block text-sm font-medium text-foreground/80">
+                  AI ka vibe
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {TONES.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => {
+                        setTone(option.id);
+                        track("ai_tone_select", { tone: option.id });
+                      }}
+                      title={option.hint}
+                      aria-pressed={tone === option.id}
+                      className={`rounded-full border px-3 py-1.5 text-sm transition-all ${
+                        tone === option.id
+                          ? "border-pink-500 bg-pink-50 font-medium text-pink-700 ring-1 ring-pink-500/20"
+                          : "border-white/80 bg-white/60 text-foreground/70 hover:border-pink-300"
+                      }`}
+                    >
+                      {option.emoji} {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               <div className="space-y-5">
                 {template.fields.map((field) => (
@@ -487,14 +620,10 @@ export default function TemplateEditorPage({ params }: PageProps) {
                       </motion.span>
                       Creating...
                     </span>
-                  ) : user ? (
-                    editId ? (
-                      "Update Card ✨"
-                    ) : (
-                      "Save & Get Shareable Link ✨"
-                    )
+                  ) : editId ? (
+                    "Update Card ✨"
                   ) : (
-                    "Login to Save & Share 💕"
+                    "Save & Get Shareable Link ✨"
                   )}
                 </motion.button>
               </div>
@@ -508,73 +637,25 @@ export default function TemplateEditorPage({ params }: PageProps) {
             transition={{ delay: 0.3 }}
             className="lg:sticky lg:top-24 self-start"
           >
-            <div
-              className="glass-panel p-8 md:p-12 rounded-3xl relative overflow-hidden border border-white/60 shadow-2xl"
-              style={{
-                background: `linear-gradient(135deg, rgba(255,255,255,0.8) 0%, ${template.colors.secondary}40 100%)`,
-              }}
-            >
+            <div className="relative overflow-hidden rounded-3xl border border-white/60 shadow-2xl">
               <div className="absolute top-4 right-4 z-20">
                 <span className="px-3 py-1 bg-black/5 text-foreground/60 text-[10px] font-bold tracking-widest uppercase rounded-full border border-black/5">
                   Live Preview
                 </span>
               </div>
 
-              <div
-                className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-40 pointer-events-none"
-                style={{ backgroundColor: template.colors.primary }}
+              {/* The real renderer, not a look-alike. What you see here is what
+                  the recipient gets, minus the envelope and the paced reveal —
+                  both would fight typing. */}
+              <CardPreview
+                templateId={template.id}
+                content={previewContent}
+                font={font}
+                variant="panel"
+                seed={template.id}
               />
 
-              {/* Card Content Container */}
-              <div className="relative z-10 text-center py-4">
-                {PREVIEW_GIFS[template.id] ? (
-                  <div className="mb-6 relative w-full max-w-[280px] mx-auto overflow-hidden rounded-xl">
-                    <Image
-                      src={PREVIEW_GIFS[template.id].src}
-                      alt={PREVIEW_GIFS[template.id].alt}
-                      width={280}
-                      height={280}
-                      className="w-full h-auto rounded-lg"
-                      unoptimized
-                    />
-                  </div>
-                ) : (
-                  <motion.div
-                    className="text-7xl mb-6 filter drop-shadow-lg"
-                    animate={{ scale: [1, 1.05, 1], rotate: [0, 2, -2, 0] }}
-                    transition={{ duration: 3, repeat: Infinity }}
-                  >
-                    {template.emoji}
-                  </motion.div>
-                )}
-
-                <h3
-                  className={`text-4xl mb-4 ${previewFontClasses.header}`}
-                  style={{ color: template.colors.primary }}
-                >
-                  {formData.recipientName || template.fields[0].placeholder}
-                </h3>
-
-                <p
-                  className={`text-foreground/80 text-lg leading-relaxed mb-6 max-w-sm mx-auto whitespace-pre-line ${previewFontClasses.body}`}
-                >
-                  {formData.message || formData.reason || template.previewText}
-                </p>
-
-                {(formData.memory || formData.promise) && (
-                  <p className="text-foreground/60 text-sm italic border-t border-foreground/10 pt-4">
-                    &ldquo;{formData.memory || formData.promise}&rdquo;
-                  </p>
-                )}
-
-                <p
-                  className={`text-foreground/50 mt-6 ${previewFontClasses.header}`}
-                >
-                  — {formData.senderName || template.fields[1].placeholder}
-                </p>
-              </div>
-
-              <div className="text-center pt-4 border-t border-foreground/10">
+              <div className="text-center py-4 border-t border-foreground/10">
                 <p className="text-xs text-foreground/40 font-serif italic">
                   Made with LetterLove 💕
                 </p>
@@ -586,20 +667,3 @@ export default function TemplateEditorPage({ params }: PageProps) {
     </main>
   );
 }
-
-// TODO(phase-1): these live in the theme config once the theme engine lands,
-// and the preview mounts the real card renderer instead of this mini-card.
-const PREVIEW_GIFS: Record<string, { src: string; alt: string }> = {
-  "love-letter": {
-    src: "https://media1.tenor.com/m/HI7GdDJ1yq0AAAAC/us-you-and-me.gif",
-    alt: "Us You And Me Sticker",
-  },
-  "miss-you": {
-    src: "https://media1.tenor.com/m/rzG9YBjxW-0AAAAC/peach-sad.gif",
-    alt: "Peach Sad GIF",
-  },
-  anniversary: {
-    src: "https://media1.tenor.com/m/K6WkauZF1ToAAAAC/happy-valentines-day-valentines-day.gif",
-    alt: "Happy Valentines Day Hugs Sticker",
-  },
-};

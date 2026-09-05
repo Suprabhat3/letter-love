@@ -415,3 +415,177 @@ h6 {
     animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Card engine (lib/theme + components/card)
+
+   Ambient blobs and floating decor are pure looping animation with no state,
+   so they run as CSS keyframes: composited off the main thread, with zero
+   React reconciliation per frame. The old components animated 50+ nodes
+   through motion, which kept mid-range Android compositing continuously.
+   `motion` is reserved for the sequenced envelope and one-shot bursts.
+   Per-node variation comes in through custom properties, so every node in a
+   layer shares one animation rule.
+--------------------------------------------------------------------------- */
+
+@keyframes ll-float-up {
+  from {
+    transform: translate3d(0, 110vh, 0);
+    opacity: 0;
+  }
+
+  10%,
+  85% {
+    opacity: var(--ll-opacity, 0.5);
+  }
+
+  to {
+    transform: translate3d(0, -20vh, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes ll-float-down {
+  from {
+    transform: translate3d(0, -20vh, 0);
+    opacity: 0;
+  }
+
+  10%,
+  85% {
+    opacity: var(--ll-opacity, 0.5);
+  }
+
+  to {
+    transform: translate3d(0, 110vh, 0);
+    opacity: 0;
+  }
+}
+
+.ll-float {
+  position: absolute;
+  top: 0;
+  left: var(--ll-x, 50%);
+  will-change: transform, opacity;
+  animation-duration: var(--ll-duration, 20s);
+  animation-delay: var(--ll-delay, 0s);
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+.ll-float-up {
+  animation-name: ll-float-up;
+}
+
+.ll-float-down {
+  animation-name: ll-float-down;
+}
+
+/* The tinted string under a balloon. */
+.ll-balloon-string {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 1px;
+  height: 2.5rem;
+  transform: translateX(-50%);
+  background: rgba(120, 120, 120, 0.4);
+}
+
+@keyframes ll-blob {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: var(--ll-opacity, 0.4);
+  }
+
+  50% {
+    transform: scale(1.25);
+    opacity: calc(var(--ll-opacity, 0.4) * 1.5);
+  }
+}
+
+.ll-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(64px);
+  will-change: transform, opacity;
+  animation: ll-blob var(--ll-duration, 10s) ease-in-out var(--ll-delay, 0s) infinite;
+}
+
+@keyframes ll-burst {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0) rotate(0deg);
+    opacity: 0;
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate3d(var(--ll-dx, 0), var(--ll-dy, 0), 0) scale(1) rotate(var(--ll-rot, 360deg));
+    opacity: 0;
+  }
+}
+
+.ll-burst {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.625rem;
+  height: 0.625rem;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: ll-burst var(--ll-duration, 3s) ease-out var(--ll-delay, 0s) infinite;
+}
+
+/* Surfaces */
+.ll-paper-linen {
+  background-image:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.018) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.018) 0 1px, transparent 1px 3px);
+}
+
+.ll-paper-grain {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.035) 0.5px, transparent 0.5px);
+  background-size: 4px 4px;
+}
+
+.ll-paper-kraft {
+  background-image:
+    repeating-linear-gradient(115deg, rgba(120, 80, 40, 0.035) 0 2px, transparent 2px 5px);
+}
+
+/* Frames */
+.ll-frame-deckle {
+  clip-path: polygon(0% 2%, 2% 0%, 98% 1%, 100% 3%, 99% 97%, 97% 100%, 3% 99%, 0% 97%);
+}
+
+.ll-frame-polaroid {
+  padding-bottom: 4rem;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+.ll-frame-stamped {
+  border-style: dashed;
+  border-width: 2px;
+}
+
+/* Reduced motion: the whole decor system is optional by design. Every layer is
+   also skipped in JS via useReducedMotion(); this is the belt-and-braces. */
+@media (prefers-reduced-motion: reduce) {
+
+  .ll-float,
+  .ll-blob,
+  .ll-burst {
+    animation: none !important;
+  }
+
+  .ll-float,
+  .ll-burst {
+    display: none;
+  }
+}

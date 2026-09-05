@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
-import { createClient } from "@supabase/supabase-js";
-import { getTemplateById } from "@/lib/templates";
+import { getPublicCard } from "@/lib/cards-server";
+import { resolveColor, resolveTheme } from "@/lib/theme";
 
 // Route segment config
 export const alt = "LetterLove Card Preview";
@@ -10,87 +10,10 @@ export const size = {
 };
 export const contentType = "image/png";
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-async function getCard(id: string) {
-  try {
-    const { data, error } = await supabase
-      .from("cards")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error) {
-      console.error("OG Image Supabase Error:", error);
-      return null;
-    }
-    return data;
-  } catch (e) {
-    console.error("OG Image Fetch Error:", e);
-    return null;
-  }
-}
-
-// Theme configuration helper
-function getThemeConfig(template: any) {
-  const category = template?.category || "love";
-  const id = template?.id || "";
-
-  // Base config
-  let config = {
-    bgGradient:
-      "linear-gradient(135deg, #fce7f3 0%, white 50%, #ec489920 100%)",
-    primaryColor: template?.colors?.primary || "#ec4899",
-    secondaryColor: template?.colors?.secondary || "#fce7f3",
-    mainIcon: template?.emoji || "💌",
-    decorations: "💕",
-    title: "A Letter For",
-  };
-
-  // Specific overrides
-  if (id === "birthday-wish" || category === "celebration") {
-    config = {
-      ...config,
-      bgGradient:
-        "linear-gradient(135deg, #fef3c7 0%, white 50%, #f59e0b20 100%)",
-      mainIcon: "🎂",
-      decorations: "🎈",
-      title: "Happy Birthday",
-    };
-  } else if (id === "sorry-card" || category === "apology") {
-    config = {
-      ...config,
-      bgGradient:
-        "linear-gradient(135deg, #dbeafe 0%, white 50%, #3b82f620 100%)",
-      mainIcon: "🥺",
-      decorations: "💙",
-      title: "Note of Apology",
-    };
-  } else if (id === "miss-you" || category === "longing") {
-    config = {
-      ...config,
-      bgGradient:
-        "linear-gradient(135deg, #cffafe 0%, white 50%, #06b6d420 100%)",
-      mainIcon: "💭",
-      decorations: "✨",
-      title: "Thinking of You",
-    };
-  } else if (id === "love-letter" || category === "love") {
-    config = {
-      ...config,
-      bgGradient:
-        "linear-gradient(135deg, #fce7f3 0%, white 50%, #ec489920 100%)",
-      mainIcon: "💌",
-      decorations: "💖",
-      title: "A Love Letter For",
-    };
-  }
-
-  return config;
-}
+// This route runs in its own Satori bundle. It calls getPublicCard directly
+// rather than through the React.cache()'d wrapper in page.tsx — that cache
+// belongs to a different request — but it goes through the same reader, so the
+// preview can never show something the share page would withhold.
 
 export default async function Image({
   params,
@@ -98,7 +21,7 @@ export default async function Image({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const card = await getCard(id);
+  const card = await getPublicCard(id);
 
   if (!card) {
     return new ImageResponse(
@@ -122,12 +45,23 @@ export default async function Image({
     );
   }
 
-  const template = getTemplateById(card.template_id);
-  const recipient = card.data.recipientName || "Someone Special";
-  const sender = card.data.senderName || "Someone";
+  const content = card.content;
+  const recipient = content.recipientName || "Someone Special";
+  const sender = content.senderName || "Someone";
 
-  const theme = getThemeConfig(template);
+  // The former `getThemeConfig()` if-chain now lives in lib/theme — one theme
+  // per template, shared with the card renderer. Satori cannot share React
+  // components (no grid, no backdrop-filter, no animation, and every
+  // multi-child div needs an explicit `display: flex`), so what is shared here
+  // is the *config*, not the markup.
+  const theme = resolveTheme(card.templateId, card.style);
+  const og = theme.og;
+  // Follow the resolved palette so a per-card palette override also recolours
+  // the link preview, not just the card.
+  const primary = resolveColor(og.primaryColor, theme.palette);
 
+  // Never render the letter body here. The whole point of the envelope is that
+  // the preview does not spoil what is inside.
   return new ImageResponse(
     <div
       style={{
@@ -138,60 +72,32 @@ export default async function Image({
         alignItems: "center",
         justifyContent: "center",
         backgroundColor: "white",
-        backgroundImage: theme.bgGradient,
+        backgroundImage: og.bgGradient,
         fontFamily: "sans-serif",
         position: "relative",
       }}
     >
       {/* Floating Background Elements */}
-      {/* Top Left */}
-      <div
-        style={{
-          position: "absolute",
-          top: 40,
-          left: 40,
-          fontSize: 80,
-          opacity: 0.2,
-        }}
-      >
-        {theme.decorations}
-      </div>
-      {/* Top Right */}
-      <div
-        style={{
-          position: "absolute",
-          top: 40,
-          right: 40,
-          fontSize: 80,
-          opacity: 0.2,
-        }}
-      >
-        {theme.decorations}
-      </div>
-      {/* Bottom Left */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: 40,
-          left: 40,
-          fontSize: 80,
-          opacity: 0.2,
-        }}
-      >
-        {theme.decorations}
-      </div>
-      {/* Bottom Right */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: 40,
-          right: 40,
-          fontSize: 80,
-          opacity: 0.2,
-        }}
-      >
-        {theme.decorations}
-      </div>
+      {(
+        [
+          { top: 40, left: 40 },
+          { top: 40, right: 40 },
+          { bottom: 40, left: 40 },
+          { bottom: 40, right: 40 },
+        ] as const
+      ).map((pos, i) => (
+        <div
+          key={i}
+          style={{
+            position: "absolute",
+            ...pos,
+            fontSize: 80,
+            opacity: 0.2,
+          }}
+        >
+          {og.decorations}
+        </div>
+      ))}
 
       {/* Main Card Container */}
       <div
@@ -215,14 +121,14 @@ export default async function Image({
             fontWeight: 600,
             textTransform: "uppercase",
             letterSpacing: "4px",
-            color: theme.primaryColor,
+            color: primary,
             marginBottom: 30,
-            background: `${theme.primaryColor}15`,
+            background: `${primary}15`,
             padding: "10px 30px",
             borderRadius: "100px",
           }}
         >
-          {theme.title}
+          {og.title}
         </div>
 
         {/* Main Visual Icon Container */}
@@ -233,13 +139,13 @@ export default async function Image({
             justifyContent: "center",
             width: 160,
             height: 160,
-            background: `${theme.primaryColor}10`,
+            background: `${primary}10`,
             borderRadius: "50%",
             marginBottom: 30,
-            border: `4px solid ${theme.primaryColor}30`,
+            border: `4px solid ${primary}30`,
           }}
         >
-          <div style={{ fontSize: 80 }}>{theme.mainIcon}</div>
+          <div style={{ fontSize: 80 }}>{og.mainIcon}</div>
         </div>
 
         {/* Recipient Name */}
@@ -273,9 +179,7 @@ export default async function Image({
           }}
         >
           From{" "}
-          <span style={{ color: theme.primaryColor, fontWeight: 700 }}>
-            {sender}
-          </span>
+          <span style={{ color: primary, fontWeight: 700 }}>{sender}</span>
         </div>
       </div>
 

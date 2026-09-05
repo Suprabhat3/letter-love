@@ -32,6 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...except the template, which holds no secrets and exists to be committed.
+# Without this it was ignored too, so a fresh clone had no list of the
+# variables the app needs to boot.
+!.env.example
 
 # vercel
 .vercel

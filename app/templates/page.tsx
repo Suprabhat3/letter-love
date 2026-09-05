@@ -1,26 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 import { templates } from "@/lib/templates";
+import {
+  FALLBACK_FEATURED,
+  currentOccasion,
+  occasionCountdown,
+} from "@/lib/occasions";
 import { CATEGORIES, TemplateCategory, Template } from "@/lib/types";
 import TemplateCard from "@/components/templates/TemplateCard";
 import Navbar from "@/components/Navbar";
-import {
-  Search,
-  Sparkles,
-  Filter,
-  Users,
-  X,
-  Heart,
-  Star,
-  Zap,
-} from "lucide-react";
-import SorryCard from "@/components/templates/SorryCard";
-import BirthdayCard from "@/components/templates/BirthdayCard";
-import ValentineCard from "@/components/templates/ValentineCard";
+import { Search, Users, X, Star, Zap } from "lucide-react";
+import CardPreview, { demoContent } from "@/components/card/CardPreview";
 import { SparklesIcon } from "@/components/SparklesIcon";
+
+/**
+ * The upcoming occasion, read on the client only.
+ *
+ * `useSyncExternalStore` rather than a plain call, for two reasons. This page
+ * is prerendered, so a `new Date()` evaluated during render would be the build
+ * date — the banner would be permanently stuck on whatever was coming up the
+ * day we deployed. And a value that differs between the server HTML and the
+ * first client render is a hydration mismatch; the server snapshot returning
+ * "" makes the banner render generic first and swap in on the client, which is
+ * the one shape React guarantees is safe.
+ *
+ * The snapshot is a plain string (`"diwali|Diwali in 3 days"`) because
+ * `getSnapshot` must return a stable value — handing back a fresh object each
+ * call is the classic infinite-loop bug with this hook. It carries the badge
+ * copy too, so nothing downstream has to read the clock a second time and
+ * risk disagreeing with it.
+ */
+const NO_SUBSCRIBE = () => () => {};
+const serverOccasion = () => "";
+function clientOccasion(): string {
+  const found = currentOccasion();
+  return found
+    ? `${found.occasion.templateId}|${occasionCountdown(found)}`
+    : "";
+}
 
 const RECIPIENTS = [
   { id: "all", label: "Anyone" },
@@ -38,7 +58,22 @@ export default function TemplatesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
 
-  const featuredTemplate = templates.find((t) => t.id === "birthday-wish");
+  const occasionKey = useSyncExternalStore(
+    NO_SUBSCRIBE,
+    clientOccasion,
+    serverOccasion,
+  );
+
+  // "Featured This Week" was pinned to `birthday-wish` in JSX, so the gallery
+  // said the same thing in the week before Diwali as it did in March.
+  const featured = useMemo(() => {
+    const [templateId = "", badge = ""] = occasionKey.split("|");
+    const template = templates.find(
+      (t) => t.id === (templateId || FALLBACK_FEATURED),
+    );
+    if (!template) return null;
+    return { template, badge: badge || "Featured This Week" };
+  }, [occasionKey]);
 
   const filteredTemplates = templates.filter((template) => {
     // 1. Filter by Category
@@ -73,7 +108,7 @@ export default function TemplatesPage() {
             rotate: [0, 45, 0],
           }}
           transition={{ duration: 15, repeat: Infinity }}
-          className="absolute top-[-10%] left-[-10%] bg-linear-to-br from-pink-200/40 to-red-200/40 w-[800px] h-[800px] rounded-full blur-3xl"
+          className="absolute top-[-10%] left-[-10%] bg-linear-to-br from-pink-200/40 to-red-200/40 w-200 h-200 rounded-full blur-3xl"
         />
         <motion.div
           animate={{
@@ -82,9 +117,9 @@ export default function TemplatesPage() {
             rotate: [0, -30, 0],
           }}
           transition={{ duration: 18, repeat: Infinity, delay: 2 }}
-          className="absolute bottom-[-10%] right-[-10%] bg-gradient-to-tr from-purple-200/40 to-blue-200/40 w-[700px] h-[700px] rounded-full blur-3xl"
+          className="absolute bottom-[-10%] right-[-10%] bg-linear-to-tr from-purple-200/40 to-blue-200/40 w-175 h-175 rounded-full blur-3xl"
         />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[1200px] bg-white/40 blur-[100px] rounded-full pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-300 h-300 bg-white/40 blur-[100px] rounded-full pointer-events-none" />
       </div>
 
       <AnimatePresence>
@@ -104,52 +139,26 @@ export default function TemplatesPage() {
               <X size={24} />
             </motion.button>
 
+            {/* Every template previews through the real renderer now, so this
+                is what the recipient actually gets — and a new template needs
+                no demo markup of its own. Interactive, so the yes/no game and
+                the candles are playable here. */}
             <div className="w-full h-full overflow-y-auto">
-              {previewTemplate.id === "sorry-card" ? (
-                <SorryCard
-                  data={{
-                    recipientName: "Demo Friend",
-                    senderName: "You",
-                    reason: "forgetting the date",
-                    promise: "make it up to you",
-                  }}
-                />
-              ) : previewTemplate.id === "birthday-wish" ? (
-                <BirthdayCard
-                  data={{
-                    recipientName: "Birthday Star",
-                    senderName: "You",
-                    age: "21",
-                    message: "Wishing you the happiest of birthdays!",
-                    wish: "Infinite Joy",
-                  }}
-                />
-              ) : previewTemplate.id === "valentine-ask" ? (
-                <ValentineCard
-                  data={{
-                    recipientName: "My Crush",
-                    senderName: "Secret Admirer",
-                    reason: "You make my heart skip a beat!",
-                  }}
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center min-h-screen p-8 text-center">
-                  <div className="text-9xl mb-8 animate-bounce">
-                    {previewTemplate.emoji}
-                  </div>
-                  <h2 className="text-4xl font-serif font-bold mb-4">
-                    {previewTemplate.name}
-                  </h2>
-                  <p className="text-xl text-muted-foreground max-w-md mb-8">
-                    {previewTemplate.description}
-                  </p>
-                  <Link href={`/templates/${previewTemplate.id}`}>
-                    <button className="btn-primary px-8 py-4 rounded-full text-lg">
-                      Customize Template
-                    </button>
-                  </Link>
-                </div>
-              )}
+              <CardPreview
+                key={previewTemplate.id}
+                templateId={previewTemplate.id}
+                content={demoContent(previewTemplate)}
+                variant="page"
+                interactive
+                seed={previewTemplate.id}
+              />
+              <div className="pb-12 text-center">
+                <Link href={`/templates/${previewTemplate.id}`}>
+                  <button className="btn-primary px-8 py-4 rounded-full text-lg">
+                    Customize Template
+                  </button>
+                </Link>
+              </div>
             </div>
           </motion.div>
         )}
@@ -164,7 +173,7 @@ export default function TemplatesPage() {
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/60 backdrop-blur-md border border-white/50 text-foreground/80 text-sm font-medium mb-4 shadow-sm"
           >
             <SparklesIcon size={14} className="text-pink-600" />
-            <span className="bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent font-semibold italic">
+            <span className="bg-linear-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent font-semibold italic">
               AI-Powered Templates
             </span>
           </motion.div>
@@ -191,7 +200,7 @@ export default function TemplatesPage() {
         </div>
 
         {/* Featured Template Banner */}
-        {featuredTemplate &&
+        {featured &&
           !searchQuery &&
           activeCategory === "all" &&
           activeRecipient === "all" && (
@@ -208,24 +217,23 @@ export default function TemplatesPage() {
                 <div className="flex flex-col md:flex-row items-center p-8 md:p-12 gap-8 relative z-10">
                   <div className="flex-1 text-center md:text-left space-y-4">
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider mb-2 backdrop-blur-sm border border-white/20">
-                      <Star size={12} className="fill-current" /> Featured This
-                      Week
+                      <Star size={12} className="fill-current" /> {featured.badge}
                     </div>
                     <h2 className="text-3xl md:text-5xl font-serif font-bold">
-                      {featuredTemplate.name}
+                      {featured.template.name}
                     </h2>
                     <p className="text-pink-100 text-lg max-w-md mx-auto md:mx-0">
-                      {featuredTemplate.description}. Perfect for telling them
+                      {featured.template.description}. Perfect for telling them
                       how much they mean to you.
                     </p>
                     <div className="pt-4 flex flex-wrap gap-4 justify-center md:justify-start">
-                      <Link href={`/templates/${featuredTemplate.id}`}>
+                      <Link href={`/templates/${featured.template.id}`}>
                         <button className="bg-white text-pink-600 px-8 py-3.5 rounded-full font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2">
                           <Zap size={18} className="fill-current" /> Create Now
                         </button>
                       </Link>
                       <button
-                        onClick={() => setPreviewTemplate(featuredTemplate)}
+                        onClick={() => setPreviewTemplate(featured.template)}
                         className="px-6 py-3.5 rounded-full font-semibold border-2 border-white/30 hover:bg-white/10 transition-all text-white"
                       >
                         Preview Demo
@@ -234,7 +242,7 @@ export default function TemplatesPage() {
                   </div>
                   <div className="relative">
                     <div className="text-[120px] md:text-[160px] leading-none filter drop-shadow-2xl animate-float">
-                      {featuredTemplate.emoji}
+                      {featured.template.emoji}
                     </div>
                   </div>
                 </div>
