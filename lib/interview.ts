@@ -37,7 +37,56 @@ const WHO: InterviewQuestion = {
   id: "who",
   prompt: "Unka naam ya nickname?",
   hint: "Jo tum sach mein bulate ho — formal naam nahi",
-  placeholder: "Riya, ya 'Bandar' 🐒",
+  placeholder: "Aarohi, ya 'Jaan' 🫠",
+  facet: "What the sender calls them",
+};
+
+// The romantic WHO's tone ("Aarohi, ya 'Jaan'") reads wrong the moment the
+// recipient isn't a partner or crush — a teacher or a mother is never
+// "Jaan". Gratitude gets its own, and a few relationships inside it are
+// fixed enough (a teacher is always a teacher) to earn their own placeholder
+// on top of that.
+const WHO_GRATITUDE: InterviewQuestion = {
+  id: "who",
+  prompt: "Unhe kya bulate ho?",
+  hint: "Jo tum unhe assli mein bulate ho — naam ya rishta",
+  placeholder: "Ritu, ya 'Sharma Sir', ya Maa",
+  facet: "What the sender calls them",
+};
+
+const WHO_TEACHER: InterviewQuestion = {
+  id: "who",
+  prompt: "Unhe kya bulate ho?",
+  hint: "Sir, Ma'am, ya jo bhi class mein bulate the",
+  placeholder: "Sharma Sir",
+  facet: "What the sender calls them",
+};
+
+const WHO_MOTHER: InterviewQuestion = {
+  id: "who",
+  prompt: "Tum unhe kya bulate ho?",
+  hint: "Maa, Mummy, Amma — jo bhi sach mein bologe",
+  placeholder: "Maa",
+  facet: "What the sender calls them",
+};
+
+const WHO_FATHER: InterviewQuestion = {
+  id: "who",
+  prompt: "Tum unhe kya bulate ho?",
+  hint: "Papa, Baba, Dad — jo bhi sach mein bologe",
+  placeholder: "Papa",
+  facet: "What the sender calls them",
+};
+
+// Celebration and festival cards go out much wider than a partner or crush —
+// a birthday card or a Diwali note can just as easily be for a colleague, an
+// aunt, or a childhood friend — so their WHO can't lean on a flirty nickname
+// the way LOVE's does.
+const WHO_NEUTRAL: InterviewQuestion = {
+  id: "who",
+  prompt: "Unka naam ya nickname?",
+  hint: "Jo tum unhe bulate ho",
+  placeholder: "Riya, ya Rohan bhai",
   facet: "What the sender calls them",
 };
 
@@ -74,7 +123,7 @@ const LOVE: InterviewQuestion[] = [
 ];
 
 const CELEBRATION: InterviewQuestion[] = [
-  WHO,
+  WHO_NEUTRAL,
   {
     id: "howlong",
     prompt: "Inko kab se jaante ho?",
@@ -170,7 +219,7 @@ const LONGING: InterviewQuestion[] = [
 ];
 
 const FESTIVAL: InterviewQuestion[] = [
-  WHO,
+  WHO_NEUTRAL,
   {
     id: "howcelebrate",
     prompt: "Yeh tyohaar tum dono kaise manate ho?",
@@ -234,7 +283,7 @@ const FRIENDSHIP: InterviewQuestion[] = [
 ];
 
 const GRATITUDE: InterviewQuestion[] = [
-  WHO,
+  WHO_GRATITUDE,
   {
     id: "what",
     prompt: "Inhone aisa kya kiya?",
@@ -313,6 +362,18 @@ const CONFESSION: InterviewQuestion[] = [
 const BY_TEMPLATE: Record<string, InterviewQuestion[]> = {
   "valentine-ask": CONFESSION,
   "crush-confession": CONFESSION,
+
+  // Same GRATITUDE questions, but the relationship is fixed rather than
+  // generic, so the opening question can name it instead of asking as if it
+  // could be anyone.
+  "teachers-day": [WHO_TEACHER, ...GRATITUDE.slice(1)],
+  "mothers-day": [WHO_MOTHER, ...GRATITUDE.slice(1)],
+  "fathers-day": [WHO_FATHER, ...GRATITUDE.slice(1)],
+
+  // The one FESTIVAL template that isn't wide-audience: Karwa Chauth is
+  // always for a spouse, so it keeps the closer, partner-flavoured WHO
+  // instead of the neutral one the rest of the category uses.
+  "karwa-chauth": [WHO, ...FESTIVAL.slice(1)],
 
   // The AI writes into this template's `reasons` field, which is a list, not
   // a paragraph — so the questions have to collect list material. Asking "ek

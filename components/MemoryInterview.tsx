@@ -199,14 +199,35 @@ export default function MemoryInterview({
           onClick={(e) => e.stopPropagation()}
           className="relative w-full max-w-lg rounded-t-3xl sm:rounded-3xl bg-white dark:bg-gray-900 p-6 sm:p-8 shadow-2xl max-h-[92svh] overflow-y-auto"
         >
-          <button
-            type="button"
-            onClick={close}
-            aria-label="Close"
-            className="absolute right-4 top-4 rounded-full p-2 text-muted-foreground hover:bg-muted"
-          >
-            <X size={18} />
-          </button>
+          {/* The progress bar and the close button share one row instead of
+              the button floating absolutely over it — that's what makes
+              "don't overlap" true at every width instead of a padding value
+              tuned for one. */}
+          <div className="flex items-center gap-3">
+            {stage === "questions" && question ? (
+              <div className="flex flex-1 items-center gap-1.5">
+                {questions.map((q, i) => (
+                  <span
+                    key={q.id}
+                    className={`h-1 flex-1 rounded-full transition-colors ${
+                      i <= step ? "bg-pink-500" : "bg-border"
+                    }`}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="flex-1" />
+            )}
+
+            <button
+              type="button"
+              onClick={close}
+              aria-label="Close"
+              className="shrink-0 rounded-full p-2 text-muted-foreground hover:bg-muted"
+            >
+              <X size={18} />
+            </button>
+          </div>
 
           {stage === "tone" && (
             <div>
@@ -252,17 +273,6 @@ export default function MemoryInterview({
 
           {stage === "questions" && question && (
             <div>
-              <div className="flex items-center gap-1.5">
-                {questions.map((q, i) => (
-                  <span
-                    key={q.id}
-                    className={`h-1 flex-1 rounded-full transition-colors ${
-                      i <= step ? "bg-pink-500" : "bg-border"
-                    }`}
-                  />
-                ))}
-              </div>
-
               <h2 className="mt-6 font-serif text-2xl font-bold leading-snug">
                 {question.prompt}
               </h2>

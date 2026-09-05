@@ -122,7 +122,7 @@ export default function CardRenderer({
         duration: 0.5,
         delay: theme.motion.introDelayMs / 1000,
       }}
-      className={`relative w-full overflow-hidden p-8 md:p-12 ${layout.width} ${surface.className}`}
+      className={`relative w-full mx-auto overflow-hidden p-8 md:p-12 ${layout.width} ${surface.className}`}
       style={{ ...surface.style, color: theme.palette.ink }}
     >
       {surface.shine && (
