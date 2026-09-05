@@ -101,12 +101,25 @@ export function makeDefaultDecor(): DecorSpec[] {
     {
       kind: "float",
       phase: "always",
-      count: 14,
-      glyphs: ["💕", "✨", "💌", "🌸", "💗"],
+      count: 15,
+      glyphs: ["💕", "💌", "🌸", "💗", "💞"],
       direction: "up",
       speedSec: [15, 25],
-      sizeRem: 1.5,
+      sizeRem: 1.75,
       opacity: 0.6,
+    },
+    // The far layer every bespoke theme now carries, so a template that has no
+    // theme of its own still gets the same sense of depth rather than one flat
+    // sheet of same-size glyphs.
+    {
+      kind: "float",
+      phase: "always",
+      count: 12,
+      glyphs: ["✨", "🤍"],
+      direction: "up",
+      speedSec: [26, 40],
+      sizeRem: 1,
+      opacity: 0.34,
     },
     {
       kind: "burst",

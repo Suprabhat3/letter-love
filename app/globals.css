@@ -473,9 +473,18 @@ h6 {
    layer shares one animation rule.
 --------------------------------------------------------------------------- */
 
+/* The travel is expressed as two custom properties rather than baked-in `vh`,
+   because the layer is not always the viewport. A share page for a long letter
+   is three or four screens tall; a `110vh → -20vh` traversal there only ever
+   animates inside the first screen, so everything below the fold sat against a
+   dead background. DecorLayer measures its own host box and writes the real
+   span, which also makes the editor's bounded preview panel correct — it was
+   previously animating glyphs a full viewport-height above and below a 420px
+   box, i.e. almost entirely off-panel. The `vh` values survive as the
+   pre-measurement default so the first frame is never wrong on a share page. */
 @keyframes ll-float-up {
   from {
-    transform: translate3d(0, 110vh, 0);
+    transform: translate3d(0, var(--ll-span-start, 110vh), 0);
     opacity: 0;
   }
 
@@ -485,14 +494,14 @@ h6 {
   }
 
   to {
-    transform: translate3d(0, -20vh, 0);
+    transform: translate3d(0, var(--ll-span-end, -20vh), 0);
     opacity: 0;
   }
 }
 
 @keyframes ll-float-down {
   from {
-    transform: translate3d(0, -20vh, 0);
+    transform: translate3d(0, var(--ll-span-end, -20vh), 0);
     opacity: 0;
   }
 
@@ -502,11 +511,21 @@ h6 {
   }
 
   to {
-    transform: translate3d(0, 110vh, 0);
+    transform: translate3d(0, var(--ll-span-start, 110vh), 0);
     opacity: 0;
   }
 }
 
+/* `backwards` is load-bearing, not a nicety.
+   The delay that spreads a layer out in time is up to a full traversal long,
+   and with the default `fill-mode: none` an element waiting out its delay
+   renders with no animation styles at all — parked at `top: 0`, opacity 1. So
+   every glyph that had not started yet sat in a visible row pinned to the top
+   of the layer, which is precisely what the decor was accused of doing.
+   `backwards` holds the `from` state (off-screen, opacity 0) through the wait.
+   DecorLayer now also passes that delay negative, which starts each glyph
+   partway along its path, so the layer is at full density on the first frame
+   instead of filling in over the next minute. */
 .ll-float {
   position: absolute;
   top: 0;
@@ -516,6 +535,7 @@ h6 {
   animation-delay: var(--ll-delay, 0s);
   animation-iteration-count: infinite;
   animation-timing-function: linear;
+  animation-fill-mode: backwards;
 }
 
 .ll-float-up {
@@ -524,6 +544,48 @@ h6 {
 
 .ll-float-down {
   animation-name: ll-float-down;
+}
+
+/* Sway lives on an inner span rather than in the float keyframes above: the
+   vertical travel is a linear drift and the sway is an eased back-and-forth on
+   a different period, and one keyframe track cannot hold both without the
+   glyphs marching in visible lockstep. Two nested transforms compose for free
+   on the compositor, and this adds no extra painted nodes. */
+@keyframes ll-float-sway {
+  from {
+    transform: translateX(calc(var(--ll-sway, 12px) * -1)) rotate(calc(var(--ll-tilt, 8deg) * -1));
+  }
+
+  to {
+    transform: translateX(var(--ll-sway, 12px)) rotate(var(--ll-tilt, 8deg));
+  }
+}
+
+.ll-float-glyph {
+  display: block;
+  will-change: transform;
+  animation: ll-float-sway var(--ll-sway-duration, 5s) ease-in-out var(--ll-delay, 0s) infinite alternate backwards;
+}
+
+/* The "there's more below" marker (components/card/ScrollCue).
+
+   A slow, small vertical nudge — enough to read as an invitation in peripheral
+   vision while the reader is still on the first paragraph, not enough to
+   compete with the letter for attention. */
+@keyframes ll-scroll-cue {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(5px);
+  }
+}
+
+.ll-scroll-cue {
+  animation: ll-scroll-cue 2.4s ease-in-out infinite;
 }
 
 /* The tinted string under a balloon. */
@@ -583,7 +645,7 @@ h6 {
   height: 0.625rem;
   pointer-events: none;
   will-change: transform, opacity;
-  animation: ll-burst var(--ll-duration, 3s) ease-out var(--ll-delay, 0s) infinite;
+  animation: ll-burst var(--ll-duration, 3s) ease-out var(--ll-delay, 0s) infinite backwards;
 }
 
 /* Surfaces */
@@ -844,9 +906,11 @@ h6 {
 @media (prefers-reduced-motion: reduce) {
 
   .ll-float,
+  .ll-float-glyph,
   .ll-blob,
   .ll-burst,
   .ll-envelope-idle,
+  .ll-scroll-cue,
   .ll-seal-halo,
   .ll-react-fly,
   .ll-candle,

@@ -32,18 +32,29 @@ export const bestFriendTheme: ThemeDraft = {
     blobs: [
       { anchor: "top-left", sizePx: 640, color: "secondary", opacity: 0.4, durationSec: 13 },
       { anchor: "bottom-right", sizePx: 560, color: "primary", opacity: 0.16, durationSec: 16, delaySec: 3 },
+      { anchor: "center", sizePx: 820, color: "glow", opacity: 0.14, durationSec: 20, delaySec: 6 },
     ],
   },
   decor: [
     {
       kind: "float",
       phase: "always",
-      count: 8,
-      glyphs: ["🫂", "☕", "✨"],
+      count: 14,
+      glyphs: ["🫂", "☕", "🎧", "🛺", "😂"],
       direction: "up",
       speedSec: [20, 32],
-      sizeRem: 1.25,
-      opacity: 0.4,
+      sizeRem: 1.7,
+      opacity: 0.45,
+    },
+    {
+      kind: "float",
+      phase: "always",
+      count: 11,
+      glyphs: ["✨", "🧡", "🎵"],
+      direction: "up",
+      speedSec: [32, 48],
+      sizeRem: 1,
+      opacity: 0.26,
     },
   ],
   motion: {
@@ -95,16 +106,45 @@ export const friendshipDayTheme: ThemeDraft = {
   surface: { kind: "glass", tint: "secondary", shine: true },
   frame: { kind: "rounded", radiusPx: 26, shadow: "2xl" },
   layout: "centered-card",
+  ambient: {
+    enabled: true,
+    blobs: [
+      { anchor: "top-left", sizePx: 620, color: "secondary", opacity: 0.44, durationSec: 11 },
+      { anchor: "bottom-right", sizePx: 560, color: "glow", opacity: 0.3, durationSec: 14, delaySec: 2 },
+      { anchor: "center", sizePx: 800, color: "secondary", opacity: 0.16, durationSec: 19, delaySec: 5 },
+    ],
+  },
   decor: [
     {
       kind: "float",
       phase: "always",
-      count: 10,
-      glyphs: ["🤝", "🌻", "✨", "🎈"],
+      count: 15,
+      glyphs: ["🤝", "🌻", "🎈", "🍿", "🤗"],
       direction: "up",
       speedSec: [15, 26],
-      sizeRem: 1.4,
+      sizeRem: 1.85,
       opacity: 0.55,
+    },
+    {
+      kind: "float",
+      phase: "always",
+      count: 12,
+      glyphs: ["✨", "💛", "⭐"],
+      direction: "up",
+      speedSec: [26, 40],
+      sizeRem: 1.05,
+      opacity: 0.32,
+    },
+    // Friendship Day is the loud one of this file — it gets the confetti the
+    // originals have and these newer themes never did.
+    {
+      kind: "burst",
+      phase: "always",
+      count: 20,
+      colors: ["#facc15", "#fde047", "#fb923c", "#ffffff"],
+      shape: "circle",
+      spreadPx: 620,
+      repeatDelaySec: 5,
     },
   ],
   blocks: [
@@ -156,18 +196,33 @@ export const thankYouTheme: ThemeDraft = {
     enabled: true,
     blobs: [
       { anchor: "center", sizePx: 820, color: "secondary", opacity: 0.3, durationSec: 18 },
+      { anchor: "top-right", sizePx: 600, color: "glow", opacity: 0.2, durationSec: 15, delaySec: 4 },
+      { anchor: "bottom-left", sizePx: 560, color: "primary", opacity: 0.12, durationSec: 22, delaySec: 8 },
     ],
   },
+  // Fuller, but still the quietest layer in the file: this theme's restraint
+  // is a decision about gratitude, so it gains density and depth without
+  // gaining brightness or speed.
   decor: [
     {
       kind: "float",
       phase: "always",
-      count: 6,
-      glyphs: ["🙏", "🌿", "✨"],
+      count: 13,
+      glyphs: ["🙏", "🌿", "🕊️", "🍃"],
       direction: "up",
       speedSec: [26, 40],
-      sizeRem: 1.15,
-      opacity: 0.32,
+      sizeRem: 1.5,
+      opacity: 0.34,
+    },
+    {
+      kind: "float",
+      phase: "always",
+      count: 11,
+      glyphs: ["✨", "🤍"],
+      direction: "up",
+      speedSec: [38, 56],
+      sizeRem: 0.95,
+      opacity: 0.2,
     },
   ],
   motion: {
@@ -218,16 +273,43 @@ export const proudOfYouTheme: ThemeDraft = {
   surface: { kind: "gradient", from: "#ffffff", to: "#f5f3ff", angleDeg: 160 },
   frame: { kind: "stamped", radiusPx: 22, borderColor: "#c4b5fd", shadow: "2xl" },
   layout: "centered-card",
+  ambient: {
+    enabled: true,
+    blobs: [
+      { anchor: "top-right", sizePx: 660, color: "secondary", opacity: 0.44, durationSec: 12 },
+      { anchor: "bottom-left", sizePx: 580, color: "glow", opacity: 0.26, durationSec: 15, delaySec: 3 },
+      { anchor: "center", sizePx: 840, color: "secondary", opacity: 0.16, durationSec: 20, delaySec: 6 },
+    ],
+  },
   decor: [
     {
       kind: "float",
       phase: "always",
-      count: 10,
-      glyphs: ["🌟", "✨", "💜"],
+      count: 15,
+      glyphs: ["🌟", "🏆", "💜", "🎖️", "🚀"],
       direction: "up",
       speedSec: [16, 28],
-      sizeRem: 1.35,
+      sizeRem: 1.8,
       opacity: 0.5,
+    },
+    {
+      kind: "float",
+      phase: "always",
+      count: 12,
+      glyphs: ["✨", "⭐", "🤍"],
+      direction: "up",
+      speedSec: [28, 42],
+      sizeRem: 1,
+      opacity: 0.28,
+    },
+    {
+      kind: "burst",
+      phase: "always",
+      count: 18,
+      colors: ["#c4b5fd", "#a78bfa", "#facc15", "#ffffff"],
+      shape: "square",
+      spreadPx: 580,
+      repeatDelaySec: 6,
     },
   ],
   blocks: [
@@ -273,16 +355,40 @@ export const teachersDayTheme: ThemeDraft = {
   surface: { kind: "paper", texture: "grain", tint: "paper" },
   frame: { kind: "rounded", radiusPx: 14, shadow: "xl" },
   layout: "letter-sheet",
+  // This theme had no `ambient` at all, so it fell through to the generic
+  // default wash — a card about a classroom rendering the same two pink-ish
+  // blobs as everything else.
+  ambient: {
+    enabled: true,
+    blobs: [
+      { anchor: "top-left", sizePx: 660, color: "secondary", opacity: 0.42, durationSec: 13 },
+      { anchor: "bottom-right", sizePx: 580, color: "glow", opacity: 0.24, durationSec: 16, delaySec: 3 },
+      { anchor: "center", sizePx: 820, color: "secondary", opacity: 0.16, durationSec: 21, delaySec: 6 },
+    ],
+  },
   decor: [
     {
       kind: "float",
       phase: "always",
-      count: 7,
-      glyphs: ["📚", "✏️", "✨"],
+      count: 15,
+      glyphs: ["📚", "✏️", "🎓", "🍎", "📐"],
       direction: "up",
-      speedSec: [22, 34],
-      sizeRem: 1.2,
-      opacity: 0.35,
+      speedSec: [20, 32],
+      sizeRem: 1.7,
+      opacity: 0.42,
+    },
+    // The far layer. Smaller, slower and dimmer than the one above it, which
+    // is the whole trick: one sheet of same-size glyphs reads as stickers, two
+    // sheets at different depths read as air.
+    {
+      kind: "float",
+      phase: "always",
+      count: 12,
+      glyphs: ["✨", "📝", "🔖"],
+      direction: "up",
+      speedSec: [32, 48],
+      sizeRem: 1,
+      opacity: 0.24,
     },
   ],
   motion: {
@@ -342,18 +448,31 @@ export const mothersDayTheme: ThemeDraft = {
     blobs: [
       { anchor: "top-left", sizePx: 680, color: "secondary", opacity: 0.45, durationSec: 14 },
       { anchor: "bottom-right", sizePx: 560, color: "primary", opacity: 0.14, durationSec: 17, delaySec: 3 },
+      { anchor: "center", sizePx: 860, color: "glow", opacity: 0.16, durationSec: 22, delaySec: 7 },
     ],
   },
   decor: [
     {
       kind: "float",
       phase: "always",
-      count: 8,
-      glyphs: ["🌷", "🤍", "✨"],
+      count: 14,
+      glyphs: ["🌷", "🌸", "🤍", "🫖", "🌺"],
       direction: "up",
       speedSec: [22, 36],
-      sizeRem: 1.25,
-      opacity: 0.4,
+      sizeRem: 1.65,
+      opacity: 0.42,
+    },
+    // Petals coming down over flowers going up. Two directions is the cheapest
+    // way to make a still page feel like weather rather than like a loop.
+    {
+      kind: "float",
+      phase: "always",
+      count: 12,
+      glyphs: ["🌸", "✨"],
+      direction: "down",
+      speedSec: [30, 46],
+      sizeRem: 0.95,
+      opacity: 0.24,
     },
   ],
   motion: {
@@ -412,18 +531,32 @@ export const fathersDayTheme: ThemeDraft = {
     enabled: true,
     blobs: [
       { anchor: "center", sizePx: 780, color: "secondary", opacity: 0.28, durationSec: 20 },
+      { anchor: "top-left", sizePx: 620, color: "glow", opacity: 0.18, durationSec: 16, delaySec: 4 },
+      { anchor: "bottom-right", sizePx: 560, color: "primary", opacity: 0.12, durationSec: 24, delaySec: 9 },
     ],
   },
+  // Denser, but the restraint holds: still no florals, still slow, still dim.
+  // "More" here means more of the same quiet, not a change of register.
   decor: [
     {
       kind: "float",
       phase: "always",
-      count: 5,
-      glyphs: ["⌚", "🛵", "☕"],
+      count: 13,
+      glyphs: ["⌚", "🛵", "☕", "📻", "🔧"],
       direction: "up",
       speedSec: [28, 44],
-      sizeRem: 1.1,
-      opacity: 0.28,
+      sizeRem: 1.45,
+      opacity: 0.3,
+    },
+    {
+      kind: "float",
+      phase: "always",
+      count: 11,
+      glyphs: ["✨", "🤍"],
+      direction: "up",
+      speedSec: [40, 58],
+      sizeRem: 0.9,
+      opacity: 0.18,
     },
   ],
   motion: {
@@ -478,25 +611,43 @@ export const congratulationsTheme: ThemeDraft = {
   surface: { kind: "glass", tint: "secondary", shine: true },
   frame: { kind: "rounded", radiusPx: 26, shadow: "2xl" },
   layout: "centered-card",
+  ambient: {
+    enabled: true,
+    blobs: [
+      { anchor: "top-left", sizePx: 640, color: "secondary", opacity: 0.44, durationSec: 10 },
+      { anchor: "bottom-right", sizePx: 580, color: "glow", opacity: 0.28, durationSec: 13, delaySec: 2 },
+      { anchor: "center", sizePx: 820, color: "secondary", opacity: 0.16, durationSec: 18, delaySec: 5 },
+    ],
+  },
   decor: [
     {
       kind: "burst",
       phase: "always",
-      count: 20,
+      count: 22,
       colors: ["#16a34a", "#facc15", "#38bdf8", "#ffffff"],
       shape: "square",
-      spreadPx: 580,
+      spreadPx: 620,
       repeatDelaySec: 4,
     },
     {
       kind: "float",
       phase: "always",
-      count: 9,
-      glyphs: ["🎊", "🎉", "🥂"],
+      count: 15,
+      glyphs: ["🎊", "🎉", "🥂", "🏆", "🎈"],
       direction: "up",
       speedSec: [14, 24],
-      sizeRem: 1.4,
+      sizeRem: 1.85,
       opacity: 0.6,
+    },
+    {
+      kind: "float",
+      phase: "always",
+      count: 12,
+      glyphs: ["✨", "⭐", "💚"],
+      direction: "up",
+      speedSec: [24, 38],
+      sizeRem: 1.05,
+      opacity: 0.32,
     },
   ],
   motion: {
