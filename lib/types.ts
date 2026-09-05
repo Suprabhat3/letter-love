@@ -4,9 +4,18 @@ import type { ResolvedCardStyle } from "./cardStyle";
 import type { ReactionCounts } from "./reactions";
 
 // Feeling-based categories (extensible)
-export type TemplateCategory = 
+//
+// The first four were the whole product, and three of the original six
+// templates were romance-only — which quietly capped who LetterLove is *for*.
+// The last three widen it: festivals are the highest-volume moments for an
+// India-first audience and recur every year, and friendship/gratitude cover
+// the people someone writes to who they are not in love with.
+export type TemplateCategory =
   | "love"        // 💕 Romantic feelings
+  | "festival"    // 🪔 Diwali, Rakhi, Holi, Eid…
   | "celebration" // 🎉 Joyful moments
+  | "friendship"  // 🫂 The people who chose you
+  | "gratitude"   // 🙏 Thank you, properly
   | "apology"     // 😢 Remorseful
   | "longing";    // 💭 Missing someone
 
@@ -100,7 +109,10 @@ export interface CategoryInfo {
 
 export const CATEGORIES: CategoryInfo[] = [
   { id: "love", name: "Love", emoji: "💕", description: "Express your romantic feelings" },
+  { id: "festival", name: "Festivals", emoji: "🪔", description: "Wish them for the season" },
   { id: "celebration", name: "Celebration", emoji: "🎉", description: "Celebrate joyful moments" },
+  { id: "friendship", name: "Friendship", emoji: "🫂", description: "For the people who chose you" },
+  { id: "gratitude", name: "Gratitude", emoji: "🙏", description: "Say thank you properly" },
   { id: "apology", name: "Apology", emoji: "😢", description: "Say sorry with heart" },
   { id: "longing", name: "Longing", emoji: "💭", description: "Tell them you miss them" },
 ];

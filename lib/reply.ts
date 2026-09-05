@@ -11,9 +11,38 @@ const REPLY_TEMPLATE: Record<string, string> = {
   anniversary: "anniversary",
   "sorry-card": "love-letter",
   "miss-you": "miss-you",
-  // Phase 6 adds a "thank you" template, which is the right target for this
-  // one and for `sorry-card`. Until then a love letter is the closest fit.
-  "birthday-wish": "love-letter",
+  // "Thank you" arrived in Phase 6 and is the honest reply to a birthday wish
+  // — a love letter back to whoever wished you happy birthday was never right.
+  "birthday-wish": "thank-you",
+
+  // Festivals: wish them back with the same festival. This is the one place
+  // where echoing the template is correct — that is literally the custom.
+  diwali: "diwali",
+  rakhi: "rakhi",
+  holi: "holi",
+  eid: "eid",
+  "karwa-chauth": "karwa-chauth",
+  "new-year": "new-year",
+  "friendship-day": "friendship-day",
+
+  // Gratitude and praise are answered, not returned in kind: replying to
+  // "I'm proud of you" with "I'm proud of you" is a bounce, not a reply.
+  "thank-you": "best-friend",
+  "proud-of-you": "thank-you",
+  "teachers-day": "thank-you",
+  "mothers-day": "thank-you",
+  "fathers-day": "thank-you",
+  congratulations: "thank-you",
+  "best-friend": "best-friend",
+
+  // The specials. A proposal and a confession both want a letter back, not
+  // another question — the recipient has already answered on the card itself.
+  "reasons-i-love-you": "reasons-i-love-you",
+  "open-when": "open-when",
+  proposal: "love-letter",
+  "crush-confession": "love-letter",
+  "just-because": "just-because",
+  "long-distance": "long-distance",
 };
 
 const FALLBACK = "love-letter";

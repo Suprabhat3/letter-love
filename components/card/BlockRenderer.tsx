@@ -61,12 +61,14 @@ function PacedText({
   stepMs,
   active,
   className,
+  color,
 }: {
   text: string;
   mode: Theme["motion"]["reveal"];
   stepMs: number;
   active: boolean;
   className?: string;
+  color?: string;
 }) {
   const lines = text.split("\n");
   const total = mode === "typewriter" ? text.length : lines.length;
@@ -105,11 +107,15 @@ function PacedText({
   }, [running, total]);
 
   if (mode === "typewriter") {
-    return <p className={className}>{text.slice(0, shown)}</p>;
+    return (
+      <p className={className} style={{ color }}>
+        {text.slice(0, shown)}
+      </p>
+    );
   }
 
   return (
-    <div className={className}>
+    <div className={className} style={{ color }}>
       {lines.map((line, i) => (
         <motion.p
           key={i}
@@ -120,6 +126,81 @@ function PacedText({
           {line || " "}
         </motion.p>
       ))}
+    </div>
+  );
+}
+
+/**
+ * "Open When…" — a pack of notes that are each still sealed.
+ *
+ * Its own component so it owns its hook unconditionally, the same reason
+ * `PacedText` is one. The open set is local and deliberately not persisted:
+ * this card is meant to be reopened on a different day, on whichever device
+ * the recipient has to hand, and a "you already read this" state would take
+ * that away.
+ */
+function LetterPack({
+  items,
+  content,
+  palette,
+  fonts,
+}: {
+  items: { label: string; field: string; emoji?: string }[];
+  content: CardContent;
+  palette: Theme["palette"];
+  fonts: { header: string; body: string };
+}) {
+  const [open, setOpen] = useState<string | null>(null);
+
+  const filled = items.filter((item) => content[item.field]?.trim());
+  if (filled.length === 0) return null;
+
+  return (
+    <div className="w-full flex flex-col gap-3">
+      {filled.map((item) => {
+        const isOpen = open === item.field;
+        return (
+          <div
+            key={item.field}
+            className="rounded-2xl overflow-hidden border transition-colors"
+            style={{
+              borderColor: alpha(palette.primary, 0.25),
+              backgroundColor: alpha(palette.primary, isOpen ? 0.06 : 0.1),
+            }}
+          >
+            <button
+              type="button"
+              // A real button, so the pack is operable by keyboard and
+              // announced as expandable rather than as decorative text.
+              aria-expanded={isOpen}
+              onClick={() => setOpen(isOpen ? null : item.field)}
+              className={`w-full flex items-center gap-3 px-5 py-4 text-left ${fonts.header}`}
+              style={{ color: palette.accent }}
+            >
+              <span className="text-2xl leading-none">
+                {item.emoji ?? (isOpen ? "📖" : "✉️")}
+              </span>
+              <span className="flex-1 text-base md:text-lg">{item.label}</span>
+              <span className="text-xs uppercase tracking-widest opacity-60">
+                {isOpen ? "Close" : "Open"}
+              </span>
+            </button>
+            <motion.div
+              initial={false}
+              animate={{ height: isOpen ? "auto" : 0, opacity: isOpen ? 1 : 0 }}
+              transition={{ duration: 0.35 }}
+              className="overflow-hidden"
+            >
+              <p
+                className={`px-5 pb-5 text-base md:text-lg leading-relaxed whitespace-pre-line ${fonts.body}`}
+                style={{ color: alpha(palette.ink, 0.85) }}
+              >
+                {content[item.field]}
+              </p>
+            </motion.div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -183,6 +264,13 @@ export default function BlockRenderer({
   const { palette } = theme;
   const align = layout === "letter-sheet" ? "text-left" : "text-center";
 
+  // Text colour comes from `palette.ink`, never from the global `--foreground`.
+  // Those were the same thing while every theme sat on a near-white surface,
+  // and stopped being the same thing the moment a theme wanted a dark one:
+  // a Tailwind `text-foreground` class beats the inherited colour CardRenderer
+  // sets on the article, so a dark card rendered dark text on a dark surface.
+  const ink = (opacity: number) => alpha(palette.ink, opacity);
+
   switch (block.type) {
     case "spacer":
       return (
@@ -229,6 +317,58 @@ export default function BlockRenderer({
           {block.label ?? "Replay"}
         </button>
       );
+
+    case "pack":
+      return (
+        <LetterPack
+          items={block.items}
+          content={content}
+          palette={palette}
+          fonts={fonts}
+        />
+      );
+
+    case "list": {
+      const raw = content[block.field]?.trim();
+      if (!raw) return null;
+      // Split on newlines, drop blanks, and strip any numbering the sender
+      // typed themselves — otherwise "1. because" renders as "1. 1. because".
+      const items = raw
+        .split("\n")
+        .map((line) => line.replace(/^\s*(?:\d+[.)]|[-•*])\s*/, "").trim())
+        .filter(Boolean)
+        .slice(0, block.max ?? 30);
+      if (items.length === 0) return null;
+
+      return (
+        <ol className="w-full flex flex-col gap-3 text-left">
+          {items.map((item, i) => (
+            <motion.li
+              key={i}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: Math.min(i * 0.07, 1.2), duration: 0.35 }}
+              className="flex items-baseline gap-3"
+            >
+              <span
+                className="shrink-0 text-sm font-bold tabular-nums"
+                style={{ color: palette.primary }}
+              >
+                {block.numbered === false
+                  ? (block.bullet ?? "•")
+                  : `${String(i + 1).padStart(2, "0")}`}
+              </span>
+              <span
+                className={`text-base md:text-lg leading-relaxed ${fonts.body}`}
+                style={{ color: ink(0.85) }}
+              >
+                {item}
+              </span>
+            </motion.li>
+          ))}
+        </ol>
+      );
+    }
   }
 
   // Every non-text case above returns, so `block` is narrowed to the
@@ -257,8 +397,8 @@ export default function BlockRenderer({
     case "eyebrow":
       return (
         <p
-          className={`text-sm uppercase tracking-[0.2em] text-foreground/50 ${align} ${fonts.body}`}
-          style={{ color }}
+          className={`text-sm uppercase tracking-[0.2em] ${align} ${fonts.body}`}
+          style={{ color: color ?? ink(0.55) }}
         >
           {text}
         </p>
@@ -277,8 +417,8 @@ export default function BlockRenderer({
     case "subtitle":
       return (
         <h2
-          className={`text-xl md:text-2xl font-medium text-foreground/80 ${align} ${fonts.header}`}
-          style={{ color }}
+          className={`text-xl md:text-2xl font-medium ${align} ${fonts.header}`}
+          style={{ color: color ?? ink(0.85) }}
         >
           {text}
         </h2>
@@ -293,19 +433,20 @@ export default function BlockRenderer({
           mode={block.paced ? theme.motion.reveal : "none"}
           stepMs={theme.motion.revealStepMs}
           active={Boolean(block.paced) && paced && theme.motion.reveal !== "none"}
-          className={`text-lg md:text-xl text-foreground/80 leading-relaxed whitespace-pre-line max-w-md ${
+          className={`text-lg md:text-xl leading-relaxed whitespace-pre-line max-w-md ${
             layout === "letter-sheet" ? "" : "mx-auto"
           } ${align} ${fonts.body}`}
+          color={color ?? ink(0.85)}
         />
       );
 
     case "quote":
       return (
         <p
-          className={`text-foreground/60 italic border-t border-foreground/10 pt-5 max-w-md ${
+          className={`italic border-t pt-5 max-w-md ${
             layout === "letter-sheet" ? "" : "mx-auto"
           } ${align} ${fonts.body}`}
-          style={{ color }}
+          style={{ color: color ?? ink(0.62), borderColor: ink(0.12) }}
         >
           &ldquo;{text}&rdquo;
         </p>
@@ -320,15 +461,25 @@ export default function BlockRenderer({
           >
             {text}
           </span>
-          <span className="text-foreground/60 ml-2">{block.label}</span>
+          <span className="ml-2" style={{ color: ink(0.62) }}>
+            {block.label}
+          </span>
         </div>
       );
 
     case "highlight":
       return (
-        <div className="bg-white/40 p-4 rounded-xl w-full max-w-xs mx-auto text-center">
+        <div
+          className="p-4 rounded-xl w-full max-w-xs mx-auto text-center"
+          // An ink wash rather than `bg-white/40`: ink is light on a dark theme
+          // and dark on a light one, so the same value reads correctly on both.
+          style={{ backgroundColor: ink(0.07) }}
+        >
           {block.label && (
-            <p className="text-foreground/60 uppercase tracking-widest text-[10px] mb-1">
+            <p
+              className="uppercase tracking-widest text-[10px] mb-1"
+              style={{ color: ink(0.62) }}
+            >
               {block.label}
             </p>
           )}
@@ -344,8 +495,8 @@ export default function BlockRenderer({
     case "signature":
       return (
         <p
-          className={`text-foreground/60 ${align} ${fonts.header}`}
-          style={{ color }}
+          className={`${align} ${fonts.header}`}
+          style={{ color: color ?? ink(0.62) }}
         >
           {text}
         </p>

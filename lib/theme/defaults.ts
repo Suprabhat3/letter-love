@@ -250,6 +250,37 @@ export function makeDefaultOg(template: Template): OgSpec {
       title: "Thinking of You",
     };
   }
+  // Phase 6 categories. Appending rather than reordering: none of these can
+  // shift an existing preview, because no card in the table has one of these
+  // categories. Every Phase 6 template also sets `og` in its own theme, so
+  // these only ever apply to a future template that has no theme yet.
+  if (category === "festival") {
+    return {
+      ...base,
+      bgGradient:
+        "linear-gradient(135deg, #fef3c7 0%, white 50%, #f59e0b20 100%)",
+      decorations: "✨",
+      title: "Wishes For",
+    };
+  }
+  if (category === "friendship") {
+    return {
+      ...base,
+      bgGradient:
+        "linear-gradient(135deg, #ffedd5 0%, white 50%, #f9731620 100%)",
+      decorations: "🧡",
+      title: "A Letter For",
+    };
+  }
+  if (category === "gratitude") {
+    return {
+      ...base,
+      bgGradient:
+        "linear-gradient(135deg, #ccfbf1 0%, white 50%, #0d948820 100%)",
+      decorations: "🌿",
+      title: "Thank You",
+    };
+  }
   if (id === "love-letter" || category === "love") {
     return {
       ...base,

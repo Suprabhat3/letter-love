@@ -20,6 +20,32 @@ import {
   sorryTheme,
   valentineTheme,
 } from "./themes/interactive";
+import {
+  diwaliTheme,
+  eidTheme,
+  holiTheme,
+  karwaChauthTheme,
+  newYearTheme,
+  rakhiTheme,
+} from "./themes/festival";
+import {
+  bestFriendTheme,
+  congratulationsTheme,
+  fathersDayTheme,
+  friendshipDayTheme,
+  mothersDayTheme,
+  proudOfYouTheme,
+  teachersDayTheme,
+  thankYouTheme,
+} from "./themes/gratitude";
+import {
+  crushTheme,
+  justBecauseTheme,
+  longDistanceTheme,
+  openWhenTheme,
+  proposalTheme,
+  reasonsTheme,
+} from "./themes/specials";
 import type { Theme, ThemeDraft } from "./types";
 
 export * from "./types";
@@ -37,6 +63,31 @@ const DRAFTS: Record<string, ThemeDraft> = {
   "sorry-card": sorryTheme,
   "valentine-ask": valentineTheme,
   "birthday-wish": birthdayTheme,
+
+  // Phase 6. Every one of these is config — no component was written for any
+  // of them, which was the entire point of the theme engine.
+  diwali: diwaliTheme,
+  rakhi: rakhiTheme,
+  holi: holiTheme,
+  eid: eidTheme,
+  "karwa-chauth": karwaChauthTheme,
+  "new-year": newYearTheme,
+
+  "best-friend": bestFriendTheme,
+  "friendship-day": friendshipDayTheme,
+  "thank-you": thankYouTheme,
+  "proud-of-you": proudOfYouTheme,
+  "teachers-day": teachersDayTheme,
+  "mothers-day": mothersDayTheme,
+  "fathers-day": fathersDayTheme,
+  congratulations: congratulationsTheme,
+
+  "reasons-i-love-you": reasonsTheme,
+  "open-when": openWhenTheme,
+  proposal: proposalTheme,
+  "long-distance": longDistanceTheme,
+  "crush-confession": crushTheme,
+  "just-because": justBecauseTheme,
 };
 
 /** Every theme id a card may legitimately name in `_style.themeId`. */

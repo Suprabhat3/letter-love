@@ -1,6 +1,6 @@
 // The one place that talks to the model.
 //
-// Gemini 2.5 Flash through the OpenAI-compatible endpoint. Both AI routes go
+// Gemini 3.8 Flash through the OpenAI-compatible endpoint. Both AI routes go
 // through here so the timeout, the abort handling and the error mapping exist
 // once — previously the single route did all three inline and every future
 // route would have re-implemented them slightly differently.
@@ -12,7 +12,7 @@ import { ApiError } from "@/lib/api";
 import type { PromptPair } from "@/lib/prompts/enhance";
 import { cleanOutput } from "@/lib/prompts/sanitize";
 
-export const MODEL = "gemini-2.5-flash";
+export const MODEL = "gemini-3.8-flash";
 
 /** Comfortably inside the route's own maxDuration, so we abort before Vercel does. */
 const DEFAULT_TIMEOUT_MS = 25_000;

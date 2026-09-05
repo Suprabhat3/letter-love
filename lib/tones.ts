@@ -72,9 +72,19 @@ export function defaultToneForTemplate(category?: string): ToneId {
     case "apology":
       return "apologetic";
     case "celebration":
+    case "festival":
       return "festive";
     case "longing":
       return "poetic";
+    // Warm but not romantic. "Romantic" on a letter to a teacher or a father
+    // is the single worst default the chips could open on, and gratitude is
+    // the category most likely to be sent outside a relationship.
+    case "gratitude":
+      return "poetic";
+    // Best-friend letters are teasing before they are sincere, which is what
+    // people actually write — and the tone they would have picked anyway.
+    case "friendship":
+      return "funny";
     default:
       return DEFAULT_TONE;
   }

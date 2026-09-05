@@ -169,18 +169,110 @@ const LONGING: InterviewQuestion[] = [
   },
 ];
 
+const FESTIVAL: InterviewQuestion[] = [
+  WHO,
+  {
+    id: "howcelebrate",
+    prompt: "Yeh tyohaar tum dono kaise manate ho?",
+    hint: "Ghar pe, saath mein, ya ab phone pe",
+    placeholder: "Pehle saath, ab video call pe. Har saal.",
+    facet: "How the two of them mark this festival",
+  },
+  {
+    id: "bestyear",
+    prompt: "Sabse yaadgaar wala saal kaunsa tha?",
+    hint: "Ek saal, ek scene",
+    placeholder: "Woh saal jab bijli chali gayi aur sirf diye jal rahe the",
+    facet: "The most memorable year they shared",
+  },
+  {
+    id: "apart",
+    prompt: "Iss baar saath ho ya door?",
+    hint: "Agar door ho, toh yeh line letter mein aayegi",
+    placeholder: "Iss baar main Bangalore mein hoon, ghar nahi ja paunga",
+    facet: "Whether they are together or apart this year",
+  },
+  {
+    id: "wish",
+    prompt: "Iss saal inke liye kya dua hai?",
+    hint: "Ek chhoti si wish, dil se",
+    placeholder: "Bas sab theek rahe, aur tum thoda so bhi lo",
+    facet: "The wish for the year ahead",
+  },
+];
+
+const FRIENDSHIP: InterviewQuestion[] = [
+  WHO,
+  {
+    id: "howmet",
+    prompt: "Dosti shuru kaise hui thi?",
+    hint: "Pehli mulaqat, ya woh din jab dost ban gaye",
+    placeholder: "Hostel ki chhat pe, dono ko neend nahi aa rahi thi",
+    facet: "How the friendship started",
+  },
+  {
+    id: "story",
+    prompt: "Ek kissa jo aaj bhi hasa deta hai?",
+    hint: "Woh wala jo baar baar sunate ho",
+    placeholder: "Jab tumne meri jagah viva de diya tha",
+    facet: "A story they still laugh about",
+  },
+  {
+    id: "showedup",
+    prompt: "Kab yeh tumhare liye khade the?",
+    hint: "Woh din jab kisi aur ne poocha bhi nahi",
+    placeholder: "Papa ki tabiyat kharab hui thi, yeh raat bhar hospital mein baitha raha",
+    facet: "A time they showed up for the sender",
+  },
+  {
+    id: "neversaid",
+    prompt: "Kya cheez tumne kabhi bola nahi?",
+    hint: "Yehi poora letter hai",
+    placeholder: "Ki tere bina main yeh saal nikaal hi nahi paata",
+    facet: "What the sender has never said out loud",
+  },
+];
+
+const GRATITUDE: InterviewQuestion[] = [
+  WHO,
+  {
+    id: "what",
+    prompt: "Inhone aisa kya kiya?",
+    hint: "Chhoti cheez bhi chalegi — usse hi letter banta hai",
+    placeholder: "Bina poochhe mere liye ruk gaye the",
+    facet: "What they did",
+  },
+  {
+    id: "cost",
+    prompt: "Unhe iska kya mol chukana pada?",
+    hint: "Time, paisa, neend, ya bas himmat",
+    placeholder: "Apni chhutti cancel kar di thi",
+    facet: "What it cost them",
+  },
+  {
+    id: "changed",
+    prompt: "Isse tumhare liye kya badla?",
+    hint: "Yeh woh hissa hai jo unhe pata hi nahi",
+    placeholder: "Us din ke baad maine haar maanna chhod diya",
+    facet: "What it changed for the sender",
+  },
+  {
+    id: "neversaid",
+    prompt: "Ab tak thank you kyun nahi bola?",
+    hint: "Sach likho. Sudharenge hum",
+    placeholder: "Lagta tha awkward ho jaayega",
+    facet: "Why the sender never said thank you before",
+  },
+];
+
 /**
- * Keyed by template first, category second.
- *
- * Per-template beats per-category wherever the questions genuinely differ —
- * an anniversary wants "kitne saal" and a valentine wants "kab se pasand hai",
- * and asking the wrong one is exactly the kind of thing that makes an
- * interview feel like a form.
+ * Shared by "Be My Valentine?" and "Finally Saying It". Both are the same
+ * situation — you have not told them yet — and the question that makes either
+ * letter work is "why does asking scare you".
  */
-const BY_TEMPLATE: Record<string, InterviewQuestion[]> = {
-  "valentine-ask": [
-    WHO,
-    {
+const CONFESSION: InterviewQuestion[] = [
+  WHO,
+  {
       id: "since",
       prompt: "Kab se pasand hai?",
       hint: "Aur kya tumne kabhi bataya?",
@@ -207,6 +299,54 @@ const BY_TEMPLATE: Record<string, InterviewQuestion[]> = {
       hint: "Bas dil se",
       placeholder: "Tumhare saath sab kuch aasaan lagta hai",
       facet: "The one line the sender wants to say",
+    },
+];
+
+/**
+ * Keyed by template first, category second.
+ *
+ * Per-template beats per-category wherever the questions genuinely differ —
+ * an anniversary wants "kitne saal" and a valentine wants "kab se pasand hai",
+ * and asking the wrong one is exactly the kind of thing that makes an
+ * interview feel like a form.
+ */
+const BY_TEMPLATE: Record<string, InterviewQuestion[]> = {
+  "valentine-ask": CONFESSION,
+  "crush-confession": CONFESSION,
+
+  // The AI writes into this template's `reasons` field, which is a list, not
+  // a paragraph — so the questions have to collect list material. Asking "ek
+  // pal batao" here would produce one lovely paragraph in a box built for
+  // fifteen short lines.
+  "reasons-i-love-you": [
+    WHO,
+    {
+      id: "everyday",
+      prompt: "Roz ki kaunsi cheez hai jo tumhe achhi lagti hai?",
+      hint: "Chhoti, bekaar si aadat — wohi sabse acchi line banti hai",
+      placeholder: "Chai peene se pehle hamesha phoonk maarti hai",
+      facet: "Small everyday habits the sender loves",
+    },
+    {
+      id: "annoying",
+      prompt: "Kaunsi cheez irritating hai, par tum miss karoge?",
+      hint: "Yeh list ko sach banati hai",
+      placeholder: "Har movie ka ending pehle hi bata deti hai",
+      facet: "An annoying habit the sender secretly loves",
+    },
+    {
+      id: "proud",
+      prompt: "Inki kaunsi baat pe tumhe garv hota hai?",
+      hint: "Jo tum doosron ko batate ho",
+      placeholder: "Kisi ko bhi akela nahi chhodti, chahe kuch bhi ho",
+      facet: "What the sender is proud of about them",
+    },
+    {
+      id: "oneline",
+      prompt: "Aakhri line kya honi chahiye?",
+      hint: "Jo list ko band kare",
+      placeholder: "Aur sau aur, jo maine likhi hi nahi",
+      facet: "The line that should close the list",
     },
   ],
   anniversary: [
@@ -247,6 +387,9 @@ const BY_CATEGORY: Record<string, InterviewQuestion[]> = {
   celebration: CELEBRATION,
   apology: APOLOGY,
   longing: LONGING,
+  festival: FESTIVAL,
+  friendship: FRIENDSHIP,
+  gratitude: GRATITUDE,
 };
 
 export function interviewFor(

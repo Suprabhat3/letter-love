@@ -161,6 +161,8 @@ export type BlockType =
   | "signature"
   | "cta"
   | "replay"
+  | "list"
+  | "pack"
   | "spacer";
 
 interface BlockBase {
@@ -216,6 +218,29 @@ export type BlockSpec =
       variant?: "primary" | "ghost";
     })
   | (BlockBase & { type: "replay"; label?: string })
+  /**
+   * One content field split on newlines and rendered as items — the
+   * "Reasons I Love You" layout. A list is one field rather than N fields
+   * because the sender should be able to write four reasons or fourteen
+   * without the form deciding for them.
+   */
+  | (BlockBase & {
+      type: "list";
+      field: string;
+      numbered?: boolean;
+      bullet?: string;
+      /** Hard cap, so a pasted essay cannot become a 200-item card. */
+      max?: number;
+    })
+  /**
+   * A pack of separately sealed notes — "Open When…". Each item is its own
+   * content field and stays hidden until tapped, which is the entire point:
+   * the recipient is meant to come back to this card on a different day.
+   */
+  | (BlockBase & {
+      type: "pack";
+      items: { label: string; field: string; emoji?: string }[];
+    })
   | (BlockBase & { type: "spacer"; size?: "sm" | "md" | "lg" });
 
 // ---------------------------------------------------------------------------
