@@ -9,6 +9,9 @@ import BlockRenderer, { type CardContent } from "./BlockRenderer";
 import Interaction from "./interactions";
 import { surfaceStyles } from "./surface";
 
+/** The `--ease-out-strong` token, as the tuple Motion takes. */
+const EASE_OUT = [0.23, 1, 0.32, 1] as const;
+
 const INTRO = {
   none: { initial: false as const, animate: {} },
   fade: { initial: { opacity: 0 }, animate: { opacity: 1 } },
@@ -120,6 +123,10 @@ export default function CardRenderer({
         damping: 20,
         stiffness: 100,
         duration: 0.5,
+        // The card is entering, so ease-out — and the strong curve, because
+        // Motion's default tween is the same weak built-in the rest of the
+        // engine has moved off.
+        ease: EASE_OUT,
         delay: theme.motion.introDelayMs / 1000,
       }}
       className={`relative w-full mx-auto overflow-hidden p-8 md:p-12 ${layout.width} ${surface.className}`}

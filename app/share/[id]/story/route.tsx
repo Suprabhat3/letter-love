@@ -195,8 +195,11 @@ export async function GET(
           <div style={{ fontSize: 44, fontWeight: 700, color: "#374151" }}>
             Read the full letter →
           </div>
+          {/* Satori treats every interpolation as its own child node, and a
+              non-flex div with more than one child is a hard error — so the URL
+              is joined into a single string rather than composed inline. */}
           <div style={{ fontSize: 36, color: primary, marginTop: 16, fontWeight: 600 }}>
-            {origin}/share/{card.id}
+            {`${origin}/share/${card.id}`}
           </div>
         </div>
       </div>

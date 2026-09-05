@@ -655,7 +655,7 @@ export default function TemplateEditorPage({ params }: PageProps) {
                 seed={template.id}
               />
 
-              <div className="text-center py-4 border-t border-foreground/10">
+              <div className="text-center py-4">
                 <p className="text-xs text-foreground/40 font-serif italic">
                   Made with LetterLove 💕
                 </p>

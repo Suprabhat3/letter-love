@@ -40,35 +40,54 @@ export default function YesNoGame({
   const nudge = jitter[noCount % jitter.length];
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-4 w-full min-h-[100px]">
-      <motion.button
+    <div className="flex flex-wrap items-center justify-center gap-4 w-full min-h-25">
+      {/* The growth is font-size and padding, not a transform, and that is
+          deliberate: the YES button getting physically bigger is what shoves
+          the NO button around, and a scale transform would leave the layout —
+          and the joke — exactly where it was. Both are named explicitly rather
+          than left to `transition-all`, which was also animating the box-shadow
+          and the background on every refusal.
+
+          Hover and press come from `.btn-primary`, which already gates hover
+          behind a fine pointer. The old `whileHover` did not, so on a phone the
+          YES button stayed stuck at 1.05 after the first tap. */}
+      <button
         type="button"
-        className="btn-primary rounded-xl font-bold shadow-xl transition-all"
+        className="btn-primary rounded-xl font-bold shadow-xl"
         style={{
           fontSize: yesSize,
           padding: `${Math.min(yesSize / 2, 30)}px ${Math.min(yesSize, 60)}px`,
           boxShadow: `0 10px 30px ${palette.primary}33`,
+          transition:
+            "font-size 220ms var(--ease-out-strong), padding 220ms var(--ease-out-strong), transform 160ms var(--ease-out-strong)",
         }}
         onClick={() => {
           track("reaction_added", { interaction: "yes-no-game", refusals: noCount });
           onComplete();
         }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
       >
         {spec.yesLabel}
-      </motion.button>
+      </button>
 
       <motion.button
         type="button"
         className="px-6 py-3 rounded-xl bg-gray-100 text-gray-500 font-medium hover:bg-gray-200 transition-colors text-sm whitespace-nowrap"
         onClick={() => setNoCount((n) => n + 1)}
+        // A dodge is a playful, interruptible gesture — the pointer can chase
+        // it and reverse mid-flight — so it is the one place here that earns a
+        // spring. Full transform strings, and a little bounce, because this is
+        // the interaction that is meant to feel alive.
         whileHover={
           spec.evadeNo
-            ? { x: (nudge[0] - 0.5) * 60, y: (nudge[1] - 0.5) * 30 }
-            : { scale: 0.95, rotate: -2 }
+            ? {
+                transform: `translate3d(${(nudge[0] - 0.5) * 60}px, ${
+                  (nudge[1] - 0.5) * 30
+                }px, 0)`,
+              }
+            : { transform: "scale(0.95) rotate(-2deg)" }
         }
-        whileTap={{ scale: 0.9 }}
+        whileTap={{ transform: "scale(0.92)" }}
+        transition={{ type: "spring", duration: 0.5, bounce: 0.25 }}
       >
         {noText}
       </motion.button>

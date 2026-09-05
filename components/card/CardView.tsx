@@ -1,7 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "motion/react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import type { Phase } from "@/lib/theme";
 import { resolveTheme } from "@/lib/theme";
 import type { PublicCard } from "@/lib/types";
@@ -13,6 +19,9 @@ import EnvelopeGate from "./EnvelopeGate";
 import ReactionBar from "./ReactionBar";
 import ReplyCta from "./ReplyCta";
 import StoryShareButton from "./StoryShareButton";
+
+/** Feeds `.ll-rise-in`'s per-node delay without a style object per call site. */
+const delay = (ms: number) => ({ "--ll-delay": `${ms}ms` }) as CSSProperties;
 
 /**
  * A whole shared card, from a stored row.
@@ -111,27 +120,46 @@ export default function CardView({ card }: { card: PublicCard }) {
       )}
 
       {/* Everything past this point is the loop, and none of it appears over a
-          sealed envelope — a reply button on an unopened letter is noise. */}
+          sealed envelope — a reply button on an unopened letter is noise.
+
+          These three used to arrive together in one 400ms fade, which read as a
+          single undifferentiated blob of controls. They are three different
+          asks — a gesture, an invitation, a utility — so they arrive in that
+          order, unhurriedly, and are spaced and weighted to match. The base
+          delay lets the letter land and be looked at first: nothing should be
+          asking the reader for anything while they are still taking it in.
+
+          A CSS stagger, not a motion chain: this mounts while the paced reveal
+          is still ticking through the body text on the main thread. */}
       {revealed && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.4 }}
-          className="flex w-full flex-col items-center gap-5"
-        >
-          <ReactionBar
-            key={sync}
-            cardId={card.id}
-            initialCounts={counts}
-            mine={mine}
+        <div className="flex w-full max-w-md flex-col items-center gap-6">
+          <div className="ll-rise-in w-full" style={delay(600)}>
+            <ReactionBar
+              key={sync}
+              cardId={card.id}
+              initialCounts={counts}
+              mine={mine}
+            />
+          </div>
+
+          <div
+            aria-hidden
+            className="ll-rise-in h-px w-24 bg-foreground/10"
+            style={delay(760)}
           />
-          <ReplyCta
-            cardId={card.id}
-            templateId={card.templateId}
-            senderName={content.senderName}
-          />
-          <StoryShareButton cardId={card.id} />
-        </motion.div>
+
+          <div className="ll-rise-in" style={delay(900)}>
+            <ReplyCta
+              cardId={card.id}
+              templateId={card.templateId}
+              senderName={content.senderName}
+            />
+          </div>
+
+          <div className="ll-rise-in" style={delay(1060)}>
+            <StoryShareButton cardId={card.id} />
+          </div>
+        </div>
       )}
 
       <p className="text-center text-muted-foreground/50 text-xs italic font-serif">

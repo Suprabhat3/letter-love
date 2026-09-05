@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import type { InteractionSpec } from "@/lib/theme";
 import { track } from "@/lib/analytics";
@@ -32,31 +32,36 @@ export default function BlowCandles({
   };
 
   return (
-    <motion.button
+    <button
       type="button"
       aria-label="Blow out the candles"
-      className="relative cursor-pointer group"
+      // Hover and press are CSS now, gated for touch. `whileHover` fires on tap
+      // in several mobile browsers, which left the cake stuck at 1.05 after
+      // someone had already blown the candles out.
+      className="group relative cursor-pointer transition-transform duration-200 ease-out-strong active:scale-95 active:duration-100 pointer-fine:hover:scale-105"
       onClick={handleBlow}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
     >
-      <div className="text-[100px] md:text-[150px] leading-none select-none relative z-10">
+      <div className="relative z-10 text-[100px] leading-none select-none md:text-[150px]">
         🎂
       </div>
 
       {!blown && (
-        <div className="absolute top-4.5 md:top-6.25 left-1/2 -translate-x-1/2 flex gap-2 md:gap-4 justify-center">
+        <div className="absolute top-4.5 left-1/2 flex -translate-x-1/2 justify-center gap-2 md:top-6.25 md:gap-4">
           {Array.from({ length: spec.candles }, (_, i) => (
-            <motion.span
+            <span
               key={i}
-              animate={
-                reduceMotion
-                  ? undefined
-                  : { scale: [1, 1.2, 1], rotate: [-5, 5, -5] }
+              // A CSS flicker rather than a motion loop per candle: this runs
+              // forever, alongside the card's decor layer, on the phone this
+              // card is most often opened on.
+              className={`h-5 w-3 rounded-full bg-orange-400 blur-[2px] md:h-6 md:w-4 ${
+                reduceMotion ? "" : "ll-candle"
+              }`}
+              style={
+                {
+                  boxShadow: "0 0 10px #f97316, 0 0 20px #fbbf24",
+                  "--ll-delay": `${i * 0.1}s`,
+                } as CSSProperties
               }
-              transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.1 }}
-              className="w-3 h-5 md:w-4 md:h-6 bg-orange-400 rounded-full blur-[2px]"
-              style={{ boxShadow: "0 0 10px #f97316, 0 0 20px #fbbf24" }}
             />
           ))}
         </div>
@@ -64,16 +69,30 @@ export default function BlowCandles({
 
       {blown && !reduceMotion && (
         <motion.div
-          initial={{ opacity: 0, y: 0 }}
-          animate={{ opacity: [0, 1, 0], y: -50, x: [0, 10, -10, 0] }}
-          transition={{ duration: spec.smokeMs / 1000 }}
-          className="absolute top-0 left-1/2 -translate-x-1/2 text-4xl"
+          // One-shot, so a keyframe list is right — and full transform strings,
+          // because the card is mid-phase-change while this plays.
+          initial={{ opacity: 0, transform: "translate3d(-50%, 0, 0)" }}
+          animate={{
+            opacity: [0, 1, 0],
+            transform: [
+              "translate3d(-50%, 0, 0)",
+              "translate3d(calc(-50% + 10px), -18px, 0)",
+              "translate3d(calc(-50% - 10px), -36px, 0)",
+              "translate3d(-50%, -50px, 0)",
+            ],
+          }}
+          transition={{ duration: spec.smokeMs / 1000, ease: "easeOut" }}
+          className="absolute top-0 left-1/2 text-4xl"
         >
           💨
         </motion.div>
       )}
 
-      <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-28 md:w-40 h-6 md:h-8 bg-black/10 rounded-[100%] blur-md z-0 group-hover:w-36 md:group-hover:w-48 transition-all duration-300" />
-    </motion.button>
+      <div
+        aria-hidden
+        className="ll-cake-shadow absolute -bottom-4 left-1/2 z-0 h-6 w-28 rounded-[100%] bg-black/10 blur-md md:h-8 md:w-40"
+        style={{ transform: "translateX(-50%)" }}
+      />
+    </button>
   );
 }

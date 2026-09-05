@@ -55,7 +55,11 @@ export default function StoryShareButton({ cardId }: { cardId: string }) {
       type="button"
       onClick={share}
       disabled={busy}
-      className="rounded-full border border-foreground/10 bg-white/60 px-5 py-2 text-xs font-medium text-foreground/60 shadow-sm transition-colors hover:bg-white/90 disabled:opacity-60"
+      // The quietest of the three actions under a letter, and styled to say so.
+      // `transform` is named alongside the colours rather than relying on
+      // `transition-all`, which would also animate the disabled opacity swap
+      // and make "Preparing…" fade in late.
+      className="rounded-full border border-foreground/10 bg-white/60 px-5 py-2 text-xs font-medium text-foreground/60 shadow-sm transition-[background-color,color,transform] duration-200 ease-out-strong hover:bg-white/90 hover:text-foreground/80 active:scale-[0.97] active:duration-100 disabled:opacity-60"
     >
       {busy ? "Preparing…" : "Share as a story 📱"}
     </button>

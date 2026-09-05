@@ -3,6 +3,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Hover motion must never be reachable by touch — a tap fires `:hover` and the
+   state sticks afterwards. Having it as a variant is what makes the rule cheap
+   enough to actually follow: `pointer-fine:hover:-translate-y-1.5`. */
+@custom-variant pointer-fine (@media (hover: hover) and (pointer: fine));
+
 :root {
   /* Lavender Blush / Very light pink */
   /* Dark Burgundy */
@@ -31,6 +36,21 @@
   --font-serif: var(--font-playfair), serif;
   --font-handwriting: var(--font-dancing), cursive;
   --radius: 0.625rem;
+
+  /* Motion curves.
+     The built-in CSS easings are too weak to read as intentional, so these are
+     the three sanctioned curves everything in the card engine and the gallery
+     animates on. Named `-strong` rather than shadowing Tailwind's own
+     `ease-out`/`ease-in-out`, so adopting them stays a per-call decision
+     instead of silently re-curving every transition in the app. */
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  /* easeOutExpo (easings.net). The gallery is a browsing surface for love
+     letters, not a control panel — it wants motion that arrives quickly and
+     then settles for a long, quiet while, rather than the snap of
+     `--ease-out-strong`. Match the motion to the mood. */
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -143,14 +163,27 @@ h6 {
 .btn-primary {
   background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
   color: white;
-  transition: all 0.3s ease;
   box-shadow: 0 4px 14px 0 rgba(236, 72, 153, 0.39);
+  /* Named properties, not `all`: `all` also transitions background and colour
+     on every state change, which is what made the press feel mushy. */
+  transition:
+    transform 160ms var(--ease-out-strong),
+    box-shadow 200ms ease,
+    filter 200ms ease;
 }
 
-.btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(236, 72, 153, 0.23);
-  filter: brightness(110%);
+/* Touch fires a hover on tap, so the lift would stick after a press. */
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(236, 72, 153, 0.23);
+    filter: brightness(110%);
+  }
+}
+
+.btn-primary:active {
+  transform: scale(0.97);
+  transition-duration: 100ms;
 }
 
 .blob-bg {
@@ -164,6 +197,18 @@ h6 {
 }
 
 @theme inline {
+
+  /* Literals rather than `var(--ease-out-strong)`: `@theme inline` inlines the
+     value into the generated utility, so a var reference here would emit a
+     `var()` that resolves to itself. The `:root` copies above are for
+     hand-written CSS; these are for `ease-out-strong` in markup. */
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+
+  --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
 
   --radius-sm: calc(var(--radius) - 4px);
 
@@ -574,18 +619,268 @@ h6 {
   border-width: 2px;
 }
 
+/* ---------------------------------------------------------------------------
+   Envelope (components/card/EnvelopeGate + Envelope)
+
+   The sealed envelope is the one thing on the page, and it has to read as
+   tappable without a "TAP HERE" label. The idle is a CSS keyframe rather than a
+   motion loop for the same reason the decor is: it runs off the main thread
+   while the letter, the fonts and the decor are all still loading, which is
+   exactly when the envelope is on screen.
+--------------------------------------------------------------------------- */
+
+@keyframes ll-envelope-idle {
+
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-0.4deg);
+  }
+
+  50% {
+    transform: translate3d(0, -8px, 0) rotate(0.4deg);
+  }
+}
+
+.ll-envelope-idle {
+  animation: ll-envelope-idle 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* The trigger, not the envelope art: separating them means the press scale and
+   the idle float compose instead of overwriting each other's transform. */
+.ll-envelope-trigger {
+  transition:
+    transform 220ms var(--ease-out-strong),
+    filter 220ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ll-envelope-trigger:hover {
+    transform: translate3d(0, -6px, 0) scale(1.015);
+    filter: brightness(1.03);
+  }
+}
+
+.ll-envelope-trigger:active {
+  transform: scale(0.975);
+  transition-duration: 120ms;
+}
+
+/* Halo under the sealed envelope. Pure decoration, and the only thing telling
+   the eye where the letter is about to come from. */
+@keyframes ll-seal-halo {
+
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: translate3d(0, 0, 0) scale(1.08);
+  }
+}
+
+.ll-seal-halo {
+  animation: ll-seal-halo 5s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+/* ---------------------------------------------------------------------------
+   Candles (components/card/interactions/BlowCandles)
+
+   One infinite flicker per candle. These were motion components animating
+   `scale`/`rotate` shorthands on the main thread, forever, on a card that is
+   simultaneously running the decor layer — the same trade the decor system was
+   moved off of. Per-candle offset comes in through `--ll-delay`, so all of them
+   share a single animation rule.
+--------------------------------------------------------------------------- */
+
+@keyframes ll-candle-flicker {
+
+  0%,
+  100% {
+    transform: scale(1) rotate(-5deg);
+  }
+
+  50% {
+    transform: scale(1.2) rotate(5deg);
+  }
+}
+
+.ll-candle {
+  animation: ll-candle-flicker 500ms ease-in-out var(--ll-delay, 0s) infinite;
+  will-change: transform;
+}
+
+/* The cake's ground shadow. `scaleX`, not `width` — width costs layout on
+   every frame of a hover. */
+.ll-cake-shadow {
+  transition: transform 300ms var(--ease-out-strong);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .group:hover .ll-cake-shadow {
+    transform: translateX(-50%) scaleX(1.28);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Reaction feedback (components/card/ReactionBar)
+
+   One emoji floats off the button that was tapped. A keyframe is right here
+   despite the "transitions for rapidly-triggered elements" rule, because each
+   burst is a throwaway node keyed on its own tap — there is nothing to
+   retarget, and it removes itself when it ends.
+--------------------------------------------------------------------------- */
+
+@keyframes ll-react-fly {
+  0% {
+    transform: translate3d(-50%, 0, 0) scale(0.6);
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate3d(calc(-50% + var(--ll-dx, 0px)), -52px, 0) scale(1.15);
+    opacity: 0;
+  }
+}
+
+.ll-react-fly {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: ll-react-fly 900ms var(--ease-out-strong) forwards;
+}
+
+/* The typewriter's caret (components/templates/Typewriter).
+   A soft fade rather than a hard `steps()` blink — this sits under a
+   handwriting face on a love-letter card, not in a terminal. */
+@keyframes ll-caret {
+
+  0%,
+  45% {
+    opacity: 1;
+  }
+
+  55%,
+  100% {
+    opacity: 0.15;
+  }
+}
+
+.ll-caret {
+  animation: ll-caret 1.1s ease-in-out infinite;
+}
+
+/* ---------------------------------------------------------------------------
+   Shared entrance (gallery grid, and the actions under an opened letter)
+
+   A staggered rise, delayed per node through `--ll-delay`. A CSS animation
+   rather than a motion variant chain: both callers stagger a group that is
+   mounting alongside real work (a grid of 20 cards, or a letter mid-reveal),
+   which is exactly when a main-thread animation drops frames.
+
+   Stagger is decorative, so nothing here may gate interaction — every node is
+   clickable from frame one; only its paint is delayed.
+--------------------------------------------------------------------------- */
+@keyframes ll-rise-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 22px, 0) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The colour glow behind a template card. Restored — losing it flattened the
+   gallery — but as a CSS keyframe rather than a `motion.div` per card, so
+   twenty of them cost nothing on the main thread. Colour and pace come in
+   per card through custom properties. */
+@keyframes ll-card-glow {
+
+  0%,
+  100% {
+    opacity: 0.22;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    opacity: 0.42;
+    transform: translate3d(0, 0, 0) scale(1.18);
+  }
+}
+
+.ll-card-glow {
+  animation: ll-card-glow var(--ll-duration, 9s) ease-in-out var(--ll-delay, 0s) infinite;
+  will-change: transform, opacity;
+}
+
+/* `backwards`, not `forwards`. `forwards` pins the animation's end state above
+   inline styles for the life of the element, which would freeze out the layout
+   transforms the gallery grid writes when a filter changes. `backwards` holds
+   the *start* state through the delay and then hands the element back to its
+   own computed style, so the entrance plays once and gets out of the way. */
+.ll-rise-in {
+  animation: ll-rise-in 700ms var(--ease-out-soft) var(--ll-delay, 0ms) backwards;
+}
+
 /* Reduced motion: the whole decor system is optional by design. Every layer is
-   also skipped in JS via useReducedMotion(); this is the belt-and-braces. */
+   also skipped in JS via useReducedMotion(); this is the belt-and-braces.
+
+   "Fewer and gentler", not zero — the card entrance keeps its opacity fade and
+   drops only the movement, because that fade is what stops a filtered grid from
+   snapping between states. */
 @media (prefers-reduced-motion: reduce) {
 
   .ll-float,
   .ll-blob,
-  .ll-burst {
+  .ll-burst,
+  .ll-envelope-idle,
+  .ll-seal-halo,
+  .ll-react-fly,
+  .ll-candle,
+  .ll-caret,
+  .ll-card-glow {
     animation: none !important;
   }
 
+  .ll-cake-shadow {
+    transition-property: none;
+  }
+
   .ll-float,
-  .ll-burst {
+  .ll-burst,
+  .ll-react-fly {
     display: none;
+  }
+
+  .ll-envelope-trigger {
+    transition-property: filter;
+  }
+
+  @keyframes ll-rise-in {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  .ll-rise-in {
+    animation-duration: 200ms;
+    animation-delay: 0ms;
   }
 }

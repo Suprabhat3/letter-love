@@ -41,9 +41,17 @@ export default function CardStage({
     </>
   );
 
+  // The theme's own OG wash — a soft diagonal gradient tuned per palette — so
+  // the stage reads as "this card's colour" instead of the app's flat neutral
+  // `bg-background` peeking out from behind the ambient blobs.
+  const backdrop = { backgroundImage: theme.og.bgGradient };
+
   if (variant === "panel") {
     return (
-      <div className="relative flex min-h-105 items-center justify-center overflow-hidden rounded-3xl bg-background p-5">
+      <div
+        className="relative flex min-h-105 items-center justify-center overflow-hidden rounded-3xl bg-background p-5"
+        style={backdrop}
+      >
         {layers}
         <div className="relative z-10 flex w-full flex-col items-center gap-6">
           {children}
@@ -53,7 +61,10 @@ export default function CardStage({
   }
 
   return (
-    <main className="min-h-svh relative flex items-center justify-center overflow-hidden bg-background p-4 md:p-6">
+    <main
+      className="min-h-svh relative flex items-center justify-center overflow-hidden bg-background p-4 md:p-6"
+      style={backdrop}
+    >
       {layers}
       <div className="z-10 w-full relative flex flex-col items-center gap-8">
         {children}

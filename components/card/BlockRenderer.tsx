@@ -10,6 +10,9 @@ import { track } from "@/lib/analytics";
 
 export type CardContent = Record<string, string>;
 
+/** The `--ease-out-strong` token, as the tuple Motion takes. */
+const EASE_OUT = [0.23, 1, 0.32, 1] as const;
+
 interface Textish {
   text?: string;
   field?: string;
@@ -120,8 +123,16 @@ function PacedText({
         <motion.p
           key={i}
           initial={false}
-          animate={{ opacity: i < shown ? 1 : 0, y: i < shown ? 0 : 8 }}
-          transition={{ duration: 0.4 }}
+          animate={{
+            opacity: i < shown ? 1 : 0,
+            // The full transform string, not the `y` shorthand: this animates
+            // once per line while the fonts, the decor and the envelope's exit
+            // are all still resolving, and the shorthand runs on the main
+            // thread.
+            transform:
+              i < shown ? "translate3d(0,0,0)" : "translate3d(0,8px,0)",
+          }}
+          transition={{ duration: 0.4, ease: EASE_OUT }}
         >
           {line || " "}
         </motion.p>
@@ -188,7 +199,10 @@ function LetterPack({
             <motion.div
               initial={false}
               animate={{ height: isOpen ? "auto" : 0, opacity: isOpen ? 1 : 0 }}
-              transition={{ duration: 0.35 }}
+              // Height is the one property the perf rule tolerates, because an
+              // accordion has no transform equivalent — so it stays short: this
+              // costs layout on every frame.
+              transition={{ duration: 0.24, ease: EASE_OUT }}
               className="overflow-hidden"
             >
               <p
@@ -296,8 +310,11 @@ export default function BlockRenderer({
           onClick={() => track("reply_click", { href: block.href })}
           className={
             block.variant === "ghost"
-              ? "bg-white/60 hover:bg-white/90 text-foreground px-8 py-3 rounded-full font-medium transition-all shadow-sm"
-              : "btn-primary px-8 py-3 rounded-full text-lg font-semibold shadow-lg hover:scale-105 transition-transform inline-block"
+              ? "bg-white/60 hover:bg-white/90 text-foreground px-8 py-3 rounded-full font-medium shadow-sm transition-[background-color,transform] duration-200 ease-out-strong active:scale-[0.97] active:duration-100"
+              : // `.btn-primary` already owns the hover lift and press scale,
+                // both gated for touch. The old `hover:scale-105` here was a
+                // second, ungated transform fighting it.
+                "btn-primary px-8 py-3 rounded-full text-lg font-semibold shadow-lg inline-block"
           }
         >
           {block.label}
@@ -312,7 +329,7 @@ export default function BlockRenderer({
         <button
           type="button"
           onClick={onReplay}
-          className="bg-white/50 hover:bg-white/80 text-foreground px-6 py-3 rounded-full font-medium transition-all shadow-sm hover:scale-105"
+          className="bg-white/50 hover:bg-white/80 text-foreground px-6 py-3 rounded-full font-medium shadow-sm transition-[background-color,transform] duration-200 ease-out-strong active:scale-[0.97] active:duration-100"
         >
           {block.label ?? "Replay"}
         </button>
@@ -345,9 +362,16 @@ export default function BlockRenderer({
           {items.map((item, i) => (
             <motion.li
               key={i}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: Math.min(i * 0.07, 1.2), duration: 0.35 }}
+              initial={{ opacity: 0, transform: "translate3d(-8px,0,0)" }}
+              animate={{ opacity: 1, transform: "translate3d(0,0,0)" }}
+              // 60ms apart, and the whole cascade is done inside half a second.
+              // The old cap let a fourteen-reason list keep introducing itself
+              // for 1.2s after the reader had already started reading it.
+              transition={{
+                delay: Math.min(i * 0.06, 0.48),
+                duration: 0.35,
+                ease: EASE_OUT,
+              }}
               className="flex items-baseline gap-3"
             >
               <span

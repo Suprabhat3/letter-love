@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "motion/react";
 import { markSignupSource, track } from "@/lib/analytics";
 import { suggestReplyTemplate } from "@/lib/reply";
 
@@ -33,12 +32,10 @@ export default function ReplyCta({
   const to = senderName?.trim();
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.4, duration: 0.4 }}
-      className="flex flex-col items-center gap-2"
-    >
+    // No entrance animation of its own: CardView staggers this in with its
+    // siblings, and a second delayed fade on top of that was making the button
+    // arrive a beat after the row it belongs to.
+    <div className="flex flex-col items-center gap-2">
       <Link
         href={`/templates/${target}?replyTo=${encodeURIComponent(cardId)}`}
         onClick={() => {
@@ -47,13 +44,15 @@ export default function ReplyCta({
           // If they end up with an account, this is why.
           markSignupSource("reply");
         }}
-        className="btn-primary rounded-full px-7 py-3.5 text-base font-semibold shadow-lg transition-transform hover:scale-[1.03]"
+        // `.btn-primary` already carries the hover lift, the press scale and
+        // the hover gating; adding `hover:scale-[1.03]` here fought it.
+        className="btn-primary inline-block rounded-full px-7 py-3.5 text-base font-semibold shadow-lg"
       >
         {to ? `Write back to ${to} 💌` : "Reply with a letter 💌"}
       </Link>
       <p className="text-xs text-foreground/45">
         Takes two minutes. No account needed.
       </p>
-    </motion.div>
+    </div>
   );
 }
