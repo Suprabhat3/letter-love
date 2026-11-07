@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Dancing_Script, Inter } from "next/font/google";
-// Next.js processes this stylesheet import, but the project's TypeScript setup
-// does not currently declare CSS modules as ambient side-effect imports.
-// @ts-expect-error CSS is handled by Next.js at build time.
 import "./globals.css";
 import Providers from "@/components/Providers";
 

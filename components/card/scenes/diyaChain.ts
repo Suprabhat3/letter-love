@@ -172,6 +172,10 @@ export const createDiyaChain: SceneFactory = (stage, io) => {
   let nameFontPx = 60;
   let nameCenterY = 0;
   let finaleSent = false;
+  // Hinting: when the reader last made progress, and whether the "stuck" tip
+  // has already been shown since then.
+  let lastProgress = 0;
+  let stuckTipped = false;
 
   // -------------------------------------------------------------------------
   // Layout
@@ -381,10 +385,15 @@ export const createDiyaChain: SceneFactory = (stage, io) => {
         streak: true,
       });
     }
-    if (diyas.every((dd) => dd.lit)) {
+    lastProgress = time;
+    stuckTipped = false;
+    const litNow = diyas.filter((dd) => dd.lit).length;
+    if (litNow === diyas.length) {
       phase = "city";
       cityT0 = time + 0.6;
-      io.hint("");
+      io.hint("The whole city is catching your light — watch the sky ✨");
+    } else if (litNow >= 2) {
+      io.hint(`${litNow} of ${diyas.length} diyas lit — keep passing the flame`);
     }
   }
 
@@ -538,6 +547,8 @@ export const createDiyaChain: SceneFactory = (stage, io) => {
       }
       for (let i = queue.length - 1; i >= 0; i--) {
         if (time >= queue[i].at) {
+          // The name is about to be written in the sky; let it have the stage.
+          if (queue[i].kind === "name") io.hint("");
           launch(queue[i].kind);
           queue.splice(i, 1);
         }
@@ -573,7 +584,11 @@ export const createDiyaChain: SceneFactory = (stage, io) => {
         phase = "free";
         nextAuto = time + 2.5;
         io.finale();
-        io.hint("Tap the sky for more");
+        io.hint("Tap anywhere in the sky to launch your own fireworks");
+      }
+      if (phase === "lighting" && interacted && !stuckTipped && time - lastProgress > 7) {
+        stuckTipped = true;
+        io.hint("Tip: tap any dark diya — the flame will jump to it");
       }
       if (phase === "free" && time >= nextAuto) {
         nextAuto = time + 2.4 + rand() * 1.6;

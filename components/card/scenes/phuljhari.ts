@@ -88,6 +88,9 @@ export const createPhuljhari: SceneFactory = (stage, io) => {
   let ignited = 0;
   let finaleSent = false;
   let hintStage = 0;
+  // When a letter last caught, and whether the "stuck" tip has been shown since.
+  let lastLit = 0;
+  let stuckTipped = false;
 
   const key = (cx: number, cy: number) => cx * 100003 + cy;
 
@@ -161,7 +164,7 @@ export const createPhuljhari: SceneFactory = (stage, io) => {
   }
 
   layout();
-  io.hint("Touch and move — write in the dark with the phuljhari");
+  io.hint("Move across the dark sky — a hidden message is waiting");
 
   function paintGlyph(g: Glyph) {
     const c = lit.ctx;
@@ -177,6 +180,8 @@ export const createPhuljhari: SceneFactory = (stage, io) => {
     if (g.lit) return;
     g.lit = true;
     litCount++;
+    lastLit = time;
+    stuckTipped = false;
     paintGlyph(g);
     if (burstSparks && rand() < 0.35) {
       const a = rand() * Math.PI * 2;
@@ -285,12 +290,27 @@ export const createPhuljhari: SceneFactory = (stage, io) => {
       if (doneT < Infinity && !finaleSent && time - doneT > 2.2) {
         finaleSent = true;
         io.finale();
+        io.hint("The sparkler is still yours — keep writing in the sky");
       }
 
       const progress = glyphs.length ? litCount / glyphs.length : 0;
-      if (hintStage === 0 && progress > 0.08) {
-        hintStage = 1;
-        io.hint("Keep going — something is written here");
+      // Progress hints, keyed to the fraction of the reveal that completes it.
+      const toDone = progress / DONE_AT;
+      if (doneT === Infinity) {
+        if (hintStage === 0 && toDone > 0.12) {
+          hintStage = 1;
+          io.hint("Keep going — follow the faint dotted letters");
+        } else if (hintStage === 1 && toDone > 0.45) {
+          hintStage = 2;
+          io.hint("Halfway there — sweep over every word");
+        } else if (hintStage === 2 && toDone > 0.8) {
+          hintStage = 3;
+          io.hint("Almost there…");
+        }
+        if (interacted && !stuckTipped && time - Math.max(lastLit, 1) > 6) {
+          stuckTipped = true;
+          io.hint("Tip: sweep the sparkler over the faint dots in the sky");
+        }
       }
 
       // --- sound ----------------------------------------------------------

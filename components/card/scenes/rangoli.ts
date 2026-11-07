@@ -179,6 +179,13 @@ export const createRangoli: SceneFactory = (stage, io) => {
   let doneT = Infinity;
   let finaleSent = false;
   let hinted = false;
+  // Hint script: which step the reader has been told about, and what they've
+  // already discovered on their own (no point teaching a swipe they've done).
+  let hintStep = 0;
+  let pourStart = 0;
+  let everHeld = false;
+  let everSwiped = false;
+  let idleTipped = false;
 
   interface Puff {
     x: number;
@@ -386,7 +393,7 @@ export const createRangoli: SceneFactory = (stage, io) => {
   }
 
   layout();
-  io.hint("Tap the diya to light it");
+  io.hint("Tap the clay diya in the centre to light it");
 
   function lightCentre() {
     if (litT < Infinity) return;
@@ -398,7 +405,7 @@ export const createRangoli: SceneFactory = (stage, io) => {
     doneT = time;
     io.sound.setHiss(0);
     outerDiyas.forEach((d, i) => (d.litAt = time + 0.35 + i * 0.2));
-    io.hint("");
+    io.hint("And now the diyas around it…");
   }
 
   const diyaScale = () => clamp(R / 260, 0.45, 1);
@@ -439,6 +446,7 @@ export const createRangoli: SceneFactory = (stage, io) => {
 
     down(x, y) {
       held = true;
+      if (litT < Infinity) everHeld = true;
       lastPuff = { x, y };
       if (litT === Infinity) {
         if (Math.hypot(x - cx, y - cy) < Math.max(56, R * 0.25)) lightCentre();
@@ -451,6 +459,7 @@ export const createRangoli: SceneFactory = (stage, io) => {
       const d = Math.hypot(x - lastPuff.x, y - lastPuff.y);
       if (d < 14) return;
       lastPuff = { x, y };
+      everSwiped = true;
       const colors = [P.a, P.b, P.c, P.d, P.f];
       for (let i = 0; i < 3; i++) {
         puffs.push({
@@ -482,7 +491,15 @@ export const createRangoli: SceneFactory = (stage, io) => {
       if (litT < Infinity && ready && doneT === Infinity && time - litT > 0.7) {
         if (!hinted) {
           hinted = true;
-          io.hint("Hold to pour faster · swipe to throw gulal");
+          pourStart = time;
+          io.hint("Your rangoli is drawing itself — press and hold to pour faster");
+        }
+        if (hintStep === 0 && (everHeld || time - pourStart > 5)) {
+          hintStep = 1;
+          io.hint(everSwiped ? "Keep holding to pour faster" : "Now swipe across the floor to throw gulal colours");
+        } else if (hintStep === 1 && rings[ring].text) {
+          hintStep = 2;
+          io.hint("Look closely — a name is being written into the rangoli ✨");
         }
         const rg = rings[ring];
         const g = grains[ring];
@@ -508,6 +525,12 @@ export const createRangoli: SceneFactory = (stage, io) => {
         finaleSent = true;
         io.sound.chime();
         io.finale();
+        io.hint("Swipe to throw more gulal — play as long as you like");
+      }
+
+      if (litT === Infinity && !idleTipped && time > 6) {
+        idleTipped = true;
+        io.hint("Tip: the little clay diya in the middle — give it a tap");
       }
 
       // --- draw -----------------------------------------------------------

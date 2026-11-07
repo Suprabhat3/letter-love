@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { useReducedMotion } from "motion/react";
 import dynamic from "next/dynamic";
@@ -143,7 +143,16 @@ export default function SceneGate({ scene, cardId, to, from, message, wish, body
       />
 
       {stage === "envelope" && box && (
-        <LetterCeremony width={box.w} height={box.h} to={to} onDone={ceremonyDone} />
+        <>
+          <LetterCeremony width={box.w} height={box.h} to={to} onDone={ceremonyDone} />
+          <p
+            aria-live="polite"
+            className="ll-rise-in pointer-events-none fixed bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-1/2 z-30 -translate-x-1/2 max-w-[92vw] truncate rounded-full bg-black/40 px-4 py-1.5 text-[13px] tracking-wide text-amber-50/85 backdrop-blur-sm"
+            style={{ "--ll-delay": "300ms" } as CSSProperties}
+          >
+            {from ? `Opening your letter from ${from}…` : "Opening your letter…"}
+          </p>
+        </>
       )}
 
       {stage === "read" && !reduceMotion && (

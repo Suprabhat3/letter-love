@@ -60,6 +60,11 @@ export default function ScenePlayer({ scene, to, from, wish, seed, onDone, readL
     }
   });
   const [hint, setHint] = useState("");
+  const [soundTip, setSoundTip] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setSoundTip(false), 6000);
+    return () => clearTimeout(t);
+  }, []);
   const [finale, setFinale] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const unlocked = useRef(false);
@@ -145,7 +150,14 @@ export default function ScenePlayer({ scene, to, from, wish, seed, onDone, readL
         <p className="ll-rise-in max-w-[60%] font-serif text-sm italic tracking-wide text-amber-100/60">
           {from ? `A Diwali letter from ${from}` : "A Diwali letter for you"}
         </p>
-        <div className="pointer-events-auto flex items-center gap-2">
+        <div className="pointer-events-auto relative flex items-center gap-2">
+          {/* Sound is opt-in and inaudible until the first touch, so say it
+              exists — briefly, under the button, then get out of the way. */}
+          {soundTip && (
+            <span className="ll-rise-in pointer-events-none absolute right-0 top-full mt-2 whitespace-nowrap rounded-full bg-black/40 px-3 py-1 text-[11px] tracking-wide text-amber-100/75 backdrop-blur-sm">
+              {muted ? "Sound is off · tap to turn on" : "Best with sound 🔊"}
+            </span>
+          )}
           <button
             type="button"
             onClick={toggleMute}
@@ -162,14 +174,18 @@ export default function ScenePlayer({ scene, to, from, wish, seed, onDone, readL
           playing to get to their letter, but quiet until the scene has had its
           finale, when it lights up and becomes the obvious next step. */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-center">
-        <p
-          aria-live="polite"
-          className={`min-h-5 max-w-sm text-sm tracking-wide text-amber-100/70 transition-opacity duration-500 ${
-            hint && !finale ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          {hint}
-        </p>
+        {/* Keyed on the text so each new step re-enters, which is what makes
+            a changed instruction noticeable rather than a silent swap. */}
+        <div aria-live="polite" className="flex min-h-8 items-end justify-center">
+          {hint && (
+            <p
+              key={hint}
+              className="ll-rise-in max-w-[min(92vw,26rem)] rounded-full bg-black/40 px-4 py-1.5 text-[13px] leading-snug tracking-wide text-amber-50/90 shadow-[0_4px_20px_rgba(0,0,0,0.35)] backdrop-blur-sm sm:text-sm"
+            >
+              {hint}
+            </p>
+          )}
+        </div>
         <button
           type="button"
           onClick={() => leave(finale ? "finished" : "skipped")}
