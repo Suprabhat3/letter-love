@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
+import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
 import Link from "next/link";
@@ -21,9 +22,27 @@ import { fetchReplyContext } from "@/lib/engagement-client";
 import { enhanceField } from "@/lib/ai/browser";
 import { TONES, ToneId, defaultToneForTemplate } from "@/lib/tones";
 import CardPreview, { demoContent } from "@/components/card/CardPreview";
-import MemoryInterview from "@/components/MemoryInterview";
+import MemoryInterview, { type InterviewResult } from "@/components/MemoryInterview";
 import ShareModal from "@/components/ShareModal";
-import { Sparkles, ArrowLeft, User, LayoutGrid, Type, Wand2 } from "lucide-react";
+import { interviewFor, letterFieldFor } from "@/lib/interview";
+import {
+  Sparkles,
+  ArrowLeft,
+  User,
+  LayoutGrid,
+  Type,
+  Wand2,
+  Play,
+  PenLine,
+  ChevronDown,
+  RefreshCw,
+} from "lucide-react";
+import { defaultSceneFor, isSceneId, scenesForTemplate, type SceneId } from "@/lib/scenes";
+
+const ScenePlayer = dynamic(() => import("@/components/card/scenes/ScenePlayer"), {
+  ssr: false,
+  loading: () => <div className="fixed inset-0 z-100 bg-black" />,
+});
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -36,6 +55,8 @@ const draftKey = (id: string) => `template-draft-v2-${id}`;
 interface Draft {
   content: Record<string, string>;
   font: FontId;
+  /** "" is the classic envelope. */
+  scene?: SceneId | "";
 }
 
 function readDraft(id: string): Draft | null {
@@ -47,6 +68,7 @@ function readDraft(id: string): Draft | null {
     return {
       content: parsed.content ?? {},
       font: parsed.font ?? "default",
+      scene: parsed.scene === "" || isSceneId(parsed.scene) ? parsed.scene : undefined,
     };
   } catch {
     return null;
@@ -72,6 +94,12 @@ export default function TemplateEditorPage({ params }: PageProps) {
   // stored with, so a link already sitting in someone's chat does not change
   // behaviour underneath them.
   const [envelope, setEnvelope] = useState(true);
+  // The full-screen opening, for templates that have them. New cards start on
+  // the template's first scene; "" means the classic envelope.
+  const [scene, setScene] = useState<SceneId | "">(
+    () => readDraft(id)?.scene ?? defaultSceneFor(id) ?? "",
+  );
+  const [previewingScene, setPreviewingScene] = useState(false);
 
   // The tone every AI call uses. It opens on something appropriate to the
   // template — an apology card defaulting to "Romantic" reads as the product
@@ -79,7 +107,24 @@ export default function TemplateEditorPage({ params }: PageProps) {
   const [tone, setTone] = useState<ToneId>(() =>
     defaultToneForTemplate(template?.category),
   );
-  const [interviewOpen, setInterviewOpen] = useState(false);
+  // Coming back from /auth mid-interview reopens it, with the answers that
+  // were saved before they left.
+  const [interviewOpen, setInterviewOpen] = useState(
+    () => searchParams.get("interview") === "1",
+  );
+
+  // Where a generated letter lands. Every template has one; if one ever
+  // doesn't, the AI path simply doesn't render rather than dropping the letter.
+  const letterField = template ? letterFieldFor(template) : undefined;
+
+  // AI-first. A new card opens on a choice ("write it for me" / "I'll write
+  // it"), not on a wall of empty fields. After the interview, the card is
+  // filled and the fields are tucked behind "Edit details"; the preview is
+  // what they review. Editing an existing card is always the full form.
+  const [modeState, setMode] = useState<"choose" | "ai" | "manual">(() =>
+    editId || !letterField ? "manual" : "choose",
+  );
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -115,6 +160,8 @@ export default function TemplateEditorPage({ params }: PageProps) {
           const stored = readCardStyle(card.data);
           setFont(stored.font);
           setEnvelope(stored.envelope.enabled);
+          // A card saved before scenes existed keeps its envelope.
+          setScene(stored.scene ?? "");
         }
       } catch (err) {
         console.error("Failed to load card for editing:", err);
@@ -152,8 +199,46 @@ export default function TemplateEditorPage({ params }: PageProps) {
     };
   }, [replyTo, editId]);
 
+  // A restored draft (or a loaded card) that already has a letter in it was
+  // mid-edit: show the form, not the chooser.
+  const hasLetter = Boolean(letterField && formData[letterField]?.trim());
+  const mode = modeState === "choose" && hasLetter ? "manual" : modeState;
+
   const handleInputChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  /**
+   * Everything the interview produced goes onto the card at once: the names
+   * from its first screen, the letter, and whichever other fields the AI could
+   * fill. In the full form, fields the user already typed are left alone; the
+   * letter itself is always replaced, because that is what they asked for.
+   */
+  const applyInterview = ({ letter, names, fields }: InterviewResult) => {
+    if (!letterField) return;
+    const keepTyped = mode === "manual";
+    setFormData((prev) => {
+      const next = { ...prev };
+      const put = (key: string, value: string) => {
+        if (!value) return;
+        if (keepTyped && prev[key]?.trim()) return;
+        next[key] = value;
+      };
+      for (const [key, value] of Object.entries(fields)) put(key, value);
+      put("recipientName", names.to);
+      put("senderName", names.from);
+      next[letterField] = letter;
+      return next;
+    });
+    if (mode === "choose") setMode("ai");
+    setDetailsOpen(false);
+  };
+
+  const openInterview = () => {
+    // Signed out, the modal's own sign-in link leads to /auth, so the form
+    // has to be parked before they can leave from it.
+    if (!user) saveDraft();
+    setInterviewOpen(true);
   };
 
   const handleAiEnhance = async (fieldName: string, currentValue: string) => {
@@ -198,13 +283,9 @@ export default function TemplateEditorPage({ params }: PageProps) {
   }
 
   const category = CATEGORIES.find((c) => c.id === template.category);
+  const sceneOptions = scenesForTemplate(template.id);
 
-  // Where a generated letter lands: the first required textarea, falling back
-  // to any textarea. Every template has one; if one ever doesn't, the
-  // interview button simply doesn't render rather than dropping the letter.
-  const letterField =
-    template.fields.find((f) => f.type === "textarea" && f.required)?.name ??
-    template.fields.find((f) => f.type === "textarea")?.name;
+  const questionCount = interviewFor(template.id, template.category).length;
 
   // Empty fields fall back to their placeholder, so the preview is a whole
   // card from the first paint rather than a scaffold that fills in as you type.
@@ -222,7 +303,7 @@ export default function TemplateEditorPage({ params }: PageProps) {
   const saveDraft = () => {
     sessionStorage.setItem(
       draftKey(id),
-      JSON.stringify({ content: formData, font } satisfies Draft),
+      JSON.stringify({ content: formData, font, scene } satisfies Draft),
     );
   };
 
@@ -236,13 +317,20 @@ export default function TemplateEditorPage({ params }: PageProps) {
     // reads as a benefit rather than a toll.
     const missing = validateForm();
     if (missing.length > 0) {
+      // In the AI view the fields are collapsed; open them so the missing
+      // one is actually visible.
+      if (mode === "ai") setDetailsOpen(true);
       setError(`Please fill in: ${missing.join(", ")}`);
       return;
     }
 
     setIsSubmitting(true);
 
-    const style: CardStyle = { font, envelope: { enabled: envelope } };
+    const style: CardStyle = {
+      font,
+      envelope: { enabled: envelope },
+      ...(scene ? { scene } : {}),
+    };
     const payload = writeCardData(formData, style);
 
     try {
@@ -277,6 +365,114 @@ export default function TemplateEditorPage({ params }: PageProps) {
     }
   };
 
+  // Tone (which also drives per-field enhance) and the template's fields.
+  // Shared by the full form and the AI view's "Edit details".
+  const fieldsBlock = (
+    <>
+    {/* Tone applies to both AI paths, so it lives out here rather
+        than inside the modal alone. The prompt has always taken a
+        tone; until now the UI never varied it. */}
+    <div className="mb-6">
+      <label className="mb-2 block text-sm font-medium text-foreground/80">
+        AI ka vibe
+      </label>
+      <div className="flex flex-wrap gap-2">
+        {TONES.map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            onClick={() => {
+              setTone(option.id);
+              track("ai_tone_select", { tone: option.id });
+            }}
+            title={option.hint}
+            aria-pressed={tone === option.id}
+            className={`rounded-full border px-3 py-1.5 text-sm transition-all ${
+              tone === option.id
+                ? "border-pink-500 bg-pink-50 font-medium text-pink-700 ring-1 ring-pink-500/20"
+                : "border-white/80 bg-white/60 text-foreground/70 hover:border-pink-300"
+            }`}
+          >
+            {option.emoji} {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <div className="space-y-5">
+      {template.fields.map((field) => (
+        <div key={field.name} className="relative group">
+          <label className="block text-sm font-medium text-foreground/80 mb-2">
+            {field.label}
+            {field.required && (
+              <span className="text-pink-500 ml-1">*</span>
+            )}
+          </label>
+
+          {field.type === "textarea" ? (
+            <div className="relative">
+              <textarea
+                placeholder={field.placeholder}
+                value={formData[field.name] || ""}
+                onChange={(e) =>
+                  handleInputChange(field.name, e.target.value)
+                }
+                className="w-full px-4 py-3 rounded-xl bg-white/60 border border-white/80 focus:outline-none focus:ring-2 focus:ring-pink-300 transition-all resize-none pr-12"
+                style={{ minHeight: "120px" }}
+              />
+              {/* AI Enhance Button */}
+              <motion.button
+                type="button"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{
+                  opacity: formData[field.name] ? 1 : 0,
+                  scale: formData[field.name] ? 1 : 0.8,
+                  pointerEvents: formData[field.name]
+                    ? "auto"
+                    : "none",
+                }}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() =>
+                  handleAiEnhance(field.name, formData[field.name])
+                }
+                disabled={isEnhancing !== null}
+                className="absolute bottom-3 right-3 p-2 rounded-full bg-white/90 shadow-sm text-pink-500 hover:text-pink-600 hover:shadow-md border border-pink-100 transition-colors z-10 disabled:opacity-60"
+                title="Enhance with AI ✨"
+              >
+                {isEnhancing === field.name ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  >
+                    ✨
+                  </motion.div>
+                ) : (
+                  <Sparkles size={16} />
+                )}
+              </motion.button>
+            </div>
+          ) : (
+            <input
+              type="text"
+              placeholder={field.placeholder}
+              value={formData[field.name] || ""}
+              onChange={(e) =>
+                handleInputChange(field.name, e.target.value)
+              }
+              className="w-full px-5 py-4 rounded-xl bg-white/50 border border-white/60 focus:outline-none focus:ring-4 focus:ring-pink-500/10 focus:border-pink-300 transition-all text-lg placeholder:text-muted-foreground/50 shadow-sm"
+            />
+          )}
+        </div>
+      ))}
+    </div>
+    </>
+  );
+
   return (
     <main className="min-h-svh relative overflow-hidden bg-background">
       <ShareModal
@@ -289,6 +485,19 @@ export default function TemplateEditorPage({ params }: PageProps) {
         shareUrl={createdCardLink}
       />
 
+      {previewingScene && scene && (
+        <ScenePlayer
+          key={scene}
+          scene={scene}
+          to={previewContent.recipientName ?? ""}
+          from={previewContent.senderName ?? ""}
+          wish={previewContent.wish}
+          seed={`preview-${template.id}`}
+          readLabel="Back to editing"
+          onDone={() => setPreviewingScene(false)}
+        />
+      )}
+
       {letterField && interviewOpen && (
         <MemoryInterview
           onClose={() => setInterviewOpen(false)}
@@ -299,8 +508,12 @@ export default function TemplateEditorPage({ params }: PageProps) {
           // The draft was parked when the modal opened, so the round trip
           // through /auth does not cost them what they had already typed. The
           // interview answers persist on their own.
-          authHref={`/auth?redirect=${encodeURIComponent(`/templates/${id}`)}`}
-          onApply={(letter) => handleInputChange(letterField, letter)}
+          authHref={`/auth?redirect=${encodeURIComponent(`/templates/${id}?interview=1`)}`}
+          initialNames={{
+            to: formData.recipientName ?? "",
+            from: formData.senderName ?? "",
+          }}
+          onApply={applyInterview}
         />
       )}
 
@@ -402,8 +615,8 @@ export default function TemplateEditorPage({ params }: PageProps) {
             </span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
-            {template.description}. Fill in the details below to generate a
-            beautiful, personalized card.
+            {template.description}. Answer a few small questions and the AI
+            fills the whole card, or write it yourself.
           </p>
         </motion.div>
 
@@ -424,136 +637,180 @@ export default function TemplateEditorPage({ params }: PageProps) {
                 Fill in the Details
               </h2>
 
-              {/* The interview, offered before the blank fields rather than
-                  after. Someone staring at an empty "Your Message" box is
-                  exactly who this is for, and once they have written it
-                  themselves the offer is worth much less. */}
-              {letterField && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    // Signed out, the modal's own wall leads to /auth, so the
-                    // form has to be parked before they can leave from it.
-                    if (!user) saveDraft();
-                    setInterviewOpen(true);
-                  }}
-                  className="mb-6 flex w-full items-center gap-3 rounded-2xl border border-pink-200 bg-linear-to-r from-pink-50 to-rose-50 p-4 text-left transition-all hover:border-pink-400 hover:shadow-md"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-pink-500 shadow-sm">
-                    <Wand2 size={18} />
-                  </span>
-                  <span>
-                    <span className="block font-semibold text-foreground">
-                      Likh do mere liye ✨
+              {/* Chooser: a new card opens on two doors, not a wall of empty
+                  fields. The AI door is first because that is what someone
+                  staring at a blank "Your Message" box actually wants. */}
+              {mode === "choose" && letterField && (
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={openInterview}
+                    className="flex w-full items-center gap-4 rounded-2xl border border-pink-200 bg-linear-to-r from-pink-50 to-rose-50 p-5 text-left transition-all hover:border-pink-400 hover:shadow-md"
+                  >
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-pink-500 shadow-sm">
+                      <Wand2 size={20} />
                     </span>
-                    <span className="block text-sm text-muted-foreground">
-                      Chaar chhote sawaal, aur poora letter ready
+                    <span>
+                      <span className="block text-lg font-semibold text-foreground">
+                        Likh do mere liye ✨
+                      </span>
+                      <span className="block text-sm text-muted-foreground">
+                        Naam + {questionCount} chhote sawaal, aur poora card ready
+                      </span>
+                      {!user && !authLoading && (
+                        <span className="mt-1 block text-xs font-medium text-amber-700">
+                          Sign in chahiye hoga
+                        </span>
+                      )}
                     </span>
-                  </span>
-                </button>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode("manual");
+                      track("editor_manual");
+                    }}
+                    className="flex w-full items-center gap-4 rounded-2xl border border-white/80 bg-white/60 p-5 text-left transition-all hover:border-pink-300 hover:bg-white"
+                  >
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-foreground/60 shadow-sm">
+                      <PenLine size={20} />
+                    </span>
+                    <span>
+                      <span className="block text-lg font-semibold text-foreground">
+                        Khud likhunga
+                      </span>
+                      <span className="block text-sm text-muted-foreground">
+                        Saare fields khud bharo
+                      </span>
+                    </span>
+                  </button>
+                </div>
               )}
 
-              {/* Tone applies to both AI paths, so it lives out here rather
-                  than inside the modal alone. The prompt has always taken a
-                  tone; until now the UI never varied it. */}
-              <div className="mb-6">
-                <label className="mb-2 block text-sm font-medium text-foreground/80">
-                  AI ka vibe
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {TONES.map((option) => (
+              {/* After the interview: the preview is what they review, so the
+                  fields stay folded away unless they want to tweak one. */}
+              {mode === "ai" && (
+                <div>
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                    <p className="font-semibold text-emerald-900">Card ready ✨</p>
+                    <p className="mt-1 text-sm text-emerald-800/80">
+                      Preview mein dekh lo. Kuch badalna ho toh details edit karo.
+                    </p>
                     <button
-                      key={option.id}
                       type="button"
-                      onClick={() => {
-                        setTone(option.id);
-                        track("ai_tone_select", { tone: option.id });
-                      }}
-                      title={option.hint}
-                      aria-pressed={tone === option.id}
-                      className={`rounded-full border px-3 py-1.5 text-sm transition-all ${
-                        tone === option.id
-                          ? "border-pink-500 bg-pink-50 font-medium text-pink-700 ring-1 ring-pink-500/20"
-                          : "border-white/80 bg-white/60 text-foreground/70 hover:border-pink-300"
+                      onClick={openInterview}
+                      className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-white px-3 py-1.5 text-sm font-medium text-emerald-800 hover:bg-emerald-100"
+                    >
+                      <RefreshCw size={14} /> Dobara likhwao
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setDetailsOpen((open) => !open)}
+                    aria-expanded={detailsOpen}
+                    className="mt-4 flex w-full items-center justify-between rounded-xl border border-white/80 bg-white/60 px-4 py-3 text-sm font-medium text-foreground/80 hover:border-pink-300"
+                  >
+                    Edit details
+                    <ChevronDown
+                      size={18}
+                      className={`transition-transform ${detailsOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                  {detailsOpen && <div className="mt-5">{fieldsBlock}</div>}
+                </div>
+              )}
+
+              {mode === "manual" && (
+                <>
+                  {letterField && (
+                    <button
+                      type="button"
+                      onClick={openInterview}
+                      className="mb-6 flex w-full items-center gap-3 rounded-2xl border border-pink-200 bg-linear-to-r from-pink-50 to-rose-50 p-4 text-left transition-all hover:border-pink-400 hover:shadow-md"
+                    >
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-pink-500 shadow-sm">
+                        <Wand2 size={18} />
+                      </span>
+                      <span>
+                        <span className="block font-semibold text-foreground">
+                          Likh do mere liye ✨
+                        </span>
+                        <span className="block text-sm text-muted-foreground">
+                          Naam + {questionCount} chhote sawaal. Jo tumne likha hai woh rahega.
+                        </span>
+                      </span>
+                    </button>
+                  )}
+                  {fieldsBlock}
+                </>
+              )}
+
+              {mode !== "choose" && (
+                <>
+              {/* Opening experience — only for templates that have scenes. */}
+              {sceneOptions.length > 0 && (
+                <div className="mt-8">
+                  <label className="mb-1 flex items-center gap-2 text-sm font-medium text-foreground/80">
+                    <Sparkles size={16} /> How should it open?
+                  </label>
+                  <p className="mb-3 text-xs text-muted-foreground">
+                    A full-screen moment they play through before reading your letter.
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {sceneOptions.map((option) => (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => {
+                          setScene(option.id);
+                          track("scene_select", { scene: option.id });
+                        }}
+                        aria-pressed={scene === option.id}
+                        className={`flex items-start gap-3 rounded-2xl border p-3.5 text-left transition-[background-color,border-color,box-shadow] duration-200 ${
+                          scene === option.id
+                            ? "border-amber-500 bg-linear-to-br from-amber-50 to-orange-50 ring-1 ring-amber-500/30 shadow-md"
+                            : "border-white/80 bg-white/60 hover:border-amber-300 hover:bg-white"
+                        }`}
+                      >
+                        <span className="text-2xl leading-none">{option.emoji}</span>
+                        <span>
+                          <span className="block text-sm font-semibold text-foreground">
+                            {option.name}
+                          </span>
+                          <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
+                            {option.blurb}
+                          </span>
+                        </span>
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setScene("")}
+                      aria-pressed={scene === ""}
+                      className={`flex items-center gap-3 rounded-2xl border p-3.5 text-left transition-[background-color,border-color] duration-200 sm:col-span-2 ${
+                        scene === ""
+                          ? "border-pink-500 bg-pink-50 ring-1 ring-pink-500/20"
+                          : "border-white/80 bg-white/60 hover:border-pink-300 hover:bg-white"
                       }`}
                     >
-                      {option.emoji} {option.label}
+                      <span className="text-2xl leading-none">💌</span>
+                      <span className="text-sm font-medium text-foreground/80">
+                        Classic envelope
+                      </span>
                     </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-5">
-                {template.fields.map((field) => (
-                  <div key={field.name} className="relative group">
-                    <label className="block text-sm font-medium text-foreground/80 mb-2">
-                      {field.label}
-                      {field.required && (
-                        <span className="text-pink-500 ml-1">*</span>
-                      )}
-                    </label>
-
-                    {field.type === "textarea" ? (
-                      <div className="relative">
-                        <textarea
-                          placeholder={field.placeholder}
-                          value={formData[field.name] || ""}
-                          onChange={(e) =>
-                            handleInputChange(field.name, e.target.value)
-                          }
-                          className="w-full px-4 py-3 rounded-xl bg-white/60 border border-white/80 focus:outline-none focus:ring-2 focus:ring-pink-300 transition-all resize-none pr-12"
-                          style={{ minHeight: "120px" }}
-                        />
-                        {/* AI Enhance Button */}
-                        <motion.button
-                          type="button"
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{
-                            opacity: formData[field.name] ? 1 : 0,
-                            scale: formData[field.name] ? 1 : 0.8,
-                            pointerEvents: formData[field.name]
-                              ? "auto"
-                              : "none",
-                          }}
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() =>
-                            handleAiEnhance(field.name, formData[field.name])
-                          }
-                          disabled={isEnhancing !== null}
-                          className="absolute bottom-3 right-3 p-2 rounded-full bg-white/90 shadow-sm text-pink-500 hover:text-pink-600 hover:shadow-md border border-pink-100 transition-colors z-10 disabled:opacity-60"
-                          title="Enhance with AI ✨"
-                        >
-                          {isEnhancing === field.name ? (
-                            <motion.div
-                              animate={{ rotate: 360 }}
-                              transition={{
-                                duration: 1,
-                                repeat: Infinity,
-                                ease: "linear",
-                              }}
-                            >
-                              ✨
-                            </motion.div>
-                          ) : (
-                            <Sparkles size={16} />
-                          )}
-                        </motion.button>
-                      </div>
-                    ) : (
-                      <input
-                        type="text"
-                        placeholder={field.placeholder}
-                        value={formData[field.name] || ""}
-                        onChange={(e) =>
-                          handleInputChange(field.name, e.target.value)
-                        }
-                        className="w-full px-5 py-4 rounded-xl bg-white/50 border border-white/60 focus:outline-none focus:ring-4 focus:ring-pink-500/10 focus:border-pink-300 transition-all text-lg placeholder:text-muted-foreground/50 shadow-sm"
-                      />
-                    )}
                   </div>
-                ))}
-              </div>
+                  {scene && (
+                    <button
+                      type="button"
+                      onClick={() => setPreviewingScene(true)}
+                      className="mt-3 inline-flex items-center gap-2 rounded-full bg-neutral-950 px-4 py-2 text-sm font-medium text-amber-100 shadow-md transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                      <Play size={14} /> Preview the opening
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Font Selector */}
               <div className="mt-8">
@@ -583,6 +840,9 @@ export default function TemplateEditorPage({ params }: PageProps) {
                 </div>
               </div>
 
+                </>
+              )}
+
               {error && (
                 <motion.p
                   initial={{ opacity: 0, y: -10 }}
@@ -595,6 +855,7 @@ export default function TemplateEditorPage({ params }: PageProps) {
               )}
 
               {/* Save button */}
+              {mode !== "choose" && (
               <div className="mt-6">
                 <motion.button
                   type="submit"
@@ -627,6 +888,7 @@ export default function TemplateEditorPage({ params }: PageProps) {
                   )}
                 </motion.button>
               </div>
+              )}
             </form>
           </motion.div>
 

@@ -22,12 +22,15 @@ export default function CardStage({
   seed,
   phase,
   variant = "page",
+  backdrop: backdropOverride,
   children,
 }: {
   theme: Theme;
   seed: string;
   phase: Phase;
   variant?: "page" | "panel";
+  /** Replaces the theme's OG wash, e.g. the night sky behind a scene card. */
+  backdrop?: string;
   children: ReactNode;
 }) {
   /**
@@ -71,7 +74,7 @@ export default function CardStage({
   // The theme's own OG wash — a soft diagonal gradient tuned per palette — so
   // the stage reads as "this card's colour" instead of the app's flat neutral
   // `bg-background` peeking out from behind the ambient blobs.
-  const backdrop = { backgroundImage: theme.og.bgGradient };
+  const backdrop = { backgroundImage: backdropOverride ?? theme.og.bgGradient };
 
   if (variant === "panel") {
     return (

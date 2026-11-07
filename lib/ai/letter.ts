@@ -7,13 +7,20 @@ import "server-only";
 
 import { ApiError, readJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth-server";
-import { interviewFor, pickAnswers } from "@/lib/interview";
+import {
+  interviewFor,
+  pickAnswers,
+  pickNames,
+  type InterviewQuestion,
+  type LetterNames,
+} from "@/lib/interview";
 import { buildLetterPrompt } from "@/lib/prompts/letter";
 import type { PromptPair } from "@/lib/prompts/enhance";
 import { toneTemperature } from "@/lib/prompts/tones";
-import { enforceLimit } from "@/lib/rate-limit";
+import { enforceLimit, type LimitKind } from "@/lib/rate-limit";
 import { getTemplateById } from "@/lib/templates";
 import { readToneId, type ToneId } from "@/lib/tones";
+import type { Template } from "@/lib/types";
 
 export interface LetterRequest {
   prompt: PromptPair;
@@ -21,22 +28,30 @@ export interface LetterRequest {
   temperature: number;
 }
 
+/** A validated, metered request, before any prompt is built from it. */
+export interface LetterInput {
+  template: Template;
+  tone: ToneId;
+  questions: InterviewQuestion[];
+  answers: Record<string, string>;
+  names: LetterNames;
+}
+
 /**
- * Validate, authorise and meter a whole-letter request.
+ * Validate, authorise and meter a request built from the interview.
  *
- * Login is required here and nowhere else in the AI surface. Two reasons, and
- * the second is the better one: this is the expensive call, and it is also the
- * single best signup moment the product will ever get — someone who has just
- * answered five questions about a person they love is more willing to make an
- * account than they will be at any other point.
+ * Login is required for every route that uses this. The interview now says so
+ * on its first screen rather than after the last question, so nobody answers
+ * everything before finding out.
  *
+ * @param kind which daily quota to charge.
  * @param cost how many model calls this request will make, charged to the quota
  *   up front. Three variants really are three calls and are billed as three.
  */
-export async function prepareLetter(
+export async function readLetterInput(
   request: Request,
-  cost = 1,
-): Promise<LetterRequest> {
+  { kind = "ai_letter", cost = 1 }: { kind?: LimitKind; cost?: number } = {},
+): Promise<LetterInput> {
   const user = await requireUser(request);
   const body = await readJson(request);
 
@@ -53,13 +68,27 @@ export async function prepareLetter(
   }
 
   for (let i = 0; i < cost; i++) {
-    await enforceLimit(`user:${user.id}`, "ai_letter");
+    await enforceLimit(`user:${user.id}`, kind);
   }
 
-  const tone = readToneId(body.tone);
   return {
-    prompt: buildLetterPrompt({ template, tone, questions, answers }),
-    tone,
-    temperature: toneTemperature(tone),
+    template,
+    tone: readToneId(body.tone),
+    questions,
+    answers,
+    names: pickNames(body.names),
+  };
+}
+
+/** The whole-letter prompt, for the streaming and variants routes. */
+export async function prepareLetter(
+  request: Request,
+  cost = 1,
+): Promise<LetterRequest> {
+  const input = await readLetterInput(request, { cost });
+  return {
+    prompt: buildLetterPrompt(input),
+    tone: input.tone,
+    temperature: toneTemperature(input.tone),
   };
 }

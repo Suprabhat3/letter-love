@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { getPublicCard } from "@/lib/cards-server";
 import { resolveColor, resolveTheme } from "@/lib/theme";
+import { diwaliOgImage } from "@/components/og/DiwaliOg";
 
 // Route segment config
 export const alt = "LetterLove Card Preview";
@@ -43,6 +44,12 @@ export default async function Image({
       </div>,
       { ...size },
     );
+  }
+
+  // Diwali has its own preview: the night scene and envelope the card now
+  // opens with. Every other template keeps the config-driven card below.
+  if (card.templateId === "diwali") {
+    return diwaliOgImage(card, size);
   }
 
   const content = card.content;

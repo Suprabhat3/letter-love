@@ -5,6 +5,7 @@ export type AnalyticsEvent =
   // create funnel
   | "template_view"
   | "editor_start"
+  | "editor_manual"
   | "ai_enhance_click"
   | "ai_tone_select"
   // memory interview funnel: how many people who open it reach a letter, and
@@ -20,6 +21,7 @@ export type AnalyticsEvent =
   // loop funnel
   | "card_opened"
   | "envelope_opened"
+  | "scene_select"
   | "reaction_added"
   | "reply_click"
   | "signup_completed";

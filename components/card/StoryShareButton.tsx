@@ -15,7 +15,14 @@ import { track } from "@/lib/analytics";
  * inside the in-app WebViews people open WhatsApp links in, and a button that
  * silently does nothing is worse than one that opens a picture.
  */
-export default function StoryShareButton({ cardId }: { cardId: string }) {
+export default function StoryShareButton({
+  cardId,
+  night = false,
+}: {
+  cardId: string;
+  /** Gold-on-dark styling, for cards that sit on a night backdrop. */
+  night?: boolean;
+}) {
   const [busy, setBusy] = useState(false);
   const url = `/share/${encodeURIComponent(cardId)}/story`;
 
@@ -59,7 +66,11 @@ export default function StoryShareButton({ cardId }: { cardId: string }) {
       // `transform` is named alongside the colours rather than relying on
       // `transition-all`, which would also animate the disabled opacity swap
       // and make "Preparing…" fade in late.
-      className="rounded-full border border-foreground/10 bg-white/60 px-5 py-2 text-xs font-medium text-foreground/60 shadow-sm transition-[background-color,color,transform] duration-200 ease-out-strong hover:bg-white/90 hover:text-foreground/80 active:scale-[0.97] active:duration-100 disabled:opacity-60"
+      className={`rounded-full border px-5 py-2 text-xs font-medium shadow-sm transition-[background-color,color,transform] duration-200 ease-out-strong active:scale-[0.97] active:duration-100 disabled:opacity-60 ${
+        night
+          ? "border-amber-200/20 bg-white/5 text-amber-100/70 hover:bg-white/10 hover:text-amber-50"
+          : "border-foreground/10 bg-white/60 text-foreground/60 hover:bg-white/90 hover:text-foreground/80"
+      }`}
     >
       {busy ? "Preparing…" : "Share as a story 📱"}
     </button>

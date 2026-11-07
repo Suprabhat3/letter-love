@@ -24,13 +24,12 @@ interface VariantsResult {
  * Three letters to choose from.
  *
  * Three parallel calls, deliberately not one call asked to return a JSON array
- * of three. Gemini's OpenAI-compatibility layer has patchy `response_format`
- * support, and with a single call one bad parse loses all three letters;
+ * of three. With a single call one bad parse loses all three letters;
  * `Promise.allSettled` means two good letters still reach the user when the
  * third fails. Genuinely different temperatures also produce genuinely
  * different letters, which asking one call for "three varied versions" does
- * not — it tends to return the same letter with the adjectives swapped. Flash
- * is cheap enough that 3x tokens is noise.
+ * not — it tends to return the same letter with the adjectives swapped. A mini
+ * model is cheap enough that 3x tokens is noise.
  *
  * Variants exist only for the whole letter. Three versions of a single field
  * is decision fatigue in a two-minute flow.

@@ -1,7 +1,6 @@
 // The one place that talks to the model.
 //
-// Gemini 3.8 Flash through the OpenAI-compatible endpoint. Both AI routes go
-// through here so the timeout, the abort handling and the error mapping exist
+// OpenAI chat completions. Every AI route goes through here so the timeout, the abort handling and the error mapping exist
 // once — previously the single route did all three inline and every future
 // route would have re-implemented them slightly differently.
 import "server-only";
@@ -12,7 +11,14 @@ import { ApiError } from "@/lib/api";
 import type { PromptPair } from "@/lib/prompts/enhance";
 import { cleanOutput } from "@/lib/prompts/sanitize";
 
-export const MODEL = "gemini-3.8-flash";
+/**
+ * Overridable per deploy so a model change is a config edit, not a code change.
+ * Runs with `reasoning_effort: "none"`: these are short creative writes where
+ * thinking only adds latency, and on GPT-5.x it is also the mode in which the
+ * per-tone `temperature` (and the variants' spread) is accepted.
+ */
+export const MODEL = process.env.OPENAI_MODEL?.trim() || "gpt-5.1";
+const REASONING_EFFORT = "none" as const;
 
 /** Comfortably inside the route's own maxDuration, so we abort before Vercel does. */
 const DEFAULT_TIMEOUT_MS = 25_000;
@@ -20,15 +26,15 @@ const DEFAULT_TIMEOUT_MS = 25_000;
 let cached: OpenAI | null = null;
 
 function client(): OpenAI {
-  if (!process.env.GEMINI_API_KEY) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
     // A real status, not a 500: "AI is not configured" is actionable for us and
     // honest to the user, and it is what an unset key on a preview deploy is.
     throw new ApiError(503, "AI is not set up on this server.", "ai_unavailable");
   }
-  cached ??= new OpenAI({
-    apiKey: process.env.GEMINI_API_KEY,
-    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
-  });
+  // The SDK's own retries cover 429s and 5xx with backoff; our AbortController
+  // timeout still bounds the total wait.
+  cached ??= new OpenAI({ apiKey, maxRetries: 2 });
   return cached;
 }
 
@@ -63,8 +69,9 @@ export async function complete(
     const completion = await client().chat.completions.create(
       {
         model: MODEL,
+        reasoning_effort: REASONING_EFFORT,
         temperature,
-        max_tokens: maxTokens,
+        max_completion_tokens: maxTokens,
         messages: [
           { role: "system", content: prompt.system },
           { role: "user", content: prompt.user },
@@ -82,6 +89,55 @@ export async function complete(
       );
     }
     return text;
+  } catch (error) {
+    throw asApiError(error);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * One blocking call that returns JSON matching `schema`, via structured
+ * outputs (`strict: true`), so the shape is enforced by the API rather than
+ * hoped for. Values are returned raw; the caller cleans each one.
+ */
+export async function completeJson(
+  prompt: PromptPair,
+  schema: { name: string; schema: Record<string, unknown> },
+  { temperature, maxTokens = 800, timeoutMs = DEFAULT_TIMEOUT_MS }: CallOptions,
+): Promise<Record<string, unknown>> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const completion = await client().chat.completions.create(
+      {
+        model: MODEL,
+        reasoning_effort: REASONING_EFFORT,
+        temperature,
+        max_completion_tokens: maxTokens,
+        response_format: {
+          type: "json_schema",
+          json_schema: { name: schema.name, strict: true, schema: schema.schema },
+        },
+        messages: [
+          { role: "system", content: prompt.system },
+          { role: "user", content: prompt.user },
+        ],
+      },
+      { signal: controller.signal },
+    );
+
+    const raw = completion.choices[0]?.message?.content ?? "";
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      // Fall through: a refusal or a truncated response is not JSON.
+    }
+    throw new ApiError(502, "The AI came back in the wrong shape. Try again.", "ai_bad_json");
   } catch (error) {
     throw asApiError(error);
   } finally {
@@ -121,8 +177,9 @@ export async function streamCompletion(
     stream = await client().chat.completions.create(
       {
         model: MODEL,
+        reasoning_effort: REASONING_EFFORT,
         temperature,
-        max_tokens: maxTokens,
+        max_completion_tokens: maxTokens,
         stream: true,
         messages: [
           { role: "system", content: prompt.system },

@@ -10,6 +10,7 @@
 // without also gating on next.config.ts remotePatterns.
 
 import { DEFAULT_FONT_ID, FontId, isFontId } from "./fonts";
+import { isSceneId, type SceneId } from "./scenes";
 
 export const STYLE_KEY = "_style" as const;
 
@@ -19,6 +20,8 @@ export interface CardStyle {
   palette?: { primary?: string; secondary?: string; accent?: string };
   decor?: string;
   envelope?: { enabled?: boolean; sealEmoji?: string; hint?: string };
+  /** A full-screen opening scene. Replaces the envelope when set. */
+  scene?: SceneId;
 }
 
 export interface ResolvedCardStyle {
@@ -27,6 +30,8 @@ export interface ResolvedCardStyle {
   palette?: { primary?: string; secondary?: string; accent?: string };
   decor?: string;
   envelope: { enabled: boolean; sealEmoji?: string; hint?: string };
+  /** Whitelisted against lib/scenes.ts; absent on every card written before scenes. */
+  scene?: SceneId;
 }
 
 /** Anything stored in the `data` column. Content values are strings; `_style` is an object. */
@@ -120,6 +125,7 @@ export function readCardStyle(data: StoredCardData | null | undefined): Resolved
       sealEmoji: clampText(envelopeRaw?.sealEmoji, MAX_SEAL),
       hint: clampText(envelopeRaw?.hint, MAX_HINT),
     },
+    scene: isSceneId(raw?.scene) ? raw.scene : undefined,
   };
 }
 

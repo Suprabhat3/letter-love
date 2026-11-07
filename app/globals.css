@@ -897,6 +897,100 @@ h6 {
   animation: ll-rise-in 700ms var(--ease-out-soft) var(--ll-delay, 0ms) backwards;
 }
 
+/* ---------------------------------------------------------------------------
+   The Diwali letter's word stream (components/card/scenes/DiwaliLetter)
+
+   Each word arrives out of a soft blur and lands lit — a warm gold glow that
+   cools into ink over a second, like a wick catching. `both` so a word holds
+   its start state for the frame between mounting and animating.
+--------------------------------------------------------------------------- */
+@keyframes ll-word-in {
+  0% {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translate3d(0, 0.28em, 0);
+    color: #f59e0b;
+    text-shadow: 0 0 14px rgba(251, 191, 36, 0.9);
+  }
+
+  35% {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+    color: #d97706;
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
+  }
+
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+
+.ll-word-in {
+  display: inline-block;
+  animation: ll-word-in 1400ms var(--ease-out-soft) both;
+}
+
+@keyframes ll-stream-caret {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.55;
+    transform: scale(0.7);
+  }
+}
+
+.ll-stream-caret {
+  background: radial-gradient(circle, #fffbe6 0%, #fbbf24 45%, #f97316 100%);
+  box-shadow: 0 0 10px 3px rgba(251, 191, 36, 0.7);
+  animation: ll-stream-caret 900ms ease-in-out infinite;
+}
+
+@keyframes ll-diya-flame {
+
+  0%,
+  100% {
+    transform: scale(1, 1) rotate(0deg);
+  }
+
+  30% {
+    transform: scale(0.94, 1.06) rotate(-2deg);
+  }
+
+  60% {
+    transform: scale(1.04, 0.95) rotate(2deg);
+  }
+}
+
+.ll-diya-flame {
+  animation: ll-diya-flame 1.6s ease-in-out infinite;
+}
+
+/* The scene's "open your letter" button once the finale has played: a slow
+   breathing glow, so it reads as the next step without shouting. */
+@keyframes ll-cta-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 36px -8px rgba(251, 191, 36, 0.7);
+  }
+
+  50% {
+    box-shadow: 0 0 60px -4px rgba(251, 191, 36, 0.95);
+  }
+}
+
+.ll-cta-glow {
+  animation: ll-cta-glow 2.4s ease-in-out infinite;
+}
+
 /* Reduced motion: the whole decor system is optional by design. Every layer is
    also skipped in JS via useReducedMotion(); this is the belt-and-braces.
 
@@ -915,7 +1009,11 @@ h6 {
   .ll-react-fly,
   .ll-candle,
   .ll-caret,
-  .ll-card-glow {
+  .ll-card-glow,
+  .ll-word-in,
+  .ll-stream-caret,
+  .ll-diya-flame,
+  .ll-cta-glow {
     animation: none !important;
   }
 

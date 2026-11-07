@@ -16,9 +16,15 @@ import { reportOpen } from "@/lib/engagement-client";
 import CardStage from "./CardStage";
 import CardRenderer from "./CardRenderer";
 import EnvelopeGate from "./EnvelopeGate";
+import SceneGate from "./scenes/SceneGate";
+import { scenesForTemplate } from "@/lib/scenes";
+import { getFontClasses } from "@/lib/fonts";
 import ReactionBar from "./ReactionBar";
 import ReplyCta from "./ReplyCta";
 import StoryShareButton from "./StoryShareButton";
+
+const NIGHT_BACKDROP =
+  "radial-gradient(120% 70% at 50% 100%, #3a160c 0%, transparent 60%), linear-gradient(180deg, #05030c 0%, #120a22 55%, #1d0c14 100%)";
 
 /** Feeds `.ll-rise-in`'s per-node delay without a style object per call site. */
 const delay = (ms: number) => ({ "--ll-delay": `${ms}ms` }) as CSSProperties;
@@ -47,11 +53,21 @@ export default function CardView({ card }: { card: PublicCard }) {
     theme.interaction.kind === "none" ? "post" : "pre",
   );
 
+  // A full-screen opening scene, when the card was saved with one and its
+  // template still offers it. Cards from before scenes have no `scene` and
+  // keep their envelope.
+  const scene = scenesForTemplate(card.templateId).some((s) => s.id === style.scene)
+    ? style.scene
+    : undefined;
+
   // A card with no envelope is revealed from the start — which is every card
   // written before the envelope shipped. See readCardStyle: a link someone has
   // already sent must not change behaviour underneath them.
-  const sealed = theme.envelope.enabled;
+  const sealed = Boolean(scene) || theme.envelope.enabled;
   const [revealed, setRevealed] = useState(!sealed);
+  // A scene card's letter writes itself out; nothing below it should start
+  // asking for reactions until the reader has reached the signature.
+  const [read, setRead] = useState(!scene);
 
   const [counts, setCounts] = useState(card.reactionCounts);
   const [mine, setMine] = useState<readonly ReactionEmoji[]>([]);
@@ -91,6 +107,23 @@ export default function CardView({ card }: { card: PublicCard }) {
     if (revealed) report();
   }, [revealed, report]);
 
+  // The theme's ambient blobs are tuned for its light wash; over the night
+  // backdrop at full strength they mix into a muddy olive. Dimmed, they read
+  // as warm glow on the horizon instead.
+  const stageTheme = useMemo(
+    () =>
+      scene
+        ? {
+            ...theme,
+            ambient: {
+              ...theme.ambient,
+              blobs: theme.ambient.blobs.map((b) => ({ ...b, opacity: b.opacity * 0.4 })),
+            },
+          }
+        : theme,
+    [scene, theme],
+  );
+
   const letter = (
     <CardRenderer
       theme={theme}
@@ -104,8 +137,26 @@ export default function CardView({ card }: { card: PublicCard }) {
   );
 
   return (
-    <CardStage theme={theme} seed={card.id} phase={phase}>
-      {sealed ? (
+    <CardStage
+      theme={stageTheme}
+      seed={card.id}
+      phase={phase}
+      // The scene ends on a night sky; the page it hands over to should too.
+      backdrop={scene ? NIGHT_BACKDROP : undefined}
+    >
+      {scene ? (
+        <SceneGate
+          scene={scene}
+          cardId={card.id}
+          to={content.recipientName?.trim() ?? ""}
+          from={content.senderName?.trim() ?? ""}
+          message={content.message?.trim() || "May this Diwali fill your home with light."}
+          wish={content.wish}
+          bodyFont={getFontClasses(style.font ?? theme.fontDefaults.body).body}
+          onOpen={() => setRevealed(true)}
+          onRead={() => setRead(true)}
+        />
+      ) : sealed ? (
         <EnvelopeGate
           spec={theme.envelope}
           palette={theme.palette}
@@ -131,38 +182,85 @@ export default function CardView({ card }: { card: PublicCard }) {
 
           A CSS stagger, not a motion chain: this mounts while the paced reveal
           is still ticking through the body text on the main thread. */}
-      {revealed && (
-        <div className="flex w-full max-w-md flex-col items-center gap-6">
+      {revealed && read && (
+        <div
+          className={`relative flex w-full max-w-md flex-col items-center gap-6 ${
+            // On the night backdrop the loop sits on a dark lacquered panel
+            // with the letter's double gold rule, so it reads as part of the
+            // same set rather than a light-theme widget dropped on top.
+            scene
+              ? "ll-rise-in rounded-[22px] border border-amber-300/25 bg-[#1c0f08]/75 px-5 py-7 shadow-[0_30px_70px_-25px_rgba(0,0,0,0.8),0_0_90px_-30px_rgba(251,191,36,0.3)] backdrop-blur-md"
+              : ""
+          }`}
+          style={scene ? delay(400) : undefined}
+        >
+          {scene && (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-1.5 rounded-[17px] border border-amber-300/10"
+            />
+          )}
+
+          {scene && (
+            <p
+              className="ll-rise-in font-serif text-lg italic text-amber-100/85"
+              style={delay(520)}
+            >
+              Send a little light back
+            </p>
+          )}
+
           <div className="ll-rise-in w-full" style={delay(600)}>
             <ReactionBar
               key={sync}
               cardId={card.id}
               initialCounts={counts}
               mine={mine}
+              night={Boolean(scene)}
             />
           </div>
 
-          <div
-            aria-hidden
-            className="ll-rise-in h-px w-24 bg-foreground/10"
-            style={delay(760)}
-          />
+          {scene ? (
+            <svg
+              aria-hidden
+              viewBox="0 0 160 12"
+              className="ll-rise-in h-3 w-32"
+              style={delay(760)}
+              fill="none"
+            >
+              <path d="M2 6h60M98 6h60" stroke="#e0b44c" strokeOpacity=".45" strokeWidth="1" />
+              <path d="M80 1l5 5-5 5-5-5z" fill="#e0b44c" fillOpacity=".8" />
+              <circle cx="68" cy="6" r="1.6" fill="#e0b44c" fillOpacity=".7" />
+              <circle cx="92" cy="6" r="1.6" fill="#e0b44c" fillOpacity=".7" />
+            </svg>
+          ) : (
+            <div
+              aria-hidden
+              className="ll-rise-in h-px w-24 bg-foreground/10"
+              style={delay(760)}
+            />
+          )}
 
           <div className="ll-rise-in" style={delay(900)}>
             <ReplyCta
               cardId={card.id}
               templateId={card.templateId}
               senderName={content.senderName}
+              night={Boolean(scene)}
             />
           </div>
 
           <div className="ll-rise-in" style={delay(1060)}>
-            <StoryShareButton cardId={card.id} />
+            <StoryShareButton cardId={card.id} night={Boolean(scene)} />
           </div>
         </div>
       )}
 
-      <p className="text-center text-muted-foreground/50 text-xs italic font-serif">
+      <p
+        className={`text-center text-xs italic font-serif ${
+          scene ? "text-amber-100/50" : "text-muted-foreground/50"
+        }`}
+      >
         Made with LetterLove 💕
       </p>
     </CardStage>

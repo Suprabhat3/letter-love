@@ -2,8 +2,8 @@
 //
 // [agent.md](agent.md) promised that "users input small details and AI weaves
 // them into a tear-jerking love letter", and the landing page sells exactly
-// that. What shipped was a polish button. This is the missing half: four or
-// five small, concrete questions whose answers are the raw material the model
+// that. What shipped was a polish button. This is the missing half: a names
+// screen and three small, concrete questions whose answers are the raw material the model
 // actually needs.
 //
 // Shared between the modal that renders the questions and the prompt builder
@@ -13,6 +13,8 @@
 // Written in Hinglish on purpose. "Pehli baar kab laga ki yeh special hai?"
 // gets a real answer from the audience this is for; "Describe a formative
 // moment in your relationship" gets a blank stare and a skip.
+
+import type { Template, TemplateField } from "@/lib/types";
 
 export interface InterviewQuestion {
   /** Stable key for the answer map. Never renumber these. */
@@ -107,13 +109,6 @@ const LOVE: InterviewQuestion[] = [
     facet: "A detail only the two of them share",
   },
   {
-    id: "miss",
-    prompt: "Unki kaunsi cheez sabse zyada yaad aati hai?",
-    hint: "Awaaz, hansi, koi aadat",
-    placeholder: "Uski hansi, jab woh khud pe hi has deti hai",
-    facet: "What the sender misses most",
-  },
-  {
     id: "oneline",
     prompt: "Agar ek line kehni ho, toh kya?",
     hint: "Bas dil se. Sudharenge hum",
@@ -124,13 +119,6 @@ const LOVE: InterviewQuestion[] = [
 
 const CELEBRATION: InterviewQuestion[] = [
   WHO_NEUTRAL,
-  {
-    id: "howlong",
-    prompt: "Inko kab se jaante ho?",
-    hint: "School, college, kaam — ya bachpan se",
-    placeholder: "College ke first day se, 6 saal ho gaye",
-    facet: "How long they have known each other",
-  },
   {
     id: "story",
     prompt: "Ek kahani jo yaad aate hi hasi aa jaaye?",
@@ -177,13 +165,6 @@ const APOLOGY: InterviewQuestion[] = [
     placeholder: "Pehle sunuga, phir bolunga",
     facet: "What the sender will do differently",
   },
-  {
-    id: "matter",
-    prompt: "Yeh rishta tumhare liye kya hai?",
-    hint: "Yehi woh baat hai jo sorry ko sach banati hai",
-    placeholder: "Inke bina meri koi baat poori nahi hoti",
-    facet: "Why the relationship matters to the sender",
-  },
 ];
 
 const LONGING: InterviewQuestion[] = [
@@ -209,24 +190,10 @@ const LONGING: InterviewQuestion[] = [
     placeholder: "Station pe usne kaha 'jaldi aana' aur mud gayi",
     facet: "Their last time together",
   },
-  {
-    id: "when",
-    prompt: "Agli baar milne pe sabse pehle kya karoge?",
-    hint: "Woh pehla minute",
-    placeholder: "Bas gale lagunga, kuch bolunga hi nahi",
-    facet: "What the sender will do when they next meet",
-  },
 ];
 
 const FESTIVAL: InterviewQuestion[] = [
   WHO_NEUTRAL,
-  {
-    id: "howcelebrate",
-    prompt: "Yeh tyohaar tum dono kaise manate ho?",
-    hint: "Ghar pe, saath mein, ya ab phone pe",
-    placeholder: "Pehle saath, ab video call pe. Har saal.",
-    facet: "How the two of them mark this festival",
-  },
   {
     id: "bestyear",
     prompt: "Sabse yaadgaar wala saal kaunsa tha?",
@@ -252,13 +219,6 @@ const FESTIVAL: InterviewQuestion[] = [
 
 const FRIENDSHIP: InterviewQuestion[] = [
   WHO,
-  {
-    id: "howmet",
-    prompt: "Dosti shuru kaise hui thi?",
-    hint: "Pehli mulaqat, ya woh din jab dost ban gaye",
-    placeholder: "Hostel ki chhat pe, dono ko neend nahi aa rahi thi",
-    facet: "How the friendship started",
-  },
   {
     id: "story",
     prompt: "Ek kissa jo aaj bhi hasa deta hai?",
@@ -305,13 +265,6 @@ const GRATITUDE: InterviewQuestion[] = [
     placeholder: "Us din ke baad maine haar maanna chhod diya",
     facet: "What it changed for the sender",
   },
-  {
-    id: "neversaid",
-    prompt: "Ab tak thank you kyun nahi bola?",
-    hint: "Sach likho. Sudharenge hum",
-    placeholder: "Lagta tha awkward ho jaayega",
-    facet: "Why the sender never said thank you before",
-  },
 ];
 
 /**
@@ -341,13 +294,6 @@ const CONFESSION: InterviewQuestion[] = [
       hint: "Yeh line letter ko sach banati hai",
       placeholder: "Kahin dosti kharab na ho jaaye",
       facet: "What the sender is afraid of",
-    },
-    {
-      id: "oneline",
-      prompt: "Agar ek line kehni ho, toh kya?",
-      hint: "Bas dil se",
-      placeholder: "Tumhare saath sab kuch aasaan lagta hai",
-      facet: "The one line the sender wants to say",
     },
 ];
 
@@ -396,13 +342,6 @@ const BY_TEMPLATE: Record<string, InterviewQuestion[]> = {
       facet: "An annoying habit the sender secretly loves",
     },
     {
-      id: "proud",
-      prompt: "Inki kaunsi baat pe tumhe garv hota hai?",
-      hint: "Jo tum doosron ko batate ho",
-      placeholder: "Kisi ko bhi akela nahi chhodti, chahe kuch bhi ho",
-      facet: "What the sender is proud of about them",
-    },
-    {
       id: "oneline",
       prompt: "Aakhri line kya honi chahiye?",
       hint: "Jo list ko band kare",
@@ -433,13 +372,6 @@ const BY_TEMPLATE: Record<string, InterviewQuestion[]> = {
       placeholder: "Aaj bhi mere har mazaak pe sabse pehle wohi hasti hai",
       facet: "What has stayed exactly the same",
     },
-    {
-      id: "next",
-      prompt: "Agle saal ke liye kya chahte ho?",
-      hint: "Chhota sa bhi chalega",
-      placeholder: "Bas ek trip, sirf hum dono",
-      facet: "What the sender wants for the year ahead",
-    },
   ],
 };
 
@@ -453,11 +385,74 @@ const BY_CATEGORY: Record<string, InterviewQuestion[]> = {
   gratitude: GRATITUDE,
 };
 
+function fullSetFor(templateId: string, category?: string): InterviewQuestion[] {
+  return BY_TEMPLATE[templateId] ?? BY_CATEGORY[category ?? ""] ?? LOVE;
+}
+
+/**
+ * The memory questions: three per set, after the names screen.
+ *
+ * "who" is deliberately not among them. It used to be question one, and its
+ * answer went only to the model, so the user then typed the same name again
+ * into the card's "Their Name" field. It is now asked on the names screen,
+ * which writes straight into `recipientName`.
+ */
 export function interviewFor(
   templateId: string,
   category?: string,
 ): InterviewQuestion[] {
-  return BY_TEMPLATE[templateId] ?? BY_CATEGORY[category ?? ""] ?? LOVE;
+  return fullSetFor(templateId, category).filter((q) => q.id !== "who");
+}
+
+/** The wording for the recipient's name on the names screen, per relationship. */
+export function recipientQuestionFor(
+  templateId: string,
+  category?: string,
+): InterviewQuestion {
+  return fullSetFor(templateId, category).find((q) => q.id === "who") ?? WHO;
+}
+
+/** Names are short; anything longer is not a name. */
+export const MAX_NAME_CHARS = 60;
+
+export interface LetterNames {
+  /** What the sender calls the recipient. Fills `recipientName`. */
+  to: string;
+  /** The sender's own name. Fills `senderName`. */
+  from: string;
+}
+
+export function pickNames(raw: unknown): LetterNames {
+  const source = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const read = (v: unknown) =>
+    typeof v === "string" ? v.trim().slice(0, MAX_NAME_CHARS) : "";
+  return { to: read(source.to), from: read(source.from) };
+}
+
+/** Card fields the interview fills directly from the names screen. */
+const NAME_FIELDS = new Set(["recipientName", "senderName"]);
+
+/**
+ * Where the streamed letter lands: the first required textarea, falling back
+ * to any textarea. `undefined` means this template has no AI letter path.
+ */
+export function letterFieldFor(template: Template): string | undefined {
+  return (
+    template.fields.find((f) => f.type === "textarea" && f.required)?.name ??
+    template.fields.find((f) => f.type === "textarea")?.name
+  );
+}
+
+/**
+ * Every other field on the card: memory, wish, promise, years and so on.
+ * These are filled by the small structured call that runs alongside the
+ * stream, so the user is not left typing them by hand afterwards.
+ */
+export function extraFieldsFor(template: Template): TemplateField[] {
+  const letter = letterFieldFor(template);
+  return template.fields.filter(
+    (f) => !NAME_FIELDS.has(f.name) && f.name !== letter,
+  );
 }
 
 /**

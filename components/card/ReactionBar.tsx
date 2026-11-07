@@ -16,6 +16,8 @@ export interface ReactionBarProps {
   initialCounts: ReactionCounts;
   /** Which reactions this viewer already has on, learned from the view beacon. */
   mine: readonly ReactionEmoji[];
+  /** Gold-on-dark styling, for cards that sit on a night backdrop. */
+  night?: boolean;
 }
 
 /** One throwaway emoji drifting off a tapped button. */
@@ -42,6 +44,7 @@ export default function ReactionBar({
   cardId,
   initialCounts,
   mine,
+  night = false,
 }: ReactionBarProps) {
   const [counts, setCounts] = useState<ReactionCounts>(initialCounts);
   const [active, setActive] = useState<ReadonlySet<string>>(
@@ -131,7 +134,11 @@ export default function ReactionBar({
 
   return (
     <div className="flex w-full flex-col items-center gap-2.5">
-      <p className="text-xs tracking-wide text-foreground/45 transition-colors duration-200">
+      <p
+        className={`text-xs tracking-wide transition-colors duration-200 ${
+          night ? "text-amber-100/55" : "text-foreground/45"
+        }`}
+      >
         {total > 0
           ? `${total} ${total === 1 ? "reaction" : "reactions"}`
           : "Tap to react"}
@@ -140,7 +147,11 @@ export default function ReactionBar({
       <div
         role="group"
         aria-label="React to this letter"
-        className="flex flex-wrap items-center justify-center gap-1 rounded-full border border-white/60 bg-white/70 p-1.5 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.12)] backdrop-blur-sm"
+        className={`flex flex-wrap items-center justify-center gap-1 rounded-full border p-1.5 backdrop-blur-sm ${
+          night
+            ? "border-amber-200/15 bg-white/4 shadow-[inset_0_1px_0_rgba(255,236,170,0.08)]"
+            : "border-white/60 bg-white/70 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.12)]"
+        }`}
       >
         {REACTIONS.map(({ emoji, label }) => {
           const on = active.has(emoji);
@@ -157,13 +168,21 @@ export default function ReactionBar({
               // from wherever the last tap left it instead of restarting.
               className={`relative flex items-center gap-1 rounded-full px-2.5 py-1.5 text-base transition-[background-color,box-shadow,transform] duration-200 ease-out-strong active:scale-[0.92] active:duration-100 ${
                 on
-                  ? "scale-105 bg-pink-100 shadow-[inset_0_0_0_1px_var(--color-pink-300)]"
-                  : "scale-100 hover:bg-black/5 focus-visible:bg-black/5"
+                  ? night
+                    ? "scale-105 bg-amber-400/20 shadow-[inset_0_0_0_1px_rgba(252,211,77,0.55),0_0_18px_-4px_rgba(251,191,36,0.6)]"
+                    : "scale-105 bg-pink-100 shadow-[inset_0_0_0_1px_var(--color-pink-300)]"
+                  : night
+                    ? "scale-100 hover:bg-amber-200/10 focus-visible:bg-amber-200/10"
+                    : "scale-100 hover:bg-black/5 focus-visible:bg-black/5"
               }`}
             >
               <span aria-hidden>{emoji}</span>
               {count > 0 && (
-                <span className="text-xs font-medium tabular-nums text-foreground/60">
+                <span
+                  className={`text-xs font-medium tabular-nums ${
+                    night ? "text-amber-100/75" : "text-foreground/60"
+                  }`}
+                >
                   {count}
                 </span>
               )}

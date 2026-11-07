@@ -10,9 +10,9 @@ import { supabaseAdmin } from "./supabase-server";
  * writes rows; without it, a loop can fill the table.
  *
  * The AI limits matter more than any of the others. /api/ai/enhance is a proxy
- * to a *paid* Gemini key, discoverable by anyone who opens devtools, and one
+ * to a *paid* OpenAI key, discoverable by anyone who opens devtools, and one
  * scraper either runs up a bill or rate-limits the key into uselessness for
- * real users. Set a hard quota on the Google key as well; this is the cheap
+ * real users. Set a hard monthly budget on the OpenAI project as well; this is the cheap
  * half of that defence, not all of it.
  */
 export const LIMITS = {

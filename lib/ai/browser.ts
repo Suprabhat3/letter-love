@@ -9,6 +9,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { cleanOutput } from "@/lib/prompts/sanitize";
+import type { LetterNames } from "@/lib/interview";
 import type { ToneId } from "@/lib/tones";
 
 const GENERIC = "Couldn't reach the AI. Check your connection and try again.";
@@ -61,6 +62,7 @@ export interface LetterRequest {
   templateId: string;
   tone: ToneId;
   answers: Record<string, string>;
+  names: LetterNames;
 }
 
 /**
@@ -135,6 +137,33 @@ export async function fetchLetterVariants(
     const data = (await response.json()) as { letters?: string[] };
     if (!data.letters?.length) return { error: "The AI came back empty." };
     return { letters: data.letters };
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      return { error: "" };
+    }
+    return { error: GENERIC };
+  }
+}
+
+/**
+ * The card's smaller fields (memory, wish, promise...), fetched alongside the
+ * streamed letter. Failure is quiet by design at the call site: the letter is
+ * what matters, and these fields can still be typed by hand.
+ */
+export async function fetchLetterFields(
+  input: LetterRequest,
+  signal?: AbortSignal,
+): Promise<{ fields: Record<string, string> } | { error: string }> {
+  try {
+    const response = await fetch("/api/ai/letter/fields", {
+      method: "POST",
+      headers: await authHeaders(),
+      body: JSON.stringify(input),
+      signal,
+    });
+    if (!response.ok) return { error: await errorFrom(response) };
+    const data = (await response.json()) as { fields?: Record<string, string> };
+    return { fields: data.fields ?? {} };
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
       return { error: "" };
