@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Dancing_Script, Inter } from "next/font/google";
+// Next.js processes this stylesheet import, but the project's TypeScript setup
+// does not currently declare CSS modules as ambient side-effect imports.
+// @ts-expect-error CSS is handled by Next.js at build time.
 import "./globals.css";
 import Providers from "@/components/Providers";
 
@@ -41,7 +44,10 @@ export const metadata: Metadata = {
     siteName: "LetterLove",
     images: [
       {
-        url: "/og-image.png",
+        // JPEG, ~70KB: WhatsApp silently drops preview images over ~300KB,
+        // and the PNG this replaced was 600KB.
+        url: "/og-image.jpg",
+        type: "image/jpeg",
         width: 1200,
         height: 630,
         alt: "LetterLove - AI Powered Letters",
@@ -75,7 +81,7 @@ export const metadata: Metadata = {
     title: "LetterLove - AI Powered Cute & Valentine Letters",
     description:
       "Create adorable, AI-powered valentine letters and love notes. Whether you need a cute confession or a heartfelt message, Eugene helps you express your feelings perfectly.",
-    images: ["/og-image.png"],
+    images: ["/og-image.jpg"],
     creator: "@LetterLoveAI",
   },
   metadataBase: new URL("https://letterlove.fun"),

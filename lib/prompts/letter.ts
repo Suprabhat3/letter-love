@@ -35,11 +35,11 @@ Context:
 ${toneGuidance(opts.tone)}
 
 ${FORMAT_RULES}
-- You are writing the whole letter, from the answers below. Weave the details into something that flows; do not list them back or answer the questions one by one.
-- Use their actual words and specifics wherever you can. A real detail beats a beautiful sentence.
-- NEVER invent events, places, dates or people that are not in the answers. The one person reading this was there. If the answers are thin, write something shorter and truer rather than padding it.
+- You are writing the whole letter, from the answers below. Turn the details into one natural message; do not list them back or answer the questions one by one.
+- Use their actual words and specifics wherever you can, even if they are a bit clumsy. A real detail in their words beats a beautiful sentence in yours.
+- NEVER invent events, places, dates or people that are not in the answers. The one person reading this was there. If the answers are thin, write something shorter and truer rather than padding it with generic lines.
 - Some answers may be missing because the user skipped them. Simply write around a gap; never mention that something was left blank.
-- Length: 120 to 200 words. Break it into short paragraphs separated by a blank line, because the card reveals the letter one line at a time.
+- Length: 60 to 150 words, shorter if the answers are short. Real people write short. Break it into short paragraphs separated by a blank line, because the card reveals the letter one line at a time.
 - Do not add a greeting line or a signature; the card prints the names itself. You may use what the sender calls them once, naturally, inside the letter.
 
 ${DATA_FENCE}`;

@@ -20,32 +20,32 @@ interface ToneSpec {
 const SPECS: Record<ToneId, ToneSpec> = {
   romantic: {
     guidance:
-      "Tone: romantic and sincere. Warm, direct, a little vulnerable. Say the feeling plainly rather than dressing it up. No grand declarations the sender would be embarrassed to have written.",
+      "Tone: romantic, the real kind. Write like someone who is slightly shy about saying it. Lean on the small specific things from the answers (a habit, a moment, an inside joke) and let those carry the love. Allow one plain, direct line of feeling, not five. No filmy declarations, no 'meri jaan meri zindagi' stacking.",
     temperature: 0.8,
   },
   funny: {
     guidance:
-      "Tone: funny and affectionate. Tease them the way close friends do, then land one genuinely warm line at the end so it still means something. Never sarcastic at their expense.",
+      "Tone: funny, like a close friend or sibling who roasts out of love. Pull their leg about the real details in the answers, keep the jokes specific rather than generic, then drop in one short, sincere line near the end that they will not expect. Never mean, never forced punchlines.",
     temperature: 0.95,
   },
   shayari: {
     guidance:
-      "Tone: shayari. Write in couplets with a real rhyme, each couplet on its own two lines, blank line between couplets. Four to six couplets. Urdu-flavoured Hinglish is welcome. This is the one format where line breaks carry the meaning, so keep them.",
+      "Tone: shayari. Write in couplets with a real rhyme, each couplet on its own two lines, blank line between couplets. Three to five couplets. Simple Urdu-flavoured Hinglish that a normal person can read aloud, built on the real details from the answers, not stock imagery like chaand, sitaare and samandar. This is the one format where line breaks carry the meaning, so keep them.",
     temperature: 1.0,
   },
   poetic: {
     guidance:
-      "Tone: poetic but unrhymed. Lean on concrete images (chai, the last train, monsoon light) rather than abstract words like 'soul' and 'eternity'. Short lines. Restraint reads as depth.",
+      "Tone: quietly poetic, unrhymed. Build it from concrete everyday images taken from the answers (the chai, the last train, the terrace, the voice note) rather than abstract words. Short lines, lots of restraint. Understatement reads as depth.",
     temperature: 0.9,
   },
   apologetic: {
     guidance:
-      "Tone: apologetic. Own the mistake in the first line without any 'but'. No excuses, no explaining why it happened, no asking for anything back. Name what you will do differently. Keep it short; a long apology reads as self-defence.",
+      "Tone: a real apology. Say sorry for the specific thing in the first line, with no 'but' and no 'if I hurt you'. No excuses, no explaining why it happened, no asking them to forgive you right away. Name the one thing you will actually do differently. Keep it short and a little awkward, the way real apologies are; a long polished apology reads as self-defence.",
     temperature: 0.6,
   },
   festive: {
     guidance:
-      "Tone: festive and celebratory. Bright, generous, full of good wishes. Mention the occasion by name. This is meant to be read out loud in a family group chat.",
+      "Tone: festive but personal. Mention the festival or occasion by name and tie it to something real between the two of them (how they used to celebrate, the sweets, the family chaos, being far this year). One warm wish that is specific to this person, not a list of generic blessings. It should read like a message from someone they know, not a forward from a family group.",
     temperature: 0.85,
   },
 };

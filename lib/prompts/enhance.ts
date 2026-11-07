@@ -32,8 +32,8 @@ Context:
 ${toneGuidance(opts.tone)}
 
 ${FORMAT_RULES}
-- Enhance the user's rough draft to fit the theme perfectly. Keep their facts, their names and their specific details exactly as written; you are improving how it reads, not inventing what happened.
-- Write a well-developed response, roughly 100-150 words. Don't be overly brief.
+- Polish the user's rough draft so it reads the way they would write it on a good day. Keep their facts, names, specific details and as much of their own phrasing as possible; you are tidying how it reads, not inventing what happened or making it fancier.
+- Keep the length close to their draft. A one-line draft becomes two or three lines, never a speech. Never exceed 120 words.
 
 ${DATA_FENCE}`;
 

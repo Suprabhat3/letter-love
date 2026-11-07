@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 import { getPublicCard } from "@/lib/cards-server";
 import { resolveColor, resolveTheme } from "@/lib/theme";
 import { diwaliOgImage } from "@/components/og/DiwaliOg";
+import { crawlerFriendly } from "@/components/og/respond";
 
 // Route segment config
 export const alt = "LetterLove Card Preview";
@@ -25,7 +26,8 @@ export default async function Image({
   const card = await getPublicCard(id);
 
   if (!card) {
-    return new ImageResponse(
+    // Short cache: a link can be scraped moments before its card is saved.
+    return crawlerFriendly(new ImageResponse(
       <div
         style={{
           fontSize: 40,
@@ -43,13 +45,13 @@ export default async function Image({
         <div style={{ fontWeight: 600 }}>Letter Not Found</div>
       </div>,
       { ...size },
-    );
+    ), { maxAgeSec: 60 });
   }
 
   // Diwali has its own preview: the night scene and envelope the card now
   // opens with. Every other template keeps the config-driven card below.
   if (card.templateId === "diwali") {
-    return diwaliOgImage(card, size);
+    return crawlerFriendly(await diwaliOgImage(card, size));
   }
 
   const content = card.content;
@@ -69,7 +71,7 @@ export default async function Image({
 
   // Never render the letter body here. The whole point of the envelope is that
   // the preview does not spoil what is inside.
-  return new ImageResponse(
+  return crawlerFriendly(new ImageResponse(
     <div
       style={{
         height: "100%",
@@ -206,5 +208,5 @@ export default async function Image({
     {
       ...size,
     },
-  );
+  ));
 }
